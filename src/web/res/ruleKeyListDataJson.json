@@ -1,0 +1,142 @@
+[
+  {
+    "key": "name",
+    "name": "用户名(模糊匹配)"
+  },
+  {
+    "key": "precise_name",
+    "name": "用户名(精确匹配)"
+  },
+  {
+    "key": "nameCanonical",
+    "name": "用户名(正则匹配)"
+  },
+  {
+    "key": "precise_uid",
+    "type": "int",
+    "name": "用户uid(精确匹配)"
+  },
+  {
+    "key": "precise_uid_white",
+    "type": "int",
+    "name": "用户uid白名单(精确匹配)"
+  },
+  {
+    "key": "title",
+    "name": "标题(模糊匹配)"
+  },
+  {
+    "key": "titleCanonical",
+    "name": "标题(正则匹配)"
+  },
+  {
+    "key": "commentOn",
+    "name": "评论关键词(模糊匹配)"
+  },
+  {
+    "key": "commentOnCanonical",
+    "name": "评论关键词(正则匹配)"
+  },
+  {
+    "key": "dynamic",
+    "name": "动态关键词(模糊匹配)"
+  },
+  {
+    "key": "dynamicCanonical",
+    "name": "动态关键词(正则匹配)"
+  },
+  {
+    "key": "dynamic_video",
+    "name": "动态视频关键词(模糊匹配)"
+  },
+  {
+    "key": "dynamic_videoCanonical",
+    "name": "动态视频关键词(正则匹配)"
+  },
+  {
+    "key": "precise_tag",
+    "name": "话题tag标签(精确匹配)"
+  },
+  {
+    "key": "tag",
+    "name": "话题tag标签(模糊匹配)"
+  },
+  {
+    "key": "tagCanonical",
+    "name": "话题tag标签(正则匹配)"
+  },
+  {
+    "key": "videoTag",
+    "name": "视频tag(模糊匹配)"
+  },
+  {
+    "key": "precise_videoTag",
+    "name": "视频tag(精确匹配)"
+  },
+  {
+    "key": "videoTagCanonical",
+    "name": "视频tag(正则匹配)"
+  },
+  {
+    "key": "videoTag_preciseCombination",
+    "name": "精确视频tag(组合匹配)"
+  },
+  {
+    "key": "videoTag_combination_white",
+    "name": "白名单视频tag(组合匹配)"
+  },
+  {
+    "key": "hotSearchKey",
+    "name": "热搜关键词(模糊匹配)"
+  },
+  {
+    "key": "hotSearchKeyCanonical",
+    "name": "热搜关键词(正则匹配)"
+  },
+  {
+    "key": "precise_avatarPendantName",
+    "name": "头像挂件名(精确匹配)"
+  },
+  {
+    "key": "avatarPendantName",
+    "name": "头像挂件名(模糊匹配)"
+  },
+  {
+    "key": "signature",
+    "name": "用户签名(模糊匹配)"
+  },
+  {
+    "key": "signatureCanonical",
+    "name": "用户签名(正则匹配)"
+  },
+  {
+    "key": "videoDesc",
+    "name": "视频简介(模糊匹配)"
+  },
+  {
+    "key": "videoDescCanonical",
+    "name": "视频简介(正则匹配)"
+  },
+  {
+    "key": "precise_video_bv",
+    "name": "视频bv号(精确匹配)"
+  },
+  {
+    "key": "argue_msg",
+    "name": "争议警告消息(模糊匹配)"
+  },
+  {
+    "key": "argue_msg_precise",
+    "name": "争议警告消息(精确匹配)"
+  },
+  {
+    "key": "precise_decoration_id",
+    "type": "int",
+    "name": "装扮id(精确匹配)"
+  },
+  {
+    "key": "precise_decoration_collection_id",
+    "type": "int",
+    "name": "装扮收藏集id(精确匹配)"
+  }
+]

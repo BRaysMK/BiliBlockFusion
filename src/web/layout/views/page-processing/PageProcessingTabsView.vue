@@ -1,0 +1,37 @@
+<script>
+import PageProcessingView from "./pageProcessingView.vue";
+import dynamicCard from "./dynamicCard.vue";
+import PlayPageProcessingTab from "./PlayPageProcessingTab.vue";
+import HomePageProcessingTab from "./HomePageProcessingTab.vue";
+
+export default {
+  components: {
+    HomePageProcessingTab,
+    PlayPageProcessingTab, PageProcessingView, dynamicCard
+  },
+  data() {
+    return {}
+  }
+}
+</script>
+
+<template>
+  <el-tabs tab-position="left">
+    <el-tab-pane label="默认设置" lazy>
+      <pageProcessingView/>
+    </el-tab-pane>
+    <el-tab-pane label="首页" lazy>
+      <HomePageProcessingTab/>
+    </el-tab-pane>
+    <el-tab-pane label="播放页" lazy>
+      <PlayPageProcessingTab/>
+    </el-tab-pane>
+    <el-tab-pane label="动态" lazy>
+      <dynamicCard/>
+    </el-tab-pane>
+  </el-tabs>
+</template>
+
+<style scoped>
+
+</style>

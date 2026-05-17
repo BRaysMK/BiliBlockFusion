@@ -1,0 +1,75 @@
+import elUtil from "../../utils/elUtil.js";
+import defUtil from "../../utils/defUtil.js";
+import localMKData, {enableDynamicItemsContentBlockingGm, hidePersonalInfoCardGm} from "../../data/localMKData.js";
+import hotSearch from "../search/hotSearch.js";
+import dynamicCommon from "./dynamicCommon.js";
+import cssManager from "../../model/cssManager.js";
+import {eventEmitter} from "../../model/EventEmitter.js";
+
+//是否是动态首页
+const isUrlDynamicHomePage = () => {
+    return window.location.href.includes('t.bilibili.com') && document.title === "动态首页-哔哩哔哩";
+}
+
+//是否是动态内容页
+const isUrlDynamicContentPage = () => {
+    const href = window.location.href;
+    const title = document.title;
+    return (href.includes('t.bilibili.com') || href.includes('www.bilibili.com/opus')) &&
+        (title.endsWith('的动态-哔哩哔哩') || title.includes('的动态 - 哔哩哔哩'));
+}
+
+//检查动态列表项执行屏蔽
+const debounceCheckDynamicList = defUtil.debounce(() => {
+    if (!enableDynamicItemsContentBlockingGm()) return
+    dynamicCommon.commonCheckDynamicList();
+}, 1000);
+
+//隐藏首页个人资料卡 (使用CSS注入，覆盖多种可能的选择器)
+const hidePersonalInfoCard = (show) => {
+    const cssText = show ? `
+        .left>section,
+        aside.left>section,
+        .bili-dyn-home--member aside.left section,
+        .bili-dyn-sidebar section,
+        .bili-dyn-home--member .user-info-card,
+        .user-info-card
+        { display: none !important; }
+    ` : '';
+    elUtil.installStyle(cssText, {type: 'id', value: 'mk-hide-personal-info-card'});
+}
+
+const run = () => {
+    debounceCheckDynamicList()
+    elUtil.findElement('div.bili-dyn-up-list__content').then(el => {
+        console.log('已找到动态首页中顶部用户tabs栏', el);
+        el.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target['className'] === "shim") return
+            debounceCheckDynamicList()
+        })
+    })
+    hotSearch.startShieldingHotListDynamic();
+    if (hidePersonalInfoCardGm()) {
+        hidePersonalInfoCard(true)
+    }
+    if (localMKData.isDynamicHomeRightLayHide()) {
+        cssManager.setDynamicHomeRightLayHide()
+    }
+}
+
+
+export default {
+    isUrlDynamicHomePage,
+    isUrlDynamicContentPage,
+    run, hidePersonalInfoCard,
+    debounceCheckDynamicList,
+    // 隐藏回到旧版本按钮，根据配置选择隐藏
+    runHideBackToOldVersionButFun(hide = false) {
+        if (!(hide || localMKData.hideBackToOldVersionButGm())) return
+        elUtil.byXpathElAsync('//div[@class="bili-dyn-sidebar"]/div[@class="bili-dyn-sidebar__btn" and span[text()="回到旧版"]]').then(el => {
+            el.remove()
+            eventEmitter.send('打印信息', '已隐藏回到旧版按钮')
+        })
+    }
+}

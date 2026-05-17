@@ -1,0 +1,52 @@
+{
+  "@name": "BiliBlockFusion",
+  "@name:zh-CN": "BiliBlockFusion — B站综合内容过滤",
+  "alias": "BiliBlockFusion",
+  "@namespace": "https://github.com/BRaysMK/BiliBlockFusion",
+  "@license": "Apache-2.0",
+  "@version": "1.0.0",
+  "@author": "BRaysMK",
+  "@description": "Bilibili comprehensive content filtering script. Block videos by title/uploader/tag/duration/views, plus comments, dynamic feeds, and trending search filtering.",
+  "@description:zh-CN": "Bilibili 综合内容过滤脚本，支持按标题/UP主/标签/分区/时长/播放量等屏蔽视频，以及评论、动态、热搜的过滤。",
+  "@homepageURL": "https://github.com/BRaysMK/BiliBlockFusion",
+  "@supportURL": "https://github.com/BRaysMK/BiliBlockFusion/issues",
+  "@icon": "https://www.bilibili.com/favicon.ico",
+  "noFrames": true,
+  "@run-at": "document-start",
+  "@grant": [
+    "GM_setValue",
+    "GM_getValue",
+    "GM_deleteValue",
+    "GM_addStyle",
+    "GM_unregisterMenuCommand",
+    "GM_registerMenuCommand",
+    "GM_openInTab",
+    "GM_xmlhttpRequest",
+    "GM_getResourceText",
+    "unsafeWindow"
+  ],
+  "@exclude": [
+    "*://message.bilibili.com/pages/nav/header_sync",
+    "*://message.bilibili.com/pages/nav/index_new_pc_sync",
+    "*://live.bilibili.com/blackboard/dropdown-menu.html",
+    "*://live.bilibili.com/p/html/live-web-mng/*",
+    "*://www.bilibili.com/correspond/*",
+    "http://localhost:3001/"
+  ],
+  "@match": [
+    "*://www.bilibili.com/*",
+    "*://search.bilibili.com/*",
+    "*://message.bilibili.com/*",
+    "*://t.bilibili.com/*",
+    "*://space.bilibili.com/*",
+    "*://live.bilibili.com/*",
+    "*://account.bilibili.com/*",
+    "*://link.bilibili.com/*",
+    "*://localhost:5173/*"
+  ],
+  "@require": [
+    "https://unpkg.com/vue@2.7.16/dist/vue.min.js",
+    "https://unpkg.com/element-ui@2.15.14/lib/index.js",
+    "https://unpkg.com/dexie@4.2.0/dist/dexie.min.js"
+  ]
+}

@@ -1,0 +1,277 @@
+/* ========================================
+   BiliBlockFusion — Shield Button Styles
+   Modern pill-shaped buttons with soft shadow
+   ======================================== */
+
+button[gz_type] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-appearance: none;
+  text-align: center;
+  box-sizing: border-box;
+  outline: none;
+  margin: 0;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  /* modern pill */
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(251, 114, 153, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #FB7299;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button[gz_type]:hover {
+  background: #FB7299;
+  color: #fff;
+  border-color: #FB7299;
+  box-shadow: 0 4px 12px rgba(251, 114, 153, 0.3);
+  transform: translateY(-1px);
+}
+
+button[gz_type]:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(251, 114, 153, 0.25);
+}
+
+/* variant: primary (filled pink) */
+button[gz_type="primary"] {
+  background: linear-gradient(135deg, #FB7299 0%, #fc8aab 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(251, 114, 153, 0.3);
+}
+
+button[gz_type="primary"]:hover {
+  background: linear-gradient(135deg, #FB7299 0%, #fd9bb7 100%);
+  box-shadow: 0 4px 16px rgba(251, 114, 153, 0.4);
+  color: #fff;
+}
+
+/* variant: success (green) */
+button[gz_type="success"] {
+  background: rgba(110, 207, 112, 0.1);
+  color: #4caf50;
+  border-color: rgba(76, 175, 80, 0.25);
+}
+
+button[gz_type="success"]:hover {
+  background: #4caf50;
+  color: #fff;
+  border-color: #4caf50;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+/* variant: info (blue) */
+button[gz_type="info"] {
+  background: rgba(0, 161, 214, 0.08);
+  color: #00A1D6;
+  border-color: rgba(0, 161, 214, 0.2);
+}
+
+button[gz_type="info"]:hover {
+  background: #00A1D6;
+  color: #fff;
+  border-color: #00A1D6;
+  box-shadow: 0 4px 12px rgba(0, 161, 214, 0.3);
+}
+
+/* variant: warning (amber) */
+button[gz_type="warning"] {
+  background: rgba(230, 162, 60, 0.1);
+  color: #e6a23c;
+  border-color: rgba(230, 162, 60, 0.25);
+}
+
+button[gz_type="warning"]:hover {
+  background: #e6a23c;
+  color: #fff;
+  border-color: #e6a23c;
+  box-shadow: 0 4px 12px rgba(230, 162, 60, 0.3);
+}
+
+/* variant: danger (red) */
+button[gz_type="danger"] {
+  background: rgba(245, 108, 108, 0.08);
+  color: #f56c6c;
+  border-color: rgba(245, 108, 108, 0.2);
+}
+
+button[gz_type="danger"]:hover {
+  background: #f56c6c;
+  color: #fff;
+  border-color: #f56c6c;
+  box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3);
+}
+
+/* border modifier: extra round, larger padding */
+button[border] {
+  border-radius: 24px;
+  padding: 10px 22px;
+  font-size: 14px;
+}
+
+/* ==============================
+   Form inputs
+   ============================== */
+input[gz_type] {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  margin: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[gz_type]:focus {
+  border-color: #FB7299;
+  box-shadow: 0 0 0 3px rgba(251, 114, 153, 0.12);
+}
+
+/* ==============================
+   Selects
+   ============================== */
+select {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  margin: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  outline: none;
+  background-color: #fff;
+  color: #18191C;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+select:focus {
+  border-color: #FB7299;
+  box-shadow: 0 0 0 3px rgba(251, 114, 153, 0.12);
+}
+
+select:disabled {
+  background-color: #f5f5f5;
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #9499A0;
+}
+
+/* ==============================
+   Focus ring
+   ============================== */
+button[gz_type]:focus,
+button[gz_type]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(251, 114, 153, 0.25);
+}
+
+/* ==============================
+   Dark mode — shield buttons
+   ============================== */
+.bb-dark button[gz_type] {
+  background: rgba(40, 41, 45, 0.92);
+  border-color: rgba(251, 114, 153, 0.2);
+  color: #fc8aab;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.bb-dark button[gz_type]:hover {
+  background: #FB7299;
+  color: #fff;
+  border-color: #FB7299;
+  box-shadow: 0 4px 12px rgba(251, 114, 153, 0.35);
+}
+
+.bb-dark button[gz_type="primary"] {
+  background: linear-gradient(135deg, #FB7299 0%, #fc8aab 100%);
+  color: #fff;
+}
+
+.bb-dark button[gz_type="success"] {
+  background: rgba(110, 207, 112, 0.08);
+  color: #6ecf70;
+  border-color: rgba(110, 207, 112, 0.2);
+}
+
+.bb-dark button[gz_type="success"]:hover {
+  background: #4caf50;
+  color: #fff;
+}
+
+.bb-dark button[gz_type="info"] {
+  background: rgba(0, 161, 214, 0.08);
+  color: #00A1D6;
+  border-color: rgba(0, 161, 214, 0.15);
+}
+
+.bb-dark button[gz_type="info"]:hover {
+  background: #00A1D6;
+  color: #fff;
+}
+
+.bb-dark button[gz_type="warning"] {
+  background: rgba(230, 162, 60, 0.08);
+  color: #e6a23c;
+  border-color: rgba(230, 162, 60, 0.2);
+}
+
+.bb-dark button[gz_type="warning"]:hover {
+  background: #e6a23c;
+  color: #fff;
+}
+
+.bb-dark button[gz_type="danger"] {
+  background: rgba(245, 108, 108, 0.08);
+  color: #f56c6c;
+  border-color: rgba(245, 108, 108, 0.2);
+}
+
+.bb-dark button[gz_type="danger"]:hover {
+  background: #f56c6c;
+  color: #fff;
+}
+
+/* Dark mode inputs & selects */
+.bb-dark input[gz_type] {
+  background: #2A2B2F;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #E8E8EA;
+}
+
+.bb-dark input[gz_type]:focus {
+  border-color: #FB7299;
+  box-shadow: 0 0 0 3px rgba(251, 114, 153, 0.15);
+}
+
+.bb-dark select {
+  background: #2A2B2F;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #E8E8EA;
+}
+
+.bb-dark select:focus {
+  border-color: #FB7299;
+  box-shadow: 0 0 0 3px rgba(251, 114, 153, 0.15);
+}
+
+.bb-dark select:disabled {
+  background: #1E1F22;
+  border-color: rgba(255, 255, 255, 0.04);
+  color: #5A5A60;
+}
