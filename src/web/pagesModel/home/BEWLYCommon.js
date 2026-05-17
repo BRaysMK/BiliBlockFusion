@@ -121,12 +121,11 @@ const getVideoList = async () => {
             bulletChat = strFormatUtil.toPlayCountOrBulletChat(numberSpans[1]);
         }
 
-        const explicitSubjectEl = coverEl || el;
         const insertionPositionEl = authorEl.parentElement;
 
         list.push({
             title, name, uid, bv, userUrl, videoUrl, nPlayCount, bulletChat, nDuration, el,
-            insertionPositionEl, explicitSubjectEl
+            insertionPositionEl, explicitSubjectEl: el
         });
     }
     return list

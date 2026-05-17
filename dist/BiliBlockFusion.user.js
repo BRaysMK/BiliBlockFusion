@@ -11995,7 +11995,6 @@ const getVideoList$1 = async () => {
     if (numberSpans.length >= 2) {
       bulletChat = strFormatUtil.toPlayCountOrBulletChat(numberSpans[1]);
     }
-    const explicitSubjectEl = coverEl || el;
     const insertionPositionEl = authorEl.parentElement;
     list.push({
       title,
@@ -12009,7 +12008,7 @@ const getVideoList$1 = async () => {
       nDuration,
       el,
       insertionPositionEl,
-      explicitSubjectEl
+      explicitSubjectEl: el
     });
   }
   return list;
