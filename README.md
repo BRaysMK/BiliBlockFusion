@@ -1,6 +1,6 @@
 # BiliBlockFusion
 
-Bilibili 综合内容过滤油猴脚本，基于 [BiBiBSPUserVideoMonkeyScript](https://github.com/hgztask/BiBiBSPUserVideoMonkeyScript) 二次开发，融合了 [bilibili_blocked_videos_by_tags](https://github.com/tjxwork/bilibili_blocked_videos_by_tags) 的叠加层屏蔽等特性。
+Bilibili 综合内容过滤油猴脚本，基于 [BiBiBSPUserVideoMonkeyScript](https://github.com/hgztask/BiBiBSPUserVideoMonkeyScript) 二次开发，融合了 [bilibili_blocked_videos_by_tags](https://github.com/tjxwork/bilibili_blocked_videos_by_tags) 的叠加层屏蔽等特性。感谢原作者的开源贡献。
 
 [![Greasy Fork](https://img.shields.io/badge/Greasy%20Fork-安装-blue?style=flat-square)](https://greasyfork.org/zh-CN/scripts/578590-biliblockfusion)
 
@@ -30,12 +30,33 @@ Bilibili 综合内容过滤油猴脚本，基于 [BiBiBSPUserVideoMonkeyScript](
 - 一键屏蔽按钮（悬停 UP 名/标签时弹出）
 - 规则 JSON 导入/导出
 - IndexedDB 本地缓存视频信息
-- 旧版本脚本设置自动迁移
+
+## 与上游项目的区别
+
+相对于 [BiBiBSPUserVideoMonkeyScript](https://github.com/hgztask/BiBiBSPUserVideoMonkeyScript)，BiliBlockFusion 做了以下改动：
+
+### 界面优化
+
+- 重新设计了设置面板的 CSS 样式，改善视觉呈现和操作体验
+- 优化了规则导入/导出的交互流程
+
+### 功能精简
+
+- 移除了原脚本中的开发者调试相关功能，面向普通用户更加简洁
+- 精简了部分冗余功能，减少不必要的设置项和面板复杂度
+
+### 融合 bilibili_blocked_videos_by_tags
+
+- 引入叠加层屏蔽模式（半透明遮罩 + 屏蔽原因显示），作为原有删除/隐藏模式的替代方案
+
+### BewlyBewly 插件适配
+
+- 重新适配 [BewlyBewly](https://github.com/hakadao/BewlyBewly) 插件的 Shadow DOM 结构，修复屏蔽按钮在 BewlyBewly 美化页面中无法正常使用的问题
 
 ## 安装
 
-1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
-2. 前往 [Greasy Fork](https://greasyfork.org/zh-CN/scripts/578590-biliblockfusion) 点击「安装此脚本」
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 或 [脚本猫](https://scriptcat.org/) 浏览器扩展
+2. 前往 [Greasy Fork](https://greasyfork.org/zh-CN/scripts/578590-biliblockfusion) 或 [脚本猫](https://scriptcat.org/zh-CN/script-show-page/6301) 点击「安装此脚本」
 3. 或者将 `dist/BiliBlockFusion.user.js` 的全部内容复制到 Tampermonkey 新建脚本中
 
 ## 使用
