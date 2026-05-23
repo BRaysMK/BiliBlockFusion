@@ -1,6 +1,6 @@
 {
   "name": "bili-block-fusion",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Bilibili 综合内容过滤油猴脚本 — 融合自 tjxwork/bilibili_blocked_videos_by_tags 和 BiBiBSPUserVideoMonkeyScript",
   "license": "Apache-2.0",
   "type": "module",

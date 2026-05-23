@@ -39,23 +39,20 @@ export default {
       // 默认打开的tab
       tabsActiveName: GM_getValue('mainTabsActiveName', '规则管理'),
       isShowBackToTopVal: localMKData.isShowBackToTopBtn(),
-      darkMode: GM_getValue('dark_mode', false)
+      darkModeState: GM_getValue('dark_mode_state', 'auto'),
+      systemDark: window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
+  },
+  computed: {
+    isDark() {
+      if (this.darkModeState === 'dark') return true
+      if (this.darkModeState === 'light') return false
+      return this.systemDark
     }
   },
   methods: {
     tabClick(tab) {
       GM_setValue('mainTabsActiveName', tab.name);
-    },
-    toggleDarkMode() {
-      this.darkMode = !this.darkMode;
-      GM_setValue('dark_mode', this.darkMode);
-      document.body.classList.toggle('bb-dark', this.darkMode);
-      eventEmitter.send('toggle-dark-mode', this.darkMode);
-    }
-  },
-  watch: {
-    darkMode(val) {
-      document.body.classList.toggle('bb-dark', val);
     }
   },
   created() {
@@ -108,20 +105,19 @@ export default {
     })
 
     eventEmitter.on('toggle-dark-mode', (val) => {
-      this.darkMode = val;
-      GM_setValue('dark_mode', val);
-    });
+      this.darkModeState = val
+    })
 
-    // 初始化深色模式
-    if (this.darkMode) {
-      document.body.classList.add('bb-dark');
-    }
+    // 监听系统深色模式变化，同步面板 .theme-dark
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      this.systemDark = e.matches
+    })
   }
 }
 </script>
 
 <template>
-  <div :class="{ 'theme-dark': darkMode }">
+  <div :class="{ 'theme-dark': isDark }">
     <el-drawer :modal="false"
                :visible.sync="drawer"
                :with-header="false"
@@ -285,6 +281,10 @@ export default {
   color: #606266;
 }
 
+.el-radio-button:first-child .el-radio-button__inner {
+  border-left-width: 0;
+}
+
 .el-radio-button__inner:hover {
   color: #FB7299;
 }
@@ -294,6 +294,10 @@ export default {
   border-color: #FB7299;
   color: #FFFFFF;
   box-shadow: -1px 0 0 0 #FB7299;
+}
+
+.el-radio-button.is-active:first-child .el-radio-button__inner {
+  box-shadow: none;
 }
 
 /* ---- Switches ---- */

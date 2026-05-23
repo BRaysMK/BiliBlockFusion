@@ -11,7 +11,7 @@ export default {
       drawerShortcutKeyVal: getDrawerShortcutKeyGm(),
       isListeningForKey: false,
       isShowBackToTopVal: localMKData.isShowBackToTopBtn(),
-      darkMode: GM_getValue('dark_mode', false)
+      darkModeState: GM_getValue('dark_mode_state', 'auto')
     }
   },
   methods: {
@@ -45,10 +45,10 @@ export default {
       GM_setValue('is_show_back_to_top_btn', newVal)
       eventEmitter.send('e:设置顶部按钮状态', newVal)
     },
-    darkMode(newVal) {
-      GM_setValue('dark_mode', newVal);
-      document.body.classList.toggle('bb-dark', newVal);
-      eventEmitter.send('toggle-dark-mode', newVal);
+    darkModeState(newVal) {
+      GM_setValue('dark_mode_state', newVal)
+      window.dispatchEvent(new CustomEvent('bb-dark-mode-change'))
+      eventEmitter.send('toggle-dark-mode', newVal)
     }
   },
   created() {
@@ -67,7 +67,11 @@ export default {
       <template #header>
         <span>外观</span>
       </template>
-      <el-switch v-model="darkMode" active-text="深色模式"/>
+      <el-radio-group v-model="darkModeState" size="small">
+        <el-radio-button label="light">亮色</el-radio-button>
+        <el-radio-button label="auto">自动</el-radio-button>
+        <el-radio-button label="dark">暗色</el-radio-button>
+      </el-radio-group>
     </el-card>
     <el-card shadow="never">
       <template #header>

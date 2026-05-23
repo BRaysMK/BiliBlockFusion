@@ -183,6 +183,7 @@ button[gz_type]:focus-visible {
 
 /* ==============================
    Dark mode — shield buttons
+   .bb-dark = body class managed by init.js (dark_mode_state)
    ============================== */
 .bb-dark button[gz_type] {
   background: rgba(40, 41, 45, 0.92);
@@ -274,4 +275,86 @@ button[gz_type]:focus-visible {
   background: #1E1F22;
   border-color: rgba(255, 255, 255, 0.04);
   color: #5A5A60;
+}
+
+/* ==============================
+   OS-level dark mode fallback
+   Safety net in case .bb-dark isn't on body
+   ============================== */
+@media (prefers-color-scheme: dark) {
+  button[gz_type] {
+    background: rgba(40, 41, 45, 0.92);
+    border-color: rgba(251, 114, 153, 0.2);
+    color: #fc8aab;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+  button[gz_type]:hover {
+    background: #FB7299;
+    color: #fff;
+    border-color: #FB7299;
+    box-shadow: 0 4px 12px rgba(251, 114, 153, 0.35);
+  }
+  button[gz_type="primary"] {
+    background: linear-gradient(135deg, #FB7299 0%, #fc8aab 100%);
+    color: #fff;
+  }
+  button[gz_type="success"] {
+    background: rgba(110, 207, 112, 0.08);
+    color: #6ecf70;
+    border-color: rgba(110, 207, 112, 0.2);
+  }
+  button[gz_type="success"]:hover {
+    background: #4caf50;
+    color: #fff;
+  }
+  button[gz_type="info"] {
+    background: rgba(0, 161, 214, 0.08);
+    color: #00A1D6;
+    border-color: rgba(0, 161, 214, 0.15);
+  }
+  button[gz_type="info"]:hover {
+    background: #00A1D6;
+    color: #fff;
+  }
+  button[gz_type="warning"] {
+    background: rgba(230, 162, 60, 0.08);
+    color: #e6a23c;
+    border-color: rgba(230, 162, 60, 0.2);
+  }
+  button[gz_type="warning"]:hover {
+    background: #e6a23c;
+    color: #fff;
+  }
+  button[gz_type="danger"] {
+    background: rgba(245, 108, 108, 0.08);
+    color: #f56c6c;
+    border-color: rgba(245, 108, 108, 0.2);
+  }
+  button[gz_type="danger"]:hover {
+    background: #f56c6c;
+    color: #fff;
+  }
+  input[gz_type] {
+    background: #2A2B2F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #E8E8EA;
+  }
+  input[gz_type]:focus {
+    border-color: #FB7299;
+    box-shadow: 0 0 0 3px rgba(251, 114, 153, 0.15);
+  }
+  select {
+    background: #2A2B2F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #E8E8EA;
+  }
+  select:focus {
+    border-color: #FB7299;
+    box-shadow: 0 0 0 3px rgba(251, 114, 153, 0.15);
+  }
+  select:disabled {
+    background: #1E1F22;
+    border-color: rgba(255, 255, 255, 0.04);
+    color: #5A5A60;
+  }
 }

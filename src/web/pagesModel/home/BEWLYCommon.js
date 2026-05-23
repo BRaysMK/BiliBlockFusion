@@ -78,23 +78,23 @@ const getVideoList = async () => {
     const be_wly_el = await getBewlyEl()
     const elList = await elUtil.findElements('.video-card', {doc: be_wly_el})
     const list = [];
-    for (let el of elList) {
+    for (let videoCardEl of elList) {
         // 标题 + 视频链接: h3.keep-two-lines > a[target="_blank"]
-        const titleEl = el.querySelector('h3.keep-two-lines a');
+        const titleEl = videoCardEl.querySelector('h3.keep-two-lines a');
         if (!titleEl) continue;
         const title = titleEl.textContent.trim();
         const videoUrl = titleEl.href;
         const bv = urlUtil.getUrlBV(videoUrl);
 
         // UP主: a.channel-name
-        const authorEl = el.querySelector('a.channel-name');
+        const authorEl = videoCardEl.querySelector('a.channel-name');
         if (!authorEl) continue;
         const name = authorEl.textContent.trim();
         const userUrl = authorEl.href;
         const uid = urlUtil.getUrlUID(userUrl);
 
         // 时长: 封面内带 group-hover:opacity-0 的元素
-        const coverEl = el.querySelector('.vertical-card-cover, .horizontal-card-cover');
+        const coverEl = videoCardEl.querySelector('.vertical-card-cover, .horizontal-card-cover');
         let nDuration = -1;
         if (coverEl) {
             const durationEl = coverEl.querySelector('[class*="group-hover:opacity-0"]');
@@ -106,7 +106,7 @@ const getVideoList = async () => {
         // 播放量/弹幕: 遍历 video-card 内所有含数字的 span,
         // 跳过作者名和分隔符，取前两个
         let nPlayCount = -1, bulletChat = -1;
-        const allSpans = el.querySelectorAll('span');
+        const allSpans = videoCardEl.querySelectorAll('span');
         const numberSpans = [];
         for (const span of allSpans) {
             if (span.closest('a.channel-name')) continue;
@@ -123,9 +123,16 @@ const getVideoList = async () => {
 
         const insertionPositionEl = authorEl.parentElement;
 
+        // BewlyBewly 的 VideoCard 组件渲染结构为三层 div:
+        //   外层 <div> (grid child) > v-if <div> > <div class="video-card">
+        // 只移除 .video-card 会让外层 grid child 残留在网格中形成空白。
+        // 需将 grid child 作为 el 传入，确保 remove/叠加层作用于整个卡片。
+        const gridChild = videoCardEl.parentElement?.parentElement || videoCardEl;
+
         list.push({
-            title, name, uid, bv, userUrl, videoUrl, nPlayCount, bulletChat, nDuration, el,
-            insertionPositionEl, explicitSubjectEl: el
+            title, name, uid, bv, userUrl, videoUrl, nPlayCount, bulletChat, nDuration,
+            el: gridChild,
+            insertionPositionEl, explicitSubjectEl: gridChild
         });
     }
     return list

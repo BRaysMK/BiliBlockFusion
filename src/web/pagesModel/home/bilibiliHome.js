@@ -164,9 +164,9 @@ const startClearExcessContentList = () => {
 const startShieldingHomeVideoList = async () => {
     const homeVideoELList = await getHomeVideoELList();
     for (const videoData of homeVideoELList) {
-        video_shielding.shieldingVideoDecorated(videoData).catch(() => {
-            eventEmitter.send('视频添加屏蔽按钮', {data: videoData, maskingFunc: startShieldingHomeVideoList})
-        })
+        eventEmitter.send('视频添加屏蔽按钮', {data: videoData, maskingFunc: startShieldingHomeVideoList})
+        if (videoData.bv && video_shielding.isVideoBvProcessed(videoData.bv)) continue
+        video_shielding.shieldingVideoDecorated(videoData)
     }
     startClearExcessContentList()
 }
@@ -175,7 +175,7 @@ const startShieldingHomeVideoList = async () => {
  * 屏蔽首页中换一换下面的视频列表的防抖
  * @type function
  */
-const startDebounceShieldingHomeVideoList = defUtil.debounce(startShieldingHomeVideoList, 500);
+const startDebounceShieldingHomeVideoList = defUtil.debounce(startShieldingHomeVideoList, 800);
 
 /**
  * 模拟鼠标上下滚动

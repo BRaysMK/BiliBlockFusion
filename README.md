@@ -4,6 +4,11 @@ Bilibili 综合内容过滤油猴脚本，基于 [BiBiBSPUserVideoMonkeyScript](
 
 [![Greasy Fork](https://img.shields.io/badge/Greasy%20Fork-安装-blue?style=flat-square)](https://greasyfork.org/zh-CN/scripts/578590-biliblockfusion)
 
+## 更新
+
+- **v1.1.0**
+  修复了几个影响性能的问题；改进了使用 BewlyBewly 时隐藏模式的逻辑，被屏蔽的卡片不再留下空白区域。
+
 ## 功能
 
 ### 内容屏蔽

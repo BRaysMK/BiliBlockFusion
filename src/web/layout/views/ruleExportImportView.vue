@@ -145,10 +145,17 @@ export default {
       <div>
         <el-input v-model="ruleContentImport"
                   :autosize="{ minRows: 10, maxRows: 50}"
-                  autosize placeholder="要导入的规则内容" type="textarea"></el-input>
+                  placeholder="要导入的规则内容" type="textarea"
+                  class="rule-import-textarea"></el-input>
       </div>
     </el-card>
     <input ref="file" accept="application/json" style="display: none" type="file"
            @change="handleFileUpload">
   </div>
 </template>
+
+<style scoped>
+.rule-import-textarea >>> textarea {
+  overflow-y: auto !important;
+}
+</style>

@@ -189,6 +189,25 @@ const shieldingVideo = (videoData) => {
     return returnTempVal;
 }
 
+// 已完整处理过的 BV 集合 (避免重复执行异步规则匹配和API请求)
+const processedBVs = new Set();
+const MAX_PROCESSED_BVS = 1000;
+// 正在异步处理中的 BV 集合 (防止并发重复进入异步管道)
+const processingBVs = new Set();
+
+const isVideoBvProcessed = (bv) => processedBVs.has(bv);
+
+const addProcessedBV = (bv) => {
+    processedBVs.add(bv);
+    if (processedBVs.size > MAX_PROCESSED_BVS) {
+        let count = 0;
+        for (const key of processedBVs) {
+            if (count++ >= processedBVs.size - MAX_PROCESSED_BVS) break;
+            processedBVs.delete(key);
+        }
+    }
+};
+
 /**
  * 装饰过的屏蔽视频
  * @param videoData {{}} 视频数据
@@ -198,39 +217,51 @@ const shieldingVideo = (videoData) => {
 const shieldingVideoDecorated = async (videoData, method = "remove") => {
     const {el, bv = "-1"} = videoData;
     if (el.style.display === "none") return promiseResolve;
+    // 已完整处理过的 BV 直接跳过，避免重复请求 API 和运行规则匹配
+    if (bv !== '-1' && processedBVs.has(bv)) return promiseReject;
     const {state, type, matching = null} = shieldingVideo(videoData);
     if (state) {
+        addProcessedBV(bv);
         eventEmitter.send('event-屏蔽视频元素', {res: {state, type, matching}, method, videoData})
         return promiseResolve;
     }
     //如果没有bv号参数，则不执行
     if (bv === '-1') return promiseReject;
-    let videoRes = await videoCacheManager.find(bv);
-    if (videoRes === null) {
-        const disableNetRequestsBvVideoInfo = localMKData.isDisableNetRequestsBvVideoInfo();
-        //如果禁用了网络请求
-        if (disableNetRequestsBvVideoInfo) {
-            return promiseReject;
-        } else {
-            const httpRes = await bvRequestQueue.videoInfoRequestQueue.addBv(bv)
-            const {msg, data} = httpRes
-            if (!httpRes.state) {
-                console.warn('获取视频信息失败:' + msg);
+    // 防止并发: 同一BV已在异步处理中则跳过
+    if (processingBVs.has(bv)) return promiseReject;
+    processingBVs.add(bv);
+    try {
+        let videoRes = await videoCacheManager.find(bv);
+        if (videoRes === null) {
+            const disableNetRequestsBvVideoInfo = localMKData.isDisableNetRequestsBvVideoInfo();
+            //如果禁用了网络请求
+            if (disableNetRequestsBvVideoInfo) {
                 return promiseReject;
-            }
-            videoRes = data
-            if ((await bvDexie.addVideoData(bv, data))) {
-                console.log('mk-db-添加视频信息到数据库成功', '获取视频信息成功:' + msg, data, videoData)
-                videoCacheManager.updateCacheDebounce()
+            } else {
+                const httpRes = await bvRequestQueue.videoInfoRequestQueue.addBv(bv)
+                const {msg, data} = httpRes
+                if (!httpRes.state) {
+                    console.warn('获取视频信息失败:' + msg);
+                    return promiseReject;
+                }
+                videoRes = data
+                if ((await bvDexie.addVideoData(bv, data))) {
+                    console.log('mk-db-添加视频信息到数据库成功', '获取视频信息成功:' + msg, data, videoData)
+                    videoCacheManager.updateCacheDebounce()
+                }
             }
         }
+        const verificationIns = await shieldingOtherVideoParameter(videoRes, videoData);
+        if (verificationIns.state) {
+            addProcessedBV(bv);
+            eventEmitter.send('event-屏蔽视频元素', {res: verificationIns, method, videoData})
+            return promiseResolve;
+        }
+        addProcessedBV(bv);
+        return promiseReject;
+    } finally {
+        processingBVs.delete(bv);
     }
-    const verificationIns = await shieldingOtherVideoParameter(videoRes, videoData);
-    if (verificationIns.state) {
-        eventEmitter.send('event-屏蔽视频元素', {res: verificationIns, method, videoData})
-        return promiseResolve;
-    }
-    return promiseReject;
 }
 
 /**
@@ -375,5 +406,6 @@ eventEmitter.on('视频添加屏蔽按钮', (data) => {
 })
 
 export default {
-    shieldingVideoDecorated
+    shieldingVideoDecorated,
+    isVideoBvProcessed
 }
