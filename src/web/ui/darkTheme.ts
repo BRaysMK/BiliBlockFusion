@@ -1,32 +1,27 @@
 /**
- * 主面板深色主题适配
+ * 主面板主题同步（Fluent 2 令牌驱动）
  *
- * B 站深色主题通过 html/body 上的 bili_dark 类标记。脚本主面板与弹窗均使用 Element Plus，
- * EP 官方深色变量包（theme-chalk/dark/css-vars.css）本应挂在 html.dark 选择器下生效，
- * 但 B 站页面自身不用 EP、且不能依赖其 html 类状态，因此：
- * 1. 通过 @resource 声明 EP 深色 css（unpkg CDN），运行时用 GM_getResourceText 读取，无跨域弹窗；
- * 2. 将选择器 html.dark 改写为 :root，使深色 CSS 变量对全局 EP 组件生效（面板/弹窗/其他脚本 EP 组件）；
- * 3. MutationObserver 监听 html/body 的 bili_dark 类变化，实时注入/移除深色变量 style，随 B 站主题同步；
- * 4. 资源读取失败时降级为浅色（保持现状，不阻塞面板）。
+ * B 站深色主题通过 html/body 上的 bili_dark 类标记，但部分页面（如空间页）没有该类，
+ * 而是靠 B 站自己的深色 CSS 变量驱动，因此检测需三重兜底。
+ *
+ * 与旧实现的差异：
+ * - 旧实现用 @resource 远程拉取 Element Plus 的深色 CSS 并把 html.dark 改写成 :root 注入；
+ * - 新实现改用 Fluent 2 令牌（亮/暗两套 459 个令牌随产物内联），只切换面板根节点的
+ *   .gz-theme-light / .gz-theme-dark 类，不再依赖远程资源，离线可用且无 @resource 声明。
+ *
+ * 深色检测逻辑（三重兜底）保持不变——这是踩过坑的资产：
+ * 空间页深色时 html/body 上没有 bili_dark 类，只能靠 --bg1 的固定值判定。
  */
+import {applyThemeClass, installFluentTokens, type ThemeMode} from './theme/fluentVars.ts';
 
-/** @resource 中声明的深色 css 资源名（见 tamper_monkey.json @resource） */
-const DARK_CSS_RESOURCE_NAME = 'gzDarkCss';
-
-/** 注入深色变量的 style 节点 id */
-const DARK_STYLE_ID = 'gz-dark-theme';
-
-/** 已读取的深色 css 文本缓存（改写选择器后），避免重复读取 */
-let cachedDarkCss: string | null = null;
-
-/** 是否已读取过（读取失败也置位，避免反复尝试） */
-let prefetched = false;
-
-/** 当前是否已注入深色 style（避免重复注入） */
-let darkStyleInjected = false;
+/** 主面板根节点选择器（与 elUtil.createVueDiv 创建的容器对应） */
+const PANEL_ROOT_SELECTOR = '[gz-fluent-root]';
 
 /** MutationObserver 实例，避免重复创建 */
 let observer: MutationObserver | null = null;
+
+/** 当前主题模式缓存，避免无意义的重复应用 */
+let currentMode: ThemeMode | null = null;
 
 /**
  * 判断当前是否 B 站深色主题
@@ -53,98 +48,49 @@ const isBiliDarkByCssVar = (): boolean => {
 }
 
 /**
- * 将 EP 深色 css 的选择器从 html.dark 改写为 :root
- * EP 深色变量包以 html.dark{...} 定义变量，另有 html.dark .el-button 等派生规则；
- * 改写为 :root 后变量作用于文档根，全局 EP 组件（面板/弹窗等）均能继承深色变量。
- * @param cssText 原始深色 css 文本
- * @returns 改写后的 css 文本
+ * 把当前主题应用到主面板根节点
+ *
+ * 面板尚未挂载时静默跳过：init 流程里主题同步可能先于 Vue 挂载完成。
  */
-const rewriteSelectorToRoot = (cssText: string): string => {
-    // html.dark{...} -> :root{...}
-    // html.dark .el-button{...} -> :root .el-button{...}
-    return cssText.replace(/html\.dark/g, ':root');
+const syncTheme = (): void => {
+    const mode: ThemeMode = isBiliDark() ? 'dark' : 'light';
+    if (mode === currentMode) return;
+    const root = document.querySelector<HTMLElement>(PANEL_ROOT_SELECTOR);
+    if (root === null) return;
+    applyThemeClass(root, mode);
+    currentMode = mode;
 }
 
 /**
- * 读取 @resource 声明的 EP 深色 css 并缓存改写后的文本
- * @returns 是否读取成功
+ * 启动主题同步：注入令牌样式 + 监听 bili_dark 类变化 + 跟随 B 站主题实时切换
  */
-const prefetchDarkCss = async (): Promise<boolean> => {
-    if (prefetched) return cachedDarkCss !== null;
-    prefetched = true;
-    try {
-        const cssText = GM_getResourceText(DARK_CSS_RESOURCE_NAME);
-        if (cssText) {
-            cachedDarkCss = rewriteSelectorToRoot(cssText);
-        }
-    } catch (e) {
-        // 读取失败：保持浅色，不阻塞面板
-        console.warn('[gz][dark] EP 深色资源读取失败，面板保持浅色', e);
-    }
-    return cachedDarkCss !== null;
-}
+const startThemeSync = (): void => {
+    // 令牌样式随产物内联，注入一次即可
+    installFluentTokens();
 
-/**
- * 注入深色变量 style（幂等）
- */
-const injectDarkStyle = (): void => {
-    if (darkStyleInjected || cachedDarkCss === null) return;
-    if (document.head.querySelector('#' + DARK_STYLE_ID) !== null) {
-        darkStyleInjected = true;
-        return;
-    }
-    const styleEl = document.createElement('style');
-    styleEl.id = DARK_STYLE_ID;
-    styleEl.textContent = cachedDarkCss;
-    document.head.appendChild(styleEl);
-    darkStyleInjected = true;
-}
-
-/**
- * 移除深色变量 style（幂等）
- */
-const removeDarkStyle = (): void => {
-    if (!darkStyleInjected) return;
-    const styleEl = document.head.querySelector('#' + DARK_STYLE_ID);
-    if (styleEl) {
-        styleEl.remove();
-    }
-    darkStyleInjected = false;
-}
-
-/**
- * 根据当前 B 站主题状态同步深色 style 的注入/移除
- */
-const syncDarkTheme = (): void => {
-    if (isBiliDark()) {
-        injectDarkStyle();
-    } else {
-        removeDarkStyle();
-    }
-}
-
-/**
- * 启动深色主题同步：读取资源 + 监听 bili_dark 类变化
- */
-const startDarkThemeSync = (): void => {
-    // 同步读取深色 css 资源（GM_getResourceText 为同步 API）
-    prefetchDarkCss();
-
-    // 监听 html/body 的 class 变化，实时同步
     if (observer) return;
     observer = new MutationObserver(() => {
-        syncDarkTheme();
+        syncTheme();
     });
     observer.observe(document.documentElement, {attributes: true, attributeFilter: ['class']});
     observer.observe(document.body, {attributes: true, attributeFilter: ['class']});
 
-    // 初始同步
-    syncDarkTheme();
+    // 初始同步（面板可能尚未挂载，故用轮询兜底直到根节点出现）
+    syncTheme();
+    if (document.querySelector(PANEL_ROOT_SELECTOR) === null) {
+        const timer = setInterval(() => {
+            if (document.querySelector(PANEL_ROOT_SELECTOR) !== null) {
+                syncTheme();
+                clearInterval(timer);
+            }
+        }, 200);
+        // 最多等 10 秒，避免页面异常时轮询常驻
+        setTimeout(() => clearInterval(timer), 10000);
+    }
 }
 
 export default {
     isBiliDark,
     isBiliDarkByCssVar,
-    prefetchDarkCss,
-    startDarkThemeSync,
+    startThemeSync,
 }

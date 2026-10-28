@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {ref, watch} from 'vue';
 import cacheManagementView from "./views/debug/cacheManagementView.vue";
 import panelSettingsView from "./views/settings/panelSettingsView.vue";
@@ -177,10 +177,116 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
 </template>
 
 <style>
-/* 主面板 tabs 容器样式；id 使用 gz-drawer-tabs 避免与 B 站页面自身 #app 冲突（深色主题下 #app 会被 B 站深色 CSS 染色/干扰，导致面板样式异常、drawer 动画卡住） */
+/* ==========================================================================
+   主面板外壳 —— Fluent 2 设计语言
+   --------------------------------------------------------------------------
+   表面层次（Fluent 评审第 2 条）：画布 / 侧栏 / 卡片必须用不同明度的中性背景。
+   本面板采用「抽屉容器 = 画布(Background3) → 标签页外壳 = 一级表面(Background1)
+   → 卡片 = 一级表面 + 描边 + shadow2」的三层结构。
+   所有颜色/间距/圆角/阴影均取自 --fluent-* 令牌，随 .gz-theme-* 自动切换亮暗。
+   ========================================================================== */
+
+/* ---- 抽屉容器：画布层 ---- */
+#gz-drawer-tabs {
+  background: var(--fluent-color-neutral-background-3);
+}
+
+/* 标签页内容区：去内边距，由各视图自己控制留白 */
 #gz-drawer-tabs > .el-tabs__content {
-  padding: 0 !important;
-  background: var(--el-bg-color-page);
+  padding: 0;
+  background: var(--fluent-color-neutral-background-3);
+  overflow-y: auto;
+}
+
+/* ---- 标签页外壳：一级表面 ---- */
+#gz-drawer-tabs.el-tabs--border-card {
+  background: var(--fluent-color-neutral-background-1);
+  border: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
+  border-radius: var(--fluent-border-radius-x-large);
+  box-shadow: var(--fluent-shadow-4);
+  overflow: hidden;
+}
+
+/* ---- 标签页头：次级表面 + 吸顶 ---- */
+#gz-drawer-tabs.el-tabs--border-card > .el-tabs__header {
+  background: var(--fluent-color-neutral-background-2);
+  border-bottom: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
+  margin: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-radius: 0;
+}
+
+#gz-drawer-tabs.el-tabs--border-card > .el-tabs__header .el-tabs__nav {
+  border: none;
+}
+
+#gz-drawer-tabs.el-tabs--border-card > .el-tabs__header .el-tabs__item {
+  border: none;
+  height: 44px;
+  line-height: 44px;
+  padding: 0 var(--fluent-spacing-horizontal-l);
+  font-size: var(--fluent-font-size-base-300);
+  font-weight: var(--fluent-font-weight-medium);
+  color: var(--fluent-color-neutral-foreground-3);
+  transition: color var(--fluent-duration-fast) var(--fluent-curve-easy-ease),
+              background-color var(--fluent-duration-fast) var(--fluent-curve-easy-ease);
+}
+
+#gz-drawer-tabs.el-tabs--border-card > .el-tabs__header .el-tabs__item:hover {
+  color: var(--fluent-color-neutral-foreground-1);
+  background: var(--fluent-color-neutral-background-3);
+}
+
+/* 选中态：Fluent 用「品牌色文字 + 2px 下划线指示器」，不用填充块 */
+#gz-drawer-tabs.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
+  color: var(--fluent-color-brand-foreground-1);
+  font-weight: var(--fluent-font-weight-semibold);
+  background: transparent;
+}
+
+#gz-drawer-tabs.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: var(--fluent-spacing-horizontal-s);
+  right: var(--fluent-spacing-horizontal-s);
+  height: 2px;
+  background: var(--fluent-color-brand-background);
+  border-radius: var(--fluent-border-radius-circular);
+}
+
+/* 标签页内容内边距：Fluent 用 16px 基准留白 */
+#gz-drawer-tabs .el-tab-pane {
+  padding: var(--fluent-spacing-vertical-l) var(--fluent-spacing-horizontal-l);
+}
+
+/* ---- 抽屉本体：浮层表面 + 大圆角（沿用魔改版的 70% 高度浮层形态）---- */
+.el-drawer {
+  background: var(--fluent-color-neutral-background-3);
+}
+
+.el-drawer__body {
+  padding: var(--fluent-spacing-vertical-l) var(--fluent-spacing-horizontal-l);
+  overflow-y: auto;
+}
+
+/* 滚动条：Fluent 的细滚动条 */
+.el-drawer__body::-webkit-scrollbar,
+#gz-drawer-tabs > .el-tabs__content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.el-drawer__body::-webkit-scrollbar-thumb,
+#gz-drawer-tabs > .el-tabs__content::-webkit-scrollbar-thumb {
+  background: var(--fluent-color-neutral-stroke-2);
+  border-radius: var(--fluent-border-radius-circular);
+}
+
+.el-drawer__body::-webkit-scrollbar-thumb:hover,
+#gz-drawer-tabs > .el-tabs__content::-webkit-scrollbar-thumb:hover {
+  background: var(--fluent-color-neutral-stroke-1);
 }
 
 /* 开合动画由 App.vue 的 animateDrawer 用 Web Animations API 驱动（见 script 区）：

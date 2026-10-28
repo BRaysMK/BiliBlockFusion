@@ -12,6 +12,7 @@
   },
   "private": true,
   "devDependencies": {
+    "@fluentui/tokens": "1.0.0-alpha.24",
     "@types/node": "^26.1.0",
     "@types/tampermonkey": "^5.0.5",
     "@types/ws": "^8.18.1",

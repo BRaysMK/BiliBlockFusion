@@ -1,106 +1,160 @@
+/* ==========================================================================
+   屏蔽按钮（页面上悬浮的「屏蔽」快捷按钮）—— Fluent 2 设计语言
+   --------------------------------------------------------------------------
+   契约：保留 [gz_type] 属性选择器（业务代码通过 gz_type="primary|success|info|warning|danger"
+   设置变体），只替换视觉实现。按钮挂在 B 站页面 DOM 上，因此令牌取自
+   .gz-theme-* 作用域；面板未挂载时用 Fluent 亮色默认值兜底。
+   ========================================================================== */
+
 button[gz_type] {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--fluent-spacing-horizontal-xs, 4px);
     line-height: 1;
     white-space: nowrap;
     cursor: pointer;
-    /*background: #fff;*/
-    border: 1px solid #dcdfe6;
-    color: #F07775;
     -webkit-appearance: none;
     text-align: center;
     box-sizing: border-box;
-    outline: none;
     margin: 0;
-    transition: .1s;
-    font-weight: 500;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    padding: 10px 20px;
-    font-size: 14px;
-    border-radius: 8px;
+    font-family: var(--fluent-font-family-base, 'Segoe UI', 'Microsoft YaHei UI', sans-serif);
+    font-weight: var(--fluent-font-weight-medium, 500);
+    font-size: var(--fluent-font-size-base-200, 12px);
+    user-select: none;
+
+    /* Fluent 按钮：4px 圆角、细描边、次级表面底 */
+    padding: var(--fluent-spacing-vertical-xs, 4px) var(--fluent-spacing-horizontal-m, 12px);
+    border-radius: var(--fluent-border-radius-medium, 4px);
+    border: var(--fluent-stroke-width-thin, 1px) solid var(--fluent-color-neutral-stroke-1, #d1d1d1);
+    background: var(--fluent-color-neutral-background-1, #ffffff);
+    color: var(--fluent-color-neutral-foreground-2, #424242);
+    box-shadow: var(--fluent-shadow-2, 0 1px 2px rgba(0, 0, 0, 0.14));
+    transition: background-color var(--fluent-duration-fast, 100ms) var(--fluent-curve-easy-ease, ease),
+                border-color var(--fluent-duration-fast, 100ms) var(--fluent-curve-easy-ease, ease),
+                color var(--fluent-duration-fast, 100ms) var(--fluent-curve-easy-ease, ease);
 }
 
+button[gz_type]:hover {
+    background: var(--fluent-color-neutral-background-1-hover, #f5f5f5);
+    border-color: var(--fluent-color-neutral-stroke-1, #d1d1d1);
+    color: var(--fluent-color-neutral-foreground-1, #242424);
+    box-shadow: var(--fluent-shadow-4, 0 2px 4px rgba(0, 0, 0, 0.14));
+}
+
+button[gz_type]:active {
+    background: var(--fluent-color-neutral-background-1-pressed, #e0e0e0);
+    box-shadow: none;
+}
+
+/* 焦点环：Fluent 用品牌色双层描边，绝不移除（无障碍硬要求） */
+button[gz_type]:focus-visible {
+    outline: 2px solid var(--fluent-color-stroke-focus-2, #242424);
+    outline-offset: 1px;
+}
+
+/* ---- 变体：primary（实心品牌色）---- */
 button[gz_type="primary"] {
-    color: #fff;
-    background-color: #409eff;
-    border-color: #409eff;
+    background: var(--fluent-color-brand-background, #e8507e);
+    border-color: var(--fluent-color-brand-background, #e8507e);
+    color: var(--fluent-color-neutral-foreground-on-brand, #ffffff);
 }
 
+button[gz_type="primary"]:hover {
+    background: var(--fluent-color-brand-background-hover, #d13d6c);
+    border-color: var(--fluent-color-brand-background-hover, #d13d6c);
+    color: var(--fluent-color-neutral-foreground-on-brand, #ffffff);
+}
+
+button[gz_type="primary"]:active {
+    background: var(--fluent-color-brand-background-pressed, #b0335b);
+    border-color: var(--fluent-color-brand-background-pressed, #b0335b);
+}
+
+/* ---- 变体：success / warning / danger（Fluent 状态色浅底 + 状态色文字）---- */
 button[gz_type="success"] {
-    color: #fff;
-    background-color: #67c23a;
-    border-color: #67c23a;
+    background: var(--fluent-color-palette-green-background-2, #f1faf1);
+    border-color: var(--fluent-color-palette-green-border-1, #9fd89f);
+    color: var(--fluent-color-palette-green-foreground-1, #0e700e);
 }
 
-button[gz_type="info"] {
-    color: #fff;
-    background-color: #909399;
-    border-color: #909399;
+button[gz_type="success"]:hover {
+    background: var(--fluent-color-palette-green-background-3, #9fd89f);
+    color: var(--fluent-color-palette-green-foreground-1, #0e700e);
 }
 
 button[gz_type="warning"] {
-    color: #fff;
-    background-color: #e6a23c;
-    border-color: #e6a23c;
+    background: var(--fluent-color-palette-marigold-background-2, #fff9f5);
+    border-color: var(--fluent-color-palette-marigold-border-1, #fdcfb4);
+    color: var(--fluent-color-palette-marigold-foreground-1, #835b00);
+}
+
+button[gz_type="warning"]:hover {
+    background: var(--fluent-color-palette-marigold-background-3, #fdcfb4);
+    color: var(--fluent-color-palette-marigold-foreground-1, #835b00);
 }
 
 button[gz_type="danger"] {
-    color: #fff;
-    background-color: #f56c6c;
-    border-color: #f56c6c;
+    background: var(--fluent-color-palette-red-background-2, #fdf3f4);
+    border-color: var(--fluent-color-palette-red-border-1, #eeacb2);
+    color: var(--fluent-color-palette-red-foreground-1, #b10e1c);
 }
 
+button[gz_type="danger"]:hover {
+    background: var(--fluent-color-palette-red-background-3, #eeacb2);
+    color: var(--fluent-color-palette-red-foreground-1, #b10e1c);
+}
+
+/* ---- 变体：info（中性次级）---- */
+button[gz_type="info"] {
+    background: var(--fluent-color-neutral-background-2, #fafafa);
+    border-color: var(--fluent-color-neutral-stroke-2, #e0e0e0);
+    color: var(--fluent-color-neutral-foreground-2, #424242);
+}
+
+button[gz_type="info"]:hover {
+    background: var(--fluent-color-neutral-background-3, #f5f5f5);
+    color: var(--fluent-color-neutral-foreground-1, #242424);
+}
+
+/* ---- 修饰符：胶囊形（大号屏蔽按钮）---- */
 button[border] {
-    border-radius: 20px;
-    padding: 12px 23px;
+    border-radius: var(--fluent-border-radius-circular, 9999px);
+    padding: var(--fluent-spacing-vertical-s, 8px) var(--fluent-spacing-horizontal-l, 16px);
+    font-size: var(--fluent-font-size-base-300, 14px);
 }
 
+/* ---- 页面内原生输入控件（少数页面注入的原生 input/select）---- */
 input[gz_type] {
-    font-family: 'Arial', sans-serif; /* 设置字体 */
-    font-size: 16px; /* 设置字体大小 */
-    padding: 10px; /* 输入框内部的填充 */
-    margin: 10px; /* 输入框外部的边距 */
-    border: 1px solid #ccc; /* 边框样式 */
-    border-radius: 4px; /* 边框圆角 */
-    outline: none; /* 移除聚焦时的轮廓线 */
+    font-family: var(--fluent-font-family-base, 'Segoe UI', 'Microsoft YaHei UI', sans-serif);
+    font-size: var(--fluent-font-size-base-300, 14px);
+    padding: var(--fluent-spacing-vertical-xs, 4px) var(--fluent-spacing-horizontal-s, 8px);
+    border: var(--fluent-stroke-width-thin, 1px) solid var(--fluent-color-neutral-stroke-1, #d1d1d1);
+    border-radius: var(--fluent-border-radius-medium, 4px);
+    outline: none;
+    background: var(--fluent-color-neutral-background-1, #ffffff);
+    color: var(--fluent-color-neutral-foreground-1, #242424);
+    transition: border-color var(--fluent-duration-fast, 100ms) var(--fluent-curve-easy-ease, ease);
 }
 
 input[gz_type]:focus {
-    border-color: #007bff; /* 聚焦时边框颜色 */
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3); /* 聚焦时的阴影效果 */
+    border-color: var(--fluent-color-brand-stroke-1, #e8507e);
+    box-shadow: 0 0 0 1px var(--fluent-color-brand-stroke-1, #e8507e);
 }
 
 select {
-    font-family: 'Arial', sans-serif; /* 设置字体 */
-    font-size: 16px; /* 设置字体大小 */
-    padding: 10px; /* 输入框内部的填充 */
-    margin: 10px; /* 输入框外部的边距 */
-    border: 1px solid #ccc; /* 边框样式 */
-    border-radius: 4px; /* 边框圆角 */
-    outline: none; /* 移除聚焦时的轮廓线 */
-    background-color: white; /* 背景色 */
-    color: #333; /* 文本颜色 */
-}
-
-select:focus {
-    border-color: #007bff; /* 聚焦时边框颜色 */
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3); /* 聚焦时的阴影效果 */
+    font-family: var(--fluent-font-family-base, 'Segoe UI', 'Microsoft YaHei UI', sans-serif);
+    font-size: var(--fluent-font-size-base-300, 14px);
+    padding: var(--fluent-spacing-vertical-xs, 4px) var(--fluent-spacing-horizontal-s, 8px);
+    border: var(--fluent-stroke-width-thin, 1px) solid var(--fluent-color-neutral-stroke-1, #d1d1d1);
+    border-radius: var(--fluent-border-radius-medium, 4px);
+    outline: none;
+    background-color: var(--fluent-color-neutral-background-1, #ffffff);
+    color: var(--fluent-color-neutral-foreground-1, #242424);
 }
 
 select:disabled {
-    background-color: #f1f1f1; /* 禁用时的背景色 */
-    border-color: #ccc; /* 禁用时的边框色 */
-    color: #888; /* 禁用时的文本色 */
-}
-
-
-button:hover {
-    border-color: #646cff;
-}
-
-/*聚焦环*/
-button[gz_type]:focus,
-button[gz_type]:focus-visible {
-    outline: 4px auto -webkit-focus-ring-color;
+    background-color: var(--fluent-color-neutral-background-disabled, #f0f0f0);
+    border-color: var(--fluent-color-neutral-stroke-disabled, #e0e0e0);
+    color: var(--fluent-color-neutral-foreground-disabled, #bdbdbd);
 }

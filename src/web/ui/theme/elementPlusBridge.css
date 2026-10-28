@@ -1,0 +1,263 @@
+/* ==========================================================================
+   Element Plus ← Fluent 2 令牌桥接
+   --------------------------------------------------------------------------
+   目的：本项目 51 个 Vue 视图共使用 42 类、597 个 el-* 组件（表格、级联、
+   日期选择、分页、弹窗等）。逐个改模板既低效又易回归，因此改为在变量层
+   把 Element Plus 的主题变量映射到 Fluent 2 令牌上——EP 组件行为不变，
+   视觉全部由 Fluent 令牌驱动，亮/暗主题随 .gz-theme-* 作用域自动切换。
+
+   约定：
+   - 左侧 --el-* 是 Element Plus 的公开主题变量；
+   - 右侧 --fluent-* 由 fluentVars.ts 注入（459 个令牌）；
+   - 不硬编码任何颜色值，全部走令牌，保证亮暗一致。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. 品牌色 —— 主色、悬停、按下、禁用
+   -------------------------------------------------------------------------- */
+.gz-theme-light,
+.gz-theme-dark {
+  --el-color-primary: var(--fluent-color-brand-background);
+  --el-color-primary-light-3: var(--fluent-color-brand-background-hover);
+  --el-color-primary-light-5: var(--fluent-color-brand-background-2);
+  --el-color-primary-light-7: var(--fluent-color-brand-background-2);
+  --el-color-primary-light-8: var(--fluent-color-brand-background-2);
+  --el-color-primary-light-9: var(--fluent-color-brand-background-2);
+  --el-color-primary-dark-2: var(--fluent-color-brand-background-pressed);
+
+  /* 状态色：走 Fluent 共享调色板，保证语义一致 */
+  --el-color-success: var(--fluent-color-palette-green-foreground-1);
+  --el-color-success-light-9: var(--fluent-color-palette-green-background-2);
+  --el-color-warning: var(--fluent-color-palette-marigold-foreground-1);
+  --el-color-warning-light-9: var(--fluent-color-palette-marigold-background-2);
+  --el-color-danger: var(--fluent-color-palette-red-foreground-1);
+  --el-color-danger-light-9: var(--fluent-color-palette-red-background-2);
+  --el-color-error: var(--fluent-color-palette-red-foreground-1);
+  --el-color-info: var(--fluent-color-neutral-foreground-3);
+  --el-color-info-light-9: var(--fluent-color-neutral-background-3);
+}
+
+/* --------------------------------------------------------------------------
+   2. 表面层次 —— 画布 / 卡片 / 浮层必须不同明度（Fluent 评审第 2 条）
+   -------------------------------------------------------------------------- */
+.gz-theme-light,
+.gz-theme-dark {
+  /* 页面画布 */
+  --el-bg-color-page: var(--fluent-color-neutral-background-3);
+  /* 卡片、面板等一级表面 */
+  --el-bg-color: var(--fluent-color-neutral-background-1);
+  /* 次级表面：表头、输入框底色、斑马纹 */
+  --el-bg-color-overlay: var(--fluent-color-neutral-background-1);
+  --el-fill-color-blank: var(--fluent-color-neutral-background-1);
+  --el-fill-color-light: var(--fluent-color-neutral-background-2);
+  --el-fill-color-lighter: var(--fluent-color-neutral-background-2);
+  --el-fill-color-extra-light: var(--fluent-color-neutral-background-3);
+  --el-fill-color-dark: var(--fluent-color-neutral-background-3);
+  --el-fill-color-darker: var(--fluent-color-neutral-background-4);
+  --el-mask-color: var(--fluent-color-background-overlay);
+}
+
+/* --------------------------------------------------------------------------
+   3. 文字层次 —— 正文 14px（fontSizeBase300），次级 12px，禁止 11px
+   -------------------------------------------------------------------------- */
+.gz-theme-light,
+.gz-theme-dark {
+  --el-text-color-primary: var(--fluent-color-neutral-foreground-1);
+  --el-text-color-regular: var(--fluent-color-neutral-foreground-2);
+  --el-text-color-secondary: var(--fluent-color-neutral-foreground-3);
+  --el-text-color-placeholder: var(--fluent-color-neutral-foreground-4);
+  --el-text-color-disabled: var(--fluent-color-neutral-foreground-disabled);
+
+  --el-font-size-base: var(--fluent-font-size-base-300);
+  --el-font-size-small: var(--fluent-font-size-base-200);
+  --el-font-size-extra-small: var(--fluent-font-size-base-200);
+  --el-font-size-medium: var(--fluent-font-size-base-300);
+  --el-font-size-large: var(--fluent-font-size-base-400);
+
+  --el-font-family: var(--fluent-font-family-base);
+}
+
+/* --------------------------------------------------------------------------
+   4. 描边与圆角 —— 控件 4px / 卡片 8px，不混用（Fluent 评审第 5 条）
+   -------------------------------------------------------------------------- */
+.gz-theme-light,
+.gz-theme-dark {
+  --el-border-color: var(--fluent-color-neutral-stroke-1);
+  --el-border-color-light: var(--fluent-color-neutral-stroke-2);
+  --el-border-color-lighter: var(--fluent-color-neutral-stroke-2);
+  --el-border-color-extra-light: var(--fluent-color-neutral-stroke-2);
+  --el-border-color-dark: var(--fluent-color-neutral-stroke-1);
+  --el-border-color-darker: var(--fluent-color-neutral-stroke-1);
+  --el-border-width: var(--fluent-stroke-width-thin);
+
+  /* 控件级圆角 */
+  --el-border-radius-base: var(--fluent-border-radius-medium);
+  --el-border-radius-small: var(--fluent-border-radius-small);
+  --el-border-radius-round: var(--fluent-border-radius-circular);
+
+  /* 阴影：浮起元素用 Fluent 层级阴影 */
+  --el-box-shadow: var(--fluent-shadow-4);
+  --el-box-shadow-light: var(--fluent-shadow-2);
+  --el-box-shadow-lighter: var(--fluent-shadow-2);
+  --el-box-shadow-dark: var(--fluent-shadow-8);
+}
+
+/* --------------------------------------------------------------------------
+   5. 组件级微调 —— 让 EP 的默认形态贴近 Fluent 观感
+   -------------------------------------------------------------------------- */
+
+/* 卡片：Fluent 的卡片是大圆角 + 细描边 + 轻阴影，而非 EP 默认的硬边框 */
+.gz-theme-light .el-card,
+.gz-theme-dark .el-card {
+  border-radius: var(--fluent-border-radius-x-large);
+  border: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
+  box-shadow: var(--fluent-shadow-2);
+  background: var(--fluent-color-neutral-background-1);
+  margin-bottom: var(--fluent-spacing-vertical-m);
+  transition: box-shadow var(--fluent-duration-normal) var(--fluent-curve-easy-ease);
+}
+
+.gz-theme-light .el-card:hover,
+.gz-theme-dark .el-card:hover {
+  box-shadow: var(--fluent-shadow-4);
+}
+
+.gz-theme-light .el-card__header,
+.gz-theme-dark .el-card__header {
+  border-bottom: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
+  padding: var(--fluent-spacing-vertical-m) var(--fluent-spacing-horizontal-l);
+  font-size: var(--fluent-font-size-base-300);
+  font-weight: var(--fluent-font-weight-semibold);
+  color: var(--fluent-color-neutral-foreground-1);
+  background: transparent;
+}
+
+.gz-theme-light .el-card__body,
+.gz-theme-dark .el-card__body {
+  padding: var(--fluent-spacing-vertical-l) var(--fluent-spacing-horizontal-l);
+  font-size: var(--fluent-font-size-base-300);
+  color: var(--fluent-color-neutral-foreground-2);
+}
+
+/* 按钮：Fluent 的按钮是 4px 圆角、中等字重、无渐变 */
+.gz-theme-light .el-button,
+.gz-theme-dark .el-button {
+  border-radius: var(--fluent-border-radius-medium);
+  font-weight: var(--fluent-font-weight-medium);
+  font-size: var(--fluent-font-size-base-300);
+  transition: background-color var(--fluent-duration-fast) var(--fluent-curve-easy-ease),
+              border-color var(--fluent-duration-fast) var(--fluent-curve-easy-ease);
+}
+
+/* 主按钮：实心品牌色（去掉 EP 默认的浅色描边风格） */
+.gz-theme-light .el-button--primary,
+.gz-theme-dark .el-button--primary {
+  background: var(--fluent-color-brand-background);
+  border-color: var(--fluent-color-brand-background);
+  color: var(--fluent-color-neutral-foreground-on-brand);
+}
+
+.gz-theme-light .el-button--primary:hover,
+.gz-theme-dark .el-button--primary:hover {
+  background: var(--fluent-color-brand-background-hover);
+  border-color: var(--fluent-color-brand-background-hover);
+}
+
+.gz-theme-light .el-button--primary:active,
+.gz-theme-dark .el-button--primary:active {
+  background: var(--fluent-color-brand-background-pressed);
+  border-color: var(--fluent-color-brand-background-pressed);
+}
+
+/* 输入类控件：Fluent 输入框是 4px 圆角 + 底部加粗描边（focus 时） */
+.gz-theme-light .el-input__wrapper,
+.gz-theme-dark .el-input__wrapper,
+.gz-theme-light .el-textarea__inner,
+.gz-theme-dark .el-textarea__inner {
+  border-radius: var(--fluent-border-radius-medium);
+  box-shadow: 0 0 0 var(--fluent-stroke-width-thin) var(--fluent-color-neutral-stroke-1) inset;
+  background: var(--fluent-color-neutral-background-1);
+}
+
+.gz-theme-light .el-input__wrapper.is-focus,
+.gz-theme-dark .el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 var(--fluent-stroke-width-thick) var(--fluent-color-brand-stroke-1) inset;
+}
+
+/* 表格：行高 ≥44px，表头与数据行用底色 + 描边分开（Fluent 评审第 3 条） */
+.gz-theme-light .el-table,
+.gz-theme-dark .el-table {
+  --el-table-border-color: var(--fluent-color-neutral-stroke-2);
+  --el-table-header-bg-color: var(--fluent-color-neutral-background-2);
+  --el-table-tr-bg-color: var(--fluent-color-neutral-background-1);
+  --el-table-row-hover-bg-color: var(--fluent-color-neutral-background-2);
+  background: var(--fluent-color-neutral-background-1);
+  font-size: var(--fluent-font-size-base-300);
+}
+
+.gz-theme-light .el-table th.el-table__cell,
+.gz-theme-dark .el-table th.el-table__cell {
+  background: var(--fluent-color-neutral-background-2);
+  color: var(--fluent-color-neutral-foreground-1);
+  font-weight: var(--fluent-font-weight-semibold);
+}
+
+.gz-theme-light .el-table td.el-table__cell,
+.gz-theme-dark .el-table td.el-table__cell {
+  padding-top: var(--fluent-spacing-vertical-s);
+  padding-bottom: var(--fluent-spacing-vertical-s);
+}
+
+/* 标签页：Fluent 用下划线指示器，而不是 EP border-card 的方块感 */
+.gz-theme-light .el-tabs__item,
+.gz-theme-dark .el-tabs__item {
+  font-size: var(--fluent-font-size-base-300);
+  font-weight: var(--fluent-font-weight-medium);
+  color: var(--fluent-color-neutral-foreground-3);
+}
+
+.gz-theme-light .el-tabs__item.is-active,
+.gz-theme-dark .el-tabs__item.is-active {
+  color: var(--fluent-color-brand-foreground-1);
+  font-weight: var(--fluent-font-weight-semibold);
+}
+
+.gz-theme-light .el-tabs__item:hover,
+.gz-theme-dark .el-tabs__item:hover {
+  color: var(--fluent-color-neutral-foreground-1);
+}
+
+.gz-theme-light .el-tabs__active-bar,
+.gz-theme-dark .el-tabs__active-bar {
+  background-color: var(--fluent-color-brand-background);
+  height: 2px;
+}
+
+/* 标签（tag）：Fluent 的 Tag 是浅底 + 无描边 */
+.gz-theme-light .el-tag,
+.gz-theme-dark .el-tag {
+  border-radius: var(--fluent-border-radius-medium);
+  font-size: var(--fluent-font-size-base-200);
+}
+
+/* 浮层：弹窗/下拉/气泡统一大圆角 + 层级阴影 */
+.gz-theme-light .el-dialog,
+.gz-theme-dark .el-dialog,
+.gz-theme-light .el-drawer,
+.gz-theme-dark .el-drawer {
+  border-radius: var(--fluent-border-radius-x-large);
+}
+
+.gz-theme-light .el-popper,
+.gz-theme-dark .el-popper,
+.gz-theme-light .el-dropdown__popper,
+.gz-theme-dark .el-dropdown__popper {
+  border-radius: var(--fluent-border-radius-medium);
+  box-shadow: var(--fluent-shadow-8);
+}
+
+/* 分割线 */
+.gz-theme-light .el-divider,
+.gz-theme-dark .el-divider {
+  border-color: var(--fluent-color-neutral-stroke-2);
+}

@@ -9,6 +9,7 @@ import GzSpace from "./components/GzSpace.vue";
 import GzText from "./components/GzText.vue";
 import {installElBridge} from "./elBridge.ts";
 import darkTheme from "./darkTheme.ts";
+import bridgeCss from './theme/elementPlusBridge.css?raw'
 
 declare global {
     interface Window {
@@ -36,7 +37,9 @@ onDomReady(() => {
             console.log('element-plus样式加载完成')
         })
     }
-    const {vueDiv} = elUtil.createVueDiv(document.body);
+    const {panelDiv, vueDiv} = elUtil.createVueDiv(document.body);
+    // 标记主面板根节点：Fluent 令牌作用域与主题切换都以它为锚点
+    panelDiv.setAttribute('gz-fluent-root', '');
     // 安装 Element Plus 事件桥接（el-msg/el-notify/el-alert/el-confirm/el-prompt）
     installElBridge();
     window.mk_vue_app = initVueApp(vueDiv, App);
@@ -45,8 +48,10 @@ onDomReady(() => {
     window.mk_vue_app.component('gz-text', GzText)
     addGzStyle(document);
     cssManager.updateCssVModal();
-    // 深色主题同步（跟随 B 站 bili_dark 类，实时注入/移除 EP 深色变量）
-    darkTheme.startDarkThemeSync();
+    // Fluent ↔ Element Plus 变量桥接（让全部 el-* 组件继承 Fluent 令牌）
+    GM_addStyle(bridgeCss);
+    // 主题同步（跟随 B 站深色主题，切换面板根节点的 Fluent 令牌作用域）
+    darkTheme.startThemeSync();
 })
 
 GM_addStyle(`

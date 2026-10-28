@@ -1,40 +1,60 @@
-/*垂直居中*/
+/* ==========================================================================
+   布局工具类 —— Fluent 2 间距令牌
+   --------------------------------------------------------------------------
+   这些类名被多个视图直接引用（el-horizontal-center / el-vertical-center 等），
+   保留类名不变、仅把实现换成 Fluent 间距令牌，避免改动 51 个视图模板。
+   ========================================================================== */
+
+/* 垂直居中 */
 .el-vertical-center {
     display: flex;
     justify-content: center;
 }
 
-/*水平居中*/
+/* 水平居中 */
 .el-horizontal-center {
     display: flex;
     align-items: center;
+    gap: var(--fluent-spacing-horizontal-s, 8px);
 }
 
-/*水平右对齐*/
+/* 水平右对齐 */
 .el-horizontal-right {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
+    gap: var(--fluent-spacing-horizontal-s, 8px);
 }
 
-/*水平左对齐*/
+/* 水平左对齐 */
 .el-horizontal-left {
     display: flex;
+    align-items: center;
     justify-content: flex-start;
+    gap: var(--fluent-spacing-horizontal-s, 8px);
 }
 
-/*水平靠外边对齐*/
+/* 水平靠外边对齐 */
 .el-horizontal-outside {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: var(--fluent-spacing-horizontal-s, 8px);
 }
 
-/*修改el-divider组件设置方向垂直时将竖线设置为auto*/
+/* 垂直堆叠（Fluent 的纵向间距刻度） */
+.el-vertical-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fluent-spacing-vertical-s, 8px);
+}
+
+/* el-divider 垂直方向高度自适应 */
 .height-auto.el-divider.el-divider--vertical {
     height: auto !important;
 }
 
-/*修改el-divider组件方向横向时将top和bottom设置为10px*/
+/* el-divider 水平方向上下留白（Fluent 间距刻度） */
 .margin-top-bottom10.el-divider.el-divider--horizontal {
-    margin: 10px 0;
+    margin: var(--fluent-spacing-vertical-m, 12px) 0;
 }
