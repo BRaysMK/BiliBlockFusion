@@ -95,8 +95,11 @@ export const installFluentTokens = (target: HTMLElement | Document = document.he
 export const applyThemeClass = (el: HTMLElement, mode: ThemeMode): void => {
     el.classList.toggle('gz-theme-dark', mode === 'dark');
     el.classList.toggle('gz-theme-light', mode === 'light');
-    // 同步 body 上的标记，供 teleport 到 body 的 EP 浮层（弹窗/下拉）取到深色令牌
+    // 同步 body 上的标记：Element Plus 的弹窗/下拉/气泡会被 teleport 到 body，
+    // 不在面板根节点内，必须让 body 也带上同主题作用域，否则浮层拿不到 --fluent-*/--el-* 变量。
+    // 浅色时同样要加 gz-theme-light，不能只加深色类，否则浅色下浮层回落到 EP 默认样式。
     document.body.classList.toggle('gz-theme-dark', mode === 'dark');
+    document.body.classList.toggle('gz-theme-light', mode === 'light');
 };
 
 export default {
