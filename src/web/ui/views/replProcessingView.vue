@@ -169,10 +169,10 @@ watch(isReplaceCommentSearchTermsVal, (n) => {
         <template #header>
           <el-button @click="addBut">添加</el-button>
           <el-button @click="refreshBut">刷新</el-button>
-          <el-button type="success" @click="saveBut">保存</el-button>
+          <el-button type="primary" size="small" @click="saveBut">保存</el-button>
         </template>
         <template #default="scope">
-          <el-button type="warning" @click="delItemBut(scope.row,scope.$index)">删除</el-button>
+          <el-button type="danger" size="small" @click="delItemBut(scope.row,scope.$index)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

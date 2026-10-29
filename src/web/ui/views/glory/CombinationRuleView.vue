@@ -126,7 +126,7 @@ refresh();
                 <span>操作</span>
                 <el-button @click="addPlanBut">添加方案</el-button>
                 <el-button @click="refresh(true)">刷新方案</el-button>
-                <el-button type="success" @click="savePlanBut">保存方案</el-button>
+                <el-button type="primary" size="small" @click="savePlanBut">保存方案</el-button>
               </gz-space>
             </template>
             <template #default="scope">

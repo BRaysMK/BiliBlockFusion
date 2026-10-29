@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {ref, watch} from 'vue'
 import bilibiliHome from "../../../pages/home/bilibili.ts";
 import {
@@ -7,7 +7,9 @@ import {
   isHideCarouselImageGm,
   isHideHomeTopHeaderBannerImageGm,
   isHideHomeTopHeaderChannelGm,
-  isHomeResponseRewriteGm
+  isHomeResponseRewriteGm,
+  isOverlayOnlyTypeGm,
+  getShieldModeGm
 } from "@/state/localMKData.ts";
 import cssManager from "../../../domain/cssManager.ts";
 
@@ -17,6 +19,9 @@ const isHideTopHeaderChannelVal = ref(isHideHomeTopHeaderChannelGm());
 const homeFeedLoadAttemptsVal = ref(getHomeFeedLoadAttemptsGm());
 const isHomeResponseRewriteVal = ref(isHomeResponseRewriteGm());
 const releaseTypeCardVals = ref(getReleaseTypeCardsGm());
+// 屏蔽方式：remove（默认，卡片消失、后续顶上）/ overlay（遮罩）/ hide（不可见但留空）
+const shieldModeVal = ref(getShieldModeGm());
+const isOverlayOnlyTypeVal = ref(isOverlayOnlyTypeGm());
 
 watch(isHideCarouselImageVal, (n) => {
   GM_setValue('is_hide_carousel_image_gm', n);
@@ -40,9 +45,32 @@ watch(isHomeResponseRewriteVal, (n) => {
 watch(releaseTypeCardVals, (n) => {
   GM_setValue('release_type_cards_gm', n);
 });
+watch(shieldModeVal, (n) => {
+  GM_setValue('shield_mode', n);
+});
+watch(isOverlayOnlyTypeVal, (n) => {
+  GM_setValue('overlay_only_type', n);
+});
 </script>
 
 <template>
+  <el-card shadow="never">
+    <template #header>屏蔽方式</template>
+    <el-tooltip content="移除：卡片消失，后续顶上；叠加层：保留遮罩；隐藏：留空白">
+      <div>
+        <span>视频屏蔽方式：</span>
+        <el-radio-group v-model="shieldModeVal" size="small">
+          <el-radio-button value="remove">移除</el-radio-button>
+          <el-radio-button value="overlay">叠加层</el-radio-button>
+          <el-radio-button value="hide">隐藏</el-radio-button>
+        </el-radio-group>
+      </div>
+    </el-tooltip>
+    <el-tooltip content="遮罩上只显示屏蔽类型，不显示具体匹配词">
+      <el-switch v-model="isOverlayOnlyTypeVal" active-text="叠加层仅显示屏蔽类型"
+                 :disabled="shieldModeVal !== 'overlay'"/>
+    </el-tooltip>
+  </el-card>
   <el-card shadow="never">
     <template #header>首页</template>
     <el-switch v-model="isHideCarouselImageVal" active-text="隐藏轮播图"/>

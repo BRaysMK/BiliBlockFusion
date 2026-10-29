@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {ref} from 'vue';
 import {eventEmitter} from "../../../core/EventEmitter.ts";
 import ruleKeyListData from "../../../config/ruleKeyListData.ts";
@@ -106,17 +106,17 @@ for (let newRuleKeyListElement of ruleKeyListData.getRuleKeyListData()) {
           <el-row>
             <el-col :span="12">
               <el-button-group>
-                <el-button @click="batchAddBut">批量添加</el-button>
-                <el-button @click="setRuleBut">修改</el-button>
-                <el-button @click="findItemAllBut">查看项内容</el-button>
-                <el-button @click="delBut">移除</el-button>
+                <el-button size="small" @click="batchAddBut">批量添加</el-button>
+                <el-button size="small" @click="setRuleBut">修改</el-button>
+                <el-button size="small" @click="findItemAllBut">查看项内容</el-button>
+                <el-button size="small" @click="delBut">移除</el-button>
               </el-button-group>
             </el-col>
             <el-col :span="12">
               <div class="el-horizontal-right">
                 <el-button-group>
-                  <el-button type="danger" @click="clearItemRuleBut">清空项</el-button>
-                  <el-button type="danger" @click="delAllBut">全部移除</el-button>
+                  <el-button type="danger" size="small" @click="clearItemRuleBut">清空项</el-button>
+                  <el-button type="danger" size="small" @click="delAllBut">全部移除</el-button>
                 </el-button-group>
               </div>
             </el-col>
@@ -124,10 +124,15 @@ for (let newRuleKeyListElement of ruleKeyListData.getRuleKeyListData()) {
         </el-card>
       </el-col>
       <el-col :span="14">
+        <!-- 使用说明改为折叠面板：10 条说明共 471 字，原先平铺占满首屏，
+             普通用户几乎不会读，反而挤掉了真正需要看的「规则信息」。
+             默认收起，需要时展开，内容一条不少。 -->
         <el-card shadow="never">
           <template #header>
-            <span>使用说明</span>
+            <span>使用说明（点击展开）</span>
           </template>
+          <el-collapse>
+            <el-collapse-item title="查看 10 条使用说明" name="tips">
           <gz-space align-items="flex-start" direction="vertical">
             <span>1.基础规则类型较多，下拉框支持搜索定位，鼠标点击出现光标时支持筛选</span>
             <span>2.大部分情况下模糊匹配比精确匹配好用</span>
@@ -153,6 +158,8 @@ for (let newRuleKeyListElement of ruleKeyListData.getRuleKeyListData()) {
               10.部分规则基于api请求获取，当提示禁用根据bv号网络请求获取视频信息时，请不要马上关闭禁用，等一会，或者半小时之后，再关闭禁用
             </span>
           </gz-space>
+            </el-collapse-item>
+          </el-collapse>
         </el-card>
         <ruleInformationView :rule-info-arr="ruleInfoArr"/>
       </el-col>

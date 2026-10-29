@@ -531,6 +531,33 @@ export const getHomeFeedLoadAttemptsGm = (): number => {
     return Math.max(0, Math.floor(value))
 }
 
+/** 视频屏蔽方式 */
+export type ShieldMode = 'remove' | 'overlay' | 'hide';
+
+/**
+ * 获取视频屏蔽方式，默认 remove（删除网格项，后续卡片顶上）
+ *
+ * - remove：删除整个网格项外壳，卡片真正消失、后续卡片顶上来（默认）
+ * - overlay：保留卡片并覆盖半透明遮罩，显示屏蔽原因
+ * - hide：仅 display:none，保留占位（页面会出现空白）
+ *
+ * 注意：BewlyBewly 下只删除 .video-card 会留下 279px 的空壳占位，
+ * 因此 remove 模式必须删整个网格项（见 overlay.ts 的 removeGridItem）。
+ */
+export const getShieldModeGm = (): ShieldMode => {
+    const value: unknown = GM_getValue('shield_mode', 'remove')
+    if (value === 'overlay' || value === 'hide' || value === 'remove') return value
+    // 兼容旧键：hide_video_mode = true 视为 hide
+    const legacy: unknown = GM_getValue('hide_video_mode', false)
+    if (legacy === true) return 'hide'
+    return 'remove'
+}
+
+/** 叠加层上仅显示屏蔽类型，不显示具体匹配词，默认 false（显示完整原因） */
+export const isOverlayOnlyTypeGm = (): boolean => {
+    return GM_getValue('overlay_only_type', false)
+}
+
 /** 是否启用直播间列表自适应布局 */
 export const isRoomListAdaptiveGm = (): boolean => {
     return GM_getValue('is_room_list_adaptive_gm', false)

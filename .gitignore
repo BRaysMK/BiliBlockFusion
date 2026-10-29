@@ -1,6 +1,7 @@
 /test/
 /node_modules/
-/dist/
+/dist/*
+!/dist/BiliBlockFusion.user.js
 /dist-release/
 /lib/
 /patch/
@@ -9,3 +10,4 @@ pnpm-lock.yaml
 rollup.build.css
 /.*
 skills-lock.json
+tmp_cdp_inject.cjs

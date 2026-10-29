@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {computed, ref} from 'vue';
 import {eventEmitter} from "../../../core/EventEmitter.ts";
 import defUtil from "../../../core/util/defUtil.ts";
@@ -338,8 +338,13 @@ eventEmitter.on('正则匹配时异常', (errorData: any) => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 360px;
-  height: calc(100vh - 88px);
+  /* 高度约束：主面板是 60%×70% 浮层，抽屉可用高度约 636px。
+     百分比高度与 flex:1 在嵌套的 el-tabs 里都会塌陷成内容高度（实测 6850px），
+     因此改用视口相对上限 + 内部滚动：
+     - max-height 限制整块视图不超过面板可用高度（70vh 略小于面板 70% 高度，留出标签栏）；
+     - 日志列表自身 overflow:auto，在视图内部滚动，不影响外层抽屉。 */
+  max-height: 70vh;
+  min-height: 0;
   padding: 14px 16px 16px;
   background: var(--el-bg-color-page);
 }
@@ -577,7 +582,7 @@ eventEmitter.on('正则匹配时异常', (errorData: any) => {
 
 @media (max-width: 640px) {
   .output-information-view {
-    height: calc(100vh - 64px);
+    /* 同上：跟随父容器高度，不写死视口高度 */
     padding: 10px;
   }
 

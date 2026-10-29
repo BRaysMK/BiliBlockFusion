@@ -30,6 +30,9 @@ let currentMode: ThemeMode | null = null;
 const isBiliDark = (): boolean => {
     return document.documentElement.classList.contains('bili_dark')
         || document.body.classList.contains('bili_dark')
+        // 新版 B 站/BewlyCat：深色态是 html.dark（不带 bili_dark 前缀）
+        || document.documentElement.classList.contains('dark')
+        || document.body.classList.contains('dark')
         || isBiliDarkByCssVar();
 }
 
@@ -43,8 +46,62 @@ const isBiliDark = (): boolean => {
  */
 const isBiliDarkByCssVar = (): boolean => {
     const bg1 = getComputedStyle(document.body).getPropertyValue('--bg1').trim().toLowerCase();
-    // B 站深色主题的 --bg1 固定值：#17181A
-    return bg1 === '#17181a';
+    if (bg1 === '') return false;
+    // B 站深色主题的 --bg1 历史上是固定值 #17181A；
+    // 但新版主题改用 hsl() 写法（如 hsl(230 12% 4%)），且 BewlyCat 会覆写为自定义色，
+    // 因此不能再做精确值比对，改为「解析出亮度，低于阈值即判深色」。
+    const rgb = cssColorToRgb(bg1);
+    if (rgb === null) return false;
+    // 相对亮度（ITU-R BT.601），0=黑 255=白
+    const luminance = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+    return luminance < 128;
+}
+
+/**
+ * 把 CSS 颜色字符串解析为 RGB 三元组
+ * 支持 #rgb / #rrggbb / rgb() / rgba() / hsl() / hsla()
+ * @param color CSS 颜色字符串
+ * @returns [r,g,b] 或 null（无法解析）
+ */
+const cssColorToRgb = (color: string): [number, number, number] | null => {
+    const hex = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (hex !== null) {
+        const h = hex[1];
+        const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+        return [parseInt(full.slice(0, 2), 16), parseInt(full.slice(2, 4), 16), parseInt(full.slice(4, 6), 16)];
+    }
+    const rgb = color.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i);
+    if (rgb !== null) {
+        return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+    }
+    const hsl = color.match(/^hsla?\(\s*([\d.]+)(?:deg)?[\s,]+([\d.]+)%[\s,]+([\d.]+)%/i);
+    if (hsl !== null) {
+        const [r, g, b] = hslToRgb(Number(hsl[1]), Number(hsl[2]) / 100, Number(hsl[3]) / 100);
+        return [r, g, b];
+    }
+    return null;
+}
+
+/**
+ * HSL → RGB
+ * @param h 色相 0-360
+ * @param s 饱和度 0-1
+ * @param l 亮度 0-1
+ * @returns [r,g,b] 0-255
+ */
+const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const hp = ((h % 360) + 360) % 360 / 60;
+    const x = c * (1 - Math.abs((hp % 2) - 1));
+    let r = 0, g = 0, b = 0;
+    if (hp < 1) [r, g, b] = [c, x, 0];
+    else if (hp < 2) [r, g, b] = [x, c, 0];
+    else if (hp < 3) [r, g, b] = [0, c, x];
+    else if (hp < 4) [r, g, b] = [0, x, c];
+    else if (hp < 5) [r, g, b] = [x, 0, c];
+    else [r, g, b] = [c, 0, x];
+    const m = l - c / 2;
+    return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
 }
 
 /**

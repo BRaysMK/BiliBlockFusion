@@ -137,9 +137,9 @@ eventEmitter.on('event:更新荣耀等级图片链接列表', (dataList: any[]) 
             <gz-space align-items="flex-start" direction="">
               <div>荣耀等级图标映射(修改为零时状态，长期需手动点击保存)</div>
               <div>
-                <el-button type="warning" @click="clearBut">清除</el-button>
+                <el-button type="danger" size="small" @click="clearBut">清除</el-button>
                 <el-button @click="refreshMappingList">刷新</el-button>
-                <el-button type="success" @click="saveBut">保存</el-button>
+                <el-button type="primary" size="small" @click="saveBut">保存</el-button>
                 <el-button title="导出到剪切板和浏览器控制台" @click="exportMapUrlBut">导出</el-button>
                 <el-button @click="importMapUrlBut">导入</el-button>
               </div>

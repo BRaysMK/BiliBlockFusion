@@ -71,10 +71,24 @@ const getRightTabs = async () => {
 }
 
 
+/**
+ * BewlyBewly 首页视频卡片选择器
+ *
+ * 历史演进（每次 BewlyCat 改版都会让旧选择器静默失配，表现为「屏蔽完全不生效」）：
+ * - ≤1.7.x：.grid-adaptive > .video-card-container（卡片即 grid item）
+ * - 1.8.0 ：.grid-adaptive > .video-card-slot（grid item 是 slot 包裹层）
+ * - 1.6.5 ：.virtual-rows > .virtual-item（虚拟滚动）
+ * - 新版   ：grid item 变成无 class 的 div 包裹层，卡片本体是 .video-card，
+ *            上述选择器全部命中 0 个元素，必须直接选卡片本体。
+ *
+ * 因此选择器按「从具体到通用」排列，并保留 .video-card 兜底：
+ * 新结构下只有它命中，旧结构下前面的选择器先命中，行为保持不变。
+ */
 const homeVideoCardListSelector = [
+    '.video-card',                            // 新版（当前 BewlyCat）：卡片本体
     '.grid-adaptive>.video-card-container',   // ≤1.7.x：卡片即 grid item
     '.grid-adaptive>.video-card-slot',        // 1.8.0+：grid item 是 slot
-    '.virtual-rows>.virtual-item'//1.6.5
+    '.virtual-rows>.virtual-item'             // 1.6.5：虚拟滚动
 ].join(',')
 /**
  * 获取视频列表
@@ -86,10 +100,16 @@ const getVideoList = async () => {
     const list: any[] = [];
     const isBEWLYCatPluginVal = await isBEWLYCatPlugin()
     for (let el of elList) {
-        const titleEl = el.querySelector('.video-card-title>a');
+        // 增量扫描：已处理过的卡片直接跳过，省掉每张卡片 6+ 次 querySelector。
+        // 轮询每 3 秒跑一次，卡片数可能上百，全量重建数据是卡顿的主要来源。
+        if (el.dataset.gzScanned === '1') continue;
+        el.dataset.gzScanned = '1';
+        // 标题：新版 BewlyCat 用 h3.keep-two-lines>a，旧版用 .video-card-title>a，两者都兼容
+        const titleEl = el.querySelector('.video-card-title>a') ?? el.querySelector('h3.keep-two-lines a');
         const title = titleEl?.textContent.trim() ?? '';
-        const userUrlEl = el.querySelector('.channel-name');
-        const userUrl = userUrlEl?.href ?? '';
+        // UP 主：a.channel-name（新版带 a 前缀，旧版是裸 .channel-name）
+        const userUrlEl = el.querySelector('a.channel-name') ?? el.querySelector('.channel-name');
+        const userUrl = (userUrlEl as HTMLAnchorElement)?.href ?? '';
         const uid = urlUtil.getUrlUID(userUrl);
         const name = userUrlEl?.textContent.trim() ?? '';
         let nDuration, nPlayCount, bulletChat;
@@ -110,14 +130,35 @@ const getVideoList = async () => {
             } else {
                 bulletChat = strFormatUtil.toPlayCountOrBulletChat(bulletChat)
             }
+            // 新版 BewlyCat 没有 .video-card-cover-stats 与 flex 布局的播放信息容器，
+            // 数据改为纯文本放在 .group/desc 内，形如「7364 次•3  弹幕」「5 天前」。
+            // 这里按文本特征兜底提取，避免播放量/弹幕数恒为 null 导致相关规则失效。
+            if (nPlayCount === null) {
+                const descEl = el.querySelector('.group\\/desc');
+                if (descEl !== null) {
+                    const statLine = [...descEl.children]
+                        .map(child => (child.textContent ?? '').trim())
+                        .find(text => /次/.test(text) && /弹幕/.test(text));
+                    if (statLine !== undefined) {
+                        const playMatch = statLine.match(/([\d.]+\s*[万亿]?)\s*次/);
+                        const danmakuMatch = statLine.match(/•\s*([\d.]+\s*[万亿]?)/);
+                        nPlayCount = playMatch ? playMatch[1].trim() : null;
+                        bulletChat = danmakuMatch ? danmakuMatch[1].trim() : null;
+                    }
+                }
+            }
         }
         nDuration = strFormatUtil.timeStringToSeconds(nDuration)
         nPlayCount = strFormatUtil.toPlayCountOrBulletChat(nPlayCount)
         const videoUrl = el.querySelector('[href*="https://www.bilibili.com/video"]')?.href ?? '';
         const bv = urlUtil.getUrlBV(videoUrl)
+        // 屏蔽按钮插入点：新版用 .group/desc（标题+UP+数据的信息区），旧版用 .video-card-meta。
+        // 都找不到时退回卡片本体，保证按钮始终有落点，不会因结构变更而静默消失。
         const insertionPositionEl = el.querySelector('.video-card-meta')
-        let explicitSubjectEl;
-        explicitSubjectEl = el.querySelector('.vertical-card-cover+div');
+            ?? el.querySelector('.group\\/desc')
+            ?? el;
+        // 快捷屏蔽按钮的悬浮触发区：新版信息区在 .group/desc，旧版在封面同级 div
+        let explicitSubjectEl = el.querySelector('.vertical-card-cover+div') ?? el.querySelector('.group\\/desc');
         if (explicitSubjectEl === null) {
             explicitSubjectEl = el
         }
@@ -201,7 +242,9 @@ const startShieldingVideoList = async () => {
 //间隔执行屏蔽视频列表
 const intervalShieldingVideoListExecutor = new IntervalExecutor(startShieldingVideoList, {
     processTips: true,
-    intervalName: 'BEWLYCat插件视频列表'
+    intervalName: 'BEWLYCat插件视频列表',
+    // 配合增量扫描与 BV 去重，3 秒足够及时；原先 2 秒全量扫描开销过大
+    timeout: 3000,
 });
 
 //执行屏蔽历史记录中的视频

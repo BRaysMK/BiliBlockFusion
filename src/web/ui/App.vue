@@ -1,92 +1,41 @@
 <script setup lang="ts">
 import {ref, watch} from 'vue';
-import cacheManagementView from "./views/debug/cacheManagementView.vue";
 import panelSettingsView from "./views/settings/panelSettingsView.vue";
 import compatibleSettingView from "./views/settings/compatibleSettingView.vue";
 import lookContentDialog from "./dialogs/lookContentDialog.vue";
-import debuggerManagementView from './views/debug/debuggerManagementView.vue';
-import debuggerManagement from "../domain/debuggerManagement";
 import PageProcessingTabsView from "./views/page/PageProcessingTabsView.vue";
-import aboutAndFeedbackView from "./views/aboutAndFeedbackView.vue";
+import DiagnosticTabsView from "./views/DiagnosticTabsView.vue";
+import AboutTabsView from "./views/AboutTabsView.vue";
 import showImgDialog from "./dialogs/showImgDialog.vue";
 import sheetDialog from "./dialogs/sheetDialog.vue";
 import bulletWordManagementView from "./views/bulletWordManagementView.vue";
 import {eventEmitter} from "../core/EventEmitter.ts";
 import localMKData, {getDrawerShortcutKeyGm} from "../state/localMKData.ts";
-import outputInformationView from './views/debug/outputInformationView.vue'
-import donateLayoutView from './views/settings/donateLayoutView.vue'
 import ruleManagementView from './views/rule/ruleManagementView.vue'
 import excludeURLsView from './views/settings/excludeURLsView.vue'
 import RightFloatingLayoutView from "./views/settings/rightFloatingLayoutView.vue";
 import conditionalityView from './views/rule/conditionalityView.vue';
 import defUtil from "../core/util/defUtil.ts";
 import {ElMessageBox} from 'element-plus';
-import {nextTick} from 'vue';
 
 const drawer = ref(false);
 // 默认打开的tab
 const tabsActiveName = ref(GM_getValue('mainTabsActiveName', '规则管理'));
 const debug_panel_show = ref(__DEV__);
-// ws 开关开启后，生产构建也显示"调试测试"页签，便于随时关闭 ws 连接
-const ws_panel_show = ref(__DEV__ || debuggerManagement.isWsService());
 const isShowBackToTopVal = ref(localMKData.isShowBackToTopBtn());
 
-/** 开合动画令牌：递增序号，防止连续开关时旧动画/兜底回调覆盖新状态 */
-let drawerAnimToken = 0;
-
 /**
- * B 站页面环境下 EP drawer 的 Vue Transition 动画间歇性不完成（enter-from 类残留、面板卡在视口外），
- * 用 Web Animations API 手动驱动开合动画，绕开 Vue Transition 的不稳定性：
- * - 打开：从 translateX(100%) 滑入到 translateX(0)（direction=rtl，从右侧滑入）；
- * - 关闭：从 translateX(0) 滑出到 translateX(100%)（滑出到右侧），并确保 wrap 隐藏不残留；
- * - 动画开始前清理 wrap 上残留的 Vue Transition 动画类，避免 enter-from 把 transform 锁死；
- * - token 防竞态：连续开关时只有最新一次调用的回调能生效。
+ * 面板开合动画完全交给 Element Plus 原生的 Vue Transition 驱动。
+ *
+ * 历史教训（三条弯路，都已验证是错的）：
+ * 1. 用 Web Animations API 手写滑入/滑出：与 EP 自带的 .el-drawer-fade-* 过渡
+ *    争抢同一个 transform，表现为开合抽搐；finalize() 强行 display:none
+ *    又打断了 leave 过渡，导致关闭无动画。
+ * 2. 在 watch 里清理过渡类：清理时机与 Vue Transition 的类切换冲突，
+ *    反而让 Transition 完全不运行（实测开合瞬间类名全程不变）。
+ * 3. 因此这里不再对 drawer 的 DOM 做任何干预，纯靠 EP 的 v-model 驱动 Transition。
+ *    动画时长与曲线在下方 <style> 里通过 CSS 覆盖。
  */
-const animateDrawer = (open: boolean): void => {
-  const token = ++drawerAnimToken;
-  nextTick(() => {
-    const wrapEl = document.querySelector('.is-drawer.el-modal-drawer') as HTMLElement | null;
-    if (wrapEl) {
-      // 打开时确保 wrap 可见；清理 Vue Transition 残留动画类，避免锁死 transform
-      if (open) wrapEl.style.display = '';
-      wrapEl.classList.remove(
-        'el-drawer-fade-enter-from', 'el-drawer-fade-enter-active', 'el-drawer-fade-enter-to',
-        'el-drawer-fade-leave-from', 'el-drawer-fade-leave-active', 'el-drawer-fade-leave-to'
-      );
-    }
-    const drawerEl = document.querySelector('.el-drawer') as HTMLElement | null;
-    if (!drawerEl) return;
-    // 取消进行中的动画，避免叠加
-    drawerEl.getAnimations().forEach((anim) => anim.cancel());
-    const from = open
-      ? {transform: 'translateX(100%)'}
-      : {transform: 'translateX(0)'};
-    const to = open
-      ? {transform: 'translateX(0)'}
-      : {transform: 'translateX(100%)'};
-    // 动画结束/超时后：若仍是最新状态则强制归位（打开贴合右缘，关闭滑出右侧并隐藏 wrap）
-    const finalize = (): void => {
-      if (token !== drawerAnimToken) return; // 竞态：已有更新的开关请求，放弃本次
-      if (open) {
-        drawerEl.style.transform = 'translateX(0)';
-      } else {
-        drawerEl.style.transform = 'translateX(100%)';
-        if (wrapEl) wrapEl.style.display = 'none';
-      }
-    };
-    try {
-      drawerEl.animate([from, to], {duration: 280, easing: 'ease'}).finished.then(finalize).catch(finalize);
-    } catch (e) {
-      finalize();
-    }
-    // 超时兜底：动画异常不推进时也强制归位（仅最新状态）
-    setTimeout(finalize, 500);
-  });
-}
-
-watch(drawer, (open) => {
-  animateDrawer(open);
-});
 
 watch(tabsActiveName,(n)=>{
   GM_setValue('mainTabsActiveName', n);
@@ -122,11 +71,14 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
 
 <template>
   <div>
+    <!-- 浮层形态（对齐魔改版）：宽 60%、高 70%、距顶 15%，从左侧滑入。
+         EP 的 size 只控制宽度，高度由样式覆盖 -->
     <el-drawer :modal="false"
                v-model="drawer"
                :with-header="false"
-               direction="rtl"
-               size="100%"
+               direction="ltr"
+               size="60%"
+               class="gz-main-drawer"
                style="position: fixed">
       <el-tabs id="gz-drawer-tabs" v-model="tabsActiveName"
                type="border-card">
@@ -148,23 +100,16 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
         <el-tab-pane label="条件限制" lazy name="条件限制">
           <conditionalityView/>
         </el-tab-pane>
-        <el-tab-pane label="输出信息" name="输出信息">
-          <outputInformationView/>
-        </el-tab-pane>
-        <el-tab-pane label="缓存管理" lazy name="缓存管理">
-          <cacheManagementView/>
+        <!-- 诊断：合并原「输出信息」「缓存管理」「调试测试」三个排查类页签 -->
+        <el-tab-pane label="诊断" name="诊断">
+          <DiagnosticTabsView/>
         </el-tab-pane>
         <el-tab-pane v-if="debug_panel_show" label="弹幕词管理" lazy name="弹幕词管理">
           <bulletWordManagementView/>
         </el-tab-pane>
-        <el-tab-pane label="支持打赏" lazy name="支持打赏">
-          <donateLayoutView/>
-        </el-tab-pane>
-        <el-tab-pane label="关于和问题反馈" lazy name="关于和问题反馈">
-          <aboutAndFeedbackView/>
-        </el-tab-pane>
-        <el-tab-pane v-if="ws_panel_show" label="调试测试" lazy name="调试测试">
-          <debuggerManagementView/>
+        <!-- 关于：合并原「支持打赏」「关于和问题反馈」两个信息展示类页签 -->
+        <el-tab-pane label="关于" lazy name="关于">
+          <AboutTabsView/>
         </el-tab-pane>
       </el-tabs>
     </el-drawer>
@@ -186,16 +131,21 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
    所有颜色/间距/圆角/阴影均取自 --fluent-* 令牌，随 .gz-theme-* 自动切换亮暗。
    ========================================================================== */
 
-/* ---- 抽屉容器：画布层 ---- */
+/* ---- 抽屉容器：画布层 ----
+   用 Background2 而非 Background3：深色下 Background3 是 #141414，
+   与卡片 #292929 相差两档，视觉割裂；Background2 形成「画布 → 卡片」的柔和层次 */
 #gz-drawer-tabs {
-  background: var(--fluent-color-neutral-background-3);
+  background: var(--fluent-color-neutral-background-2);
 }
 
-/* 标签页内容区：去内边距，由各视图自己控制留白 */
+/* 标签页内容区
+   - 背景用 Background2（次级表面）：与卡片 Background1 形成层次但不产生过暗反差
+     （用 Background3 会在深色下变成近乎纯黑，与卡片割裂）
+   - 自身不滚动，由抽屉 body 统一滚动，避免双重滚动条 */
 #gz-drawer-tabs > .el-tabs__content {
   padding: 0;
-  background: var(--fluent-color-neutral-background-3);
-  overflow-y: auto;
+  background: var(--fluent-color-neutral-background-2);
+  overflow: visible;
 }
 
 /* ---- 标签页外壳：一级表面 ---- */
@@ -205,6 +155,15 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   border-radius: var(--fluent-border-radius-x-large);
   box-shadow: var(--fluent-shadow-4);
   overflow: hidden;
+  /* 注意：这里曾用 height:100% + flex 撑满高度，副作用是把内容区高度锁死，
+     导致内容超出时不产生溢出、抽屉 body 的 overflow:auto 失效、面板无法滚动。
+     改为 min-height 让内容自然撑高，由抽屉 body 统一滚动。 */
+  min-height: 100%;
+}
+
+/* 内容区不再限制高度：内容多时自然撑高，交给抽屉 body 滚动 */
+#gz-drawer-tabs > .el-tabs__content {
+  overflow: visible;
 }
 
 /* ---- 标签页头：次级表面 + 吸顶 ---- */
@@ -216,6 +175,18 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   top: 0;
   z-index: 10;
   border-radius: 0;
+  /* 面板宽 60% 时 12 个页签放不下，允许横向滚动而不是挤压换行 */
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* 页签横向滚动时隐藏滚动条，保持 Fluent 的干净观感 */
+#gz-drawer-tabs.el-tabs--border-card > .el-tabs__header::-webkit-scrollbar {
+  height: 0;
+}
+
+#gz-drawer-tabs.el-tabs--border-card > .el-tabs__header .el-tabs__nav-wrap {
+  overflow: visible;
 }
 
 #gz-drawer-tabs.el-tabs--border-card > .el-tabs__header .el-tabs__nav {
@@ -226,7 +197,12 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   border: none;
   height: 44px;
   line-height: 44px;
-  padding: 0 var(--fluent-spacing-horizontal-l);
+  /* 水平 padding 用 S(8px) 而非 L(16px)：实测 12 个页签文字总宽 728px，
+     16px 两侧会让总宽达到 1112px 而溢出容器（978px）；
+     降到 8px 后总宽 824px，全部页签一屏可见，无需滚动或省略 */
+  padding: 0 var(--fluent-spacing-horizontal-s);
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: var(--fluent-font-size-base-300);
   font-weight: var(--fluent-font-weight-medium);
   color: var(--fluent-color-neutral-foreground-3);
@@ -262,9 +238,44 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   padding: var(--fluent-spacing-vertical-l) var(--fluent-spacing-horizontal-l);
 }
 
-/* ---- 抽屉本体：浮层表面 + 大圆角（沿用魔改版的 70% 高度浮层形态）---- */
-.el-drawer {
-  background: var(--fluent-color-neutral-background-3);
+/* ---- 抽屉本体：60% 宽 × 70% 高的浮层（对齐魔改版形态）----
+   魔改版的设计是「不铺满全屏」的浮层：宽 60%、距顶 15%、高 70%、
+   从左侧滑入、只圆右侧两角，视觉上是悬浮面板而非全屏抽屉。
+   宽度由模板 size="60%" 控制（EP 会写成 inline width），
+   高度/位置用 !important 覆盖，因为 EP 对 ltr 方向不提供垂直尺寸控制。 */
+/* 必须用 .gz-main-drawer 限定：面板内的「查看规则内容」「查看内容」等子抽屉
+   同样是 .el-drawer.ltr，用裸类选择器会把它们也套上 60%×70% 浮层样式，
+   导致子抽屉错位、并让主面板 querySelector('.el-drawer') 取到错误元素。 */
+.el-drawer.gz-main-drawer {
+  top: 15% !important;
+  height: 70% !important;
+  border-radius: 0 var(--fluent-border-radius-x-large) var(--fluent-border-radius-x-large) 0 !important;
+  box-shadow: var(--fluent-shadow-64) !important;
+  background: var(--fluent-color-neutral-background-2);
+  overflow: hidden;
+}
+
+/* 开合过渡：EP 默认用 --el-transition-duration（约 0.3s）线性过渡，
+   这里换成 Fluent 的缓动曲线，滑入更自然、关闭也走同一套过渡 */
+.el-drawer-fade-enter-active,
+.el-drawer-fade-leave-active {
+  transition: opacity 280ms cubic-bezier(0.33, 0, 0.67, 1) !important;
+}
+
+.el-drawer-fade-enter-active .el-drawer,
+.el-drawer-fade-leave-active .el-drawer {
+  transition: transform 280ms cubic-bezier(0.33, 0, 0.67, 1) !important;
+}
+
+/* 浮层右侧描边，强化「悬浮卡片」的边界感 */
+.el-drawer.gz-main-drawer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 1px;
+  background: var(--fluent-color-neutral-stroke-2);
 }
 
 .el-drawer__body {

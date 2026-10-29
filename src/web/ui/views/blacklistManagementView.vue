@@ -226,7 +226,7 @@ queue.setInterval(sliderInterval.value * 1000);
               </el-card>
               <el-button @click="getOnePageDataBut">获取第一页</el-button>
               <el-button @click="getAllBut">获取全部</el-button>
-              <el-button type="warning" @click="clearTableBut">清空列表</el-button>
+              <el-button type="danger" size="small" @click="clearTableBut">清空列表</el-button>
               <el-button @click="outDataToConsoleBut">导出控制台</el-button>
               <el-button @click="outDataToFileBut">导出文件</el-button>
             </div>

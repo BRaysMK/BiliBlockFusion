@@ -68,7 +68,7 @@ updateInfo();
             <li>最后因为设置限制条件冲突或限制太多，视频未能限制的情况下，请按需设置限制条件</li>
           </ol>
         </el-card>
-        <el-button @click="updateInfo(true)">刷新</el-button>
+        <el-button type="primary" size="small" @click="updateInfo(true)">刷新</el-button>
         <div v-for="v in showInfoList" :key="v.label">
           {{ v.label }}
           <el-tag>{{ v.showVal }}</el-tag>

@@ -51,7 +51,7 @@ tail.value = arr[1];
       <el-input v-model.number="tail" style="width: 30%;">
         <template #prepend>最大</template>
       </el-input>
-      <el-button @click="setRangeBut">设置</el-button>
+      <el-button type="primary" size="small" @click="setRangeBut">设置</el-button>
     </el-card>
   </div>
 </template>

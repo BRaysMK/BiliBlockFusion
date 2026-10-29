@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import PageProcessingView from "./pageProcessingView.vue";
 import LivePartitionPageProcessingTabVIew from "./LivePartitionPageProcessingTabVIew.vue";
 import dynamicCard from "./dynamicCard.vue";

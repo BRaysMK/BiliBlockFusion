@@ -87,7 +87,7 @@ refresh();
           <el-table-column label="操作">
             <template #default="scope">
               <gz-space>
-                <el-button type="warning" @click="delBut(scope.row)">移除</el-button>
+                <el-button type="danger" size="small" @click="delBut(scope.row)">移除</el-button>
                 <el-button @click="setFansNameBut(scope.row)">修改粉丝牌</el-button>
               </gz-space>
             </template>
@@ -99,9 +99,9 @@ refresh();
           <template #header>
             <gz-space>
               <span>说明</span>
-              <el-button type="success" @click="saveBut">保存</el-button>
+              <el-button type="primary" size="small" @click="saveBut">保存</el-button>
               <el-button @click="refresh(true)">刷新</el-button>
-              <el-button type="info" @click="addBut">添加</el-button>
+              <el-button type="primary" size="small" @click="addBut">添加</el-button>
             </gz-space>
           </template>
           <div>

@@ -1,12 +1,11 @@
 {
-  "@name": "哔哩哔哩屏蔽增强器",
-  "alias": "BIBIShield_v2",
-  "@namespace": "http://tampermonkey.net/",
+  "@name": "BiliBlockFusion",
+  "@namespace": "https://github.com/BRaysMK/BiliBlockFusion",
   "@license": "Apache-2.0",
-  "@version": "2.18.1",
-  "@author": "byhgz",
-  "@description": "对B站视频或评论进行屏蔽，支持关键词模糊正则等，支持时长播放弹幕过滤等，如视频、评论、动态、直播间的评论等，详情可看下面支持的屏蔽类型",
-  "@icon": "https://static.hdslb.com/images/favicon.ico",
+  "@version": "1.2.0",
+  "@author": "BRaysMK",
+  "@description": "B 站内容过滤：按标题/UP主/标签/时长/播放量等规则屏蔽视频、评论、动态、热搜、直播间",
+  "@icon": "https://www.bilibili.com/favicon.ico",
   "@noFrames": true,
   "@runAt": "document-start",
   "@grant": [
@@ -43,7 +42,6 @@
   "@require": [
     "https://unpkg.com/dexie@4.2.0/dist/dexie.min.js"
   ],
-  "@source": "https://gitee.com/hangexi/BiBiBSPUserVideoMonkeyScript",
-  "homepage": "https://scriptcat.org/zh-CN/script-show-page/1029"
+  "@homepageURL": "https://github.com/BRaysMK/BiliBlockFusion",
+  "@supportURL": "https://github.com/BRaysMK/BiliBlockFusion/issues"
 }
-

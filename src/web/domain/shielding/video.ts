@@ -9,7 +9,9 @@ import localMKData, {
     getMinimumPlayGm,
     isCommentDisabledVideosBlockedGm,
     isEffectiveUIDShieldingOnlyVideo,
-    isFollowers7DaysOnlyVideosBlockedGm,
+    isFollowers7DaysOnlyVideosBlockedGm,
+    getShieldModeGm,
+    isOverlayOnlyTypeGm,
     isMaximumBarrageGm,
     isMaximumDurationGm,
     isMaximumPlayGm,
@@ -18,6 +20,7 @@ import localMKData, {
     isMinimumPlayGm,
     isVideosInFeaturedCommentsBlockedGm
 } from "../../state/localMKData.ts";
+import {createOverlay, removeGridItem} from "./overlay.ts";
 import ruleKeyListData from "../../config/ruleKeyListData.ts";
 import shielding, {
     asyncBlockAvatarPendant,
@@ -215,16 +218,67 @@ export const shieldingVideo = (videoData: SyncVideoData): BlockResult => {
     return returnTempVal;
 }
 
+/* ==========================================================================
+   去重：避免每轮轮询重复跑规则匹配与 API 请求
+   --------------------------------------------------------------------------
+   首页列表由 IntervalExecutor 每 3 秒轮询一次，同一批卡片会被反复扫描。
+   若不记录已处理状态，每轮都要重跑全部同步规则、并对未命中缓存的 BV
+   重复发起网络请求——这是脚本卡顿的主要来源。
+   ========================================================================== */
+
+/** 已完整处理过的 BV（同步规则命中或异步链路已走完），避免重复处理 */
+const processedBVs = new Set<string>();
+/** 集合上限：超出后按插入顺序淘汰最旧的，防止长时间运行内存无限增长 */
+const MAX_PROCESSED_BVS = 1000;
+/** 正在异步处理中的 BV，防止并发重复进入异步管道 */
+const processingBVs = new Set<string>();
+
+/**
+ * 记录一个 BV 为已处理
+ * @param bv 视频 bv 号
+ */
+const addProcessedBV = (bv: string): void => {
+    if (bv === '-1' || bv === '') return;
+    processedBVs.add(bv);
+    if (processedBVs.size > MAX_PROCESSED_BVS) {
+        // Set 保持插入顺序，从最早的开始删
+        const overflow = processedBVs.size - MAX_PROCESSED_BVS;
+        let count = 0;
+        for (const key of processedBVs) {
+            if (count++ >= overflow) break;
+            processedBVs.delete(key);
+        }
+    }
+};
+
+/**
+ * 清除某个 BV 的已处理标记
+ *
+ * 白名单解除屏蔽、规则被删除后需要重新处理该视频时调用。
+ * @param bv 视频 bv 号
+ */
+export const clearProcessedBV = (bv: string): void => {
+    processedBVs.delete(bv);
+};
+
 /** 装饰版异步视频屏蔽：先同步检查，通过后触发异步获取详细视频信息进行深度检查 */
 const shieldingVideoDecorated = async (videoData: VideoData, method: string = "remove"): Promise<void> => {
-    const {el, bv = "-1"} = videoData;
+    const {el} = videoData;
+    // 解构默认值只对 undefined 生效，bv 可能是 null，这里统一收敛为字符串
+    const bv: string = videoData.bv ?? '-1';
+    // 隐藏模式下卡片被设为 display:none；叠加层模式下该判断不生效，靠 processedBVs 兜底
     if (el.style.display === "none") return promiseResolve;
+    // 已完整处理过 → 跳过，避免重复跑规则与请求
+    if (bv !== '-1' && processedBVs.has(bv)) return promiseReject;
     const {state, type, matching = null} = shieldingVideo(videoData);
     if (state) {
+        addProcessedBV(bv);
         eventEmitter.send('event-屏蔽视频元素', {res: {state, type, matching}, method, videoData})
         return promiseResolve;
     }
     if (bv === '-1') return promiseReject;
+    // 同一 BV 正在异步处理中 → 跳过，防止并发重复请求
+    if (processingBVs.has(bv)) return promiseReject;
     eventEmitter.emitAsync('event:检查其他视频参数', videoData, method)
     return promiseReject;
 }
@@ -233,40 +287,74 @@ const shieldingVideoDecorated = async (videoData: VideoData, method: string = "r
 eventEmitter.on('event:检查其他视频参数', async (videoData: VideoData, method: string) => {
     const {bv = "-1"} = videoData;
     const bvStr = bv ?? '';
-    let videoRes = await videoCacheManager.find(bvStr);
-    if (videoRes === null) {
-        const disableNetRequestsBvVideoInfo = localMKData.isDisableNetRequestsBvVideoInfo();
-        if (disableNetRequestsBvVideoInfo) {
-            return promiseReject;
-        } else {
-            const httpRes = await bvRequestQueue.videoInfoRequestQueue.addBv(bvStr)
-            const {msg, data} = httpRes
-            if (!httpRes.state) {
-                console.warn('获取视频信息失败:' + msg);
+    // 并发保护：同一 BV 只允许一个异步链路在跑
+    if (processingBVs.has(bvStr)) return promiseReject;
+    processingBVs.add(bvStr);
+    try {
+        let videoRes = await videoCacheManager.find(bvStr);
+        if (videoRes === null) {
+            const disableNetRequestsBvVideoInfo = localMKData.isDisableNetRequestsBvVideoInfo();
+            if (disableNetRequestsBvVideoInfo) {
                 return promiseReject;
-            }
-            videoRes = data as any
-            if ((await bvDexie.addVideoData(bvStr, data as any))) {
-                console.log('mk-db-添加视频信息到数据库成功', '获取视频信息成功:' + msg, data, videoData)
-                videoCacheManager.updateCacheDebounce()
+            } else {
+                const httpRes = await bvRequestQueue.videoInfoRequestQueue.addBv(bvStr)
+                const {msg, data} = httpRes
+                if (!httpRes.state) {
+                    console.warn('获取视频信息失败:' + msg);
+                    return promiseReject;
+                }
+                videoRes = data as any
+                if ((await bvDexie.addVideoData(bvStr, data as any))) {
+                    console.log('mk-db-添加视频信息到数据库成功', '获取视频信息成功:' + msg, data, videoData)
+                    videoCacheManager.updateCacheDebounce()
+                }
             }
         }
-    }
-    const verificationIns = await shieldingOtherVideoParameter(videoRes as any, videoData);
-    if (verificationIns.state) {
-        eventEmitter.send('event-屏蔽视频元素', {res: verificationIns, method, videoData})
+        const verificationIns = await shieldingOtherVideoParameter(videoRes as any, videoData);
+        if (verificationIns.state) {
+            addProcessedBV(bvStr);
+            eventEmitter.send('event-屏蔽视频元素', {res: verificationIns, method, videoData})
+            return promiseResolve;
+        }
+        // 未命中任何规则也记录，避免下一轮重复走异步链路
+        addProcessedBV(bvStr);
+        return promiseReject;
+    } finally {
+        processingBVs.delete(bvStr);
     }
 })
 
-/** 统一屏蔽视频元素事件处理，根据method执行remove或hide操作 */
+/**
+ * 统一屏蔽视频元素事件处理
+ *
+ * 默认走叠加层模式：在卡片上盖半透明遮罩，不删除节点、不改 display。
+ * 原因：BewlyBewly 是 Vue 虚拟列表，删除 .video-card 后其外层 Vue 组件外壳
+ * 仍保留原高度，网格中出现大量空壳占位、页面大片空白，后续卡片无法顶上来。
+ *
+ * 隐藏模式（设置项 hide_video_mode = true）保留原有 remove / display:none 行为，
+ * 适用于非 Bewly 页面或用户明确希望卡片直接消失的场景。
+ */
 eventEmitter.on('event-屏蔽视频元素', ({res, method = "remove", videoData}: ShieldVideoEventData) => {
     if (!res) return
     const {type, matching} = res
     const {el} = videoData
-    if (method === "remove") {
-        el?.remove();
-    } else {
+    if (!el) return
+    // 三种模式：
+    // - remove（默认）：删除整个网格项外壳，后续卡片顶上来
+    // - overlay：保留 DOM，覆盖半透明遮罩
+    // - hide：仅 display:none，保留占位
+    const mode = getShieldModeGm();
+    if (mode === 'overlay') {
+        const typeText: string = type ?? '已屏蔽';
+        const reason: string = isOverlayOnlyTypeGm()
+            ? typeText
+            : (matching === null || matching === undefined || matching === '' ? typeText : `${typeText}: ${matching}`);
+        createOverlay(el as HTMLElement, reason);
+    } else if (mode === 'hide') {
         el.style.display = "none";
+    } else {
+        // remove：必须删网格项外壳，只删卡片会留下空壳占位
+        removeGridItem(el as HTMLElement);
     }
     // 只取安全字段用于日志快照，避免深拷贝含 Vue 响应式实例的整个 videoData 导致卡死
     const safeData = {

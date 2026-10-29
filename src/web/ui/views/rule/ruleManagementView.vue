@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import replProcessingView from "../replProcessingView.vue";
 import timeRangeMaskingView from "../shield/timeRangeMaskingView.vue";
 import videoMetricsFilterView from "../shield/videoMetricsFilterView.vue";
@@ -15,7 +15,8 @@ import CombinationRuleView from "../glory/CombinationRuleView.vue";
 
 <template>
   <div>
-    <el-tabs id="规则管理" tab-position="left" type="border-card">
+    <!-- 样式与「页面处理」保持一致：左侧页签，不用 border-card 外观 -->
+    <el-tabs tab-position="left">
       <el-tab-pane label="基础规则">
         <basicRulesView/>
       </el-tab-pane>
@@ -53,9 +54,3 @@ import CombinationRuleView from "../glory/CombinationRuleView.vue";
     <viewRulesRuleDialog/>
   </div>
 </template>
-<style>
-/*调整规则管理tabs容器的边距*/
-#规则管理 > .el-tabs__content {
-  padding: 5px 0;
-}
-</style>

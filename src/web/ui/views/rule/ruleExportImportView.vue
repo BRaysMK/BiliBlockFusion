@@ -145,8 +145,8 @@ for (const v of ruleKeyListData.getRuleKeyListData()) {
       <el-divider/>
       <div>
         <el-button @click="inputFIleRuleBut">读取外部规则文件</el-button>
-        <el-button @click="overwriteImportRulesBut">覆盖导入规则</el-button>
-        <el-button @click="appendImportRulesBut">追加导入规则</el-button>
+        <el-button type="danger" size="small" @click="overwriteImportRulesBut">覆盖导入规则</el-button>
+        <el-button type="primary" size="small" @click="appendImportRulesBut">追加导入规则</el-button>
       </div>
       <el-divider/>
       <div>

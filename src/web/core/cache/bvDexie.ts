@@ -83,7 +83,11 @@ const addVideoData = async (bv: string, data: {
     const {tags, userInfo, videoInfo} = data
 
     try {
-        await mk_db.videoInfos.add({
+        // 用 put 而非 add：表主键是 bv，add 在记录已存在时会抛 ConstraintError。
+        // 首页补载/快速滚动时同一视频会被多轮屏蔽扫描重复命中，
+        // 用 add 会刷出大量「添加视频数据失败」警告并让缓存写入静默失败。
+        // put 语义为「存在则覆盖」，与这里的刷新过期时间意图一致。
+        await mk_db.videoInfos.put({
             bv, tags, userInfo, videoInfo,
             expiresMaxAge: getFutureTimestamp(getExpiresMaxAgeGm())
         })
