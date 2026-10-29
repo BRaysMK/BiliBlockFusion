@@ -4,7 +4,6 @@ import localMKData, {enableDynamicItemsContentBlockingGm, hidePersonalInfoCardGm
 import hotSearch from "../search/hot.ts";
 import dynamicCommon from "./common.ts";
 import cssManager from "../../domain/cssManager.ts";
-import {eventEmitter} from "@/core/EventEmitter.ts";
 import {sendShieldLog} from "@/core/shieldLog.ts";
 
 //是否是动态首页

@@ -275,5 +275,3 @@ export const sendShieldLog = (event: ShieldLogEvent): void => {
     eventEmitter.send(SHIELD_LOG_EVENT, event);
 };
 
-export const isValidSource = (value: unknown): value is ShieldSource => sources.includes(value as ShieldSource);
-export const isValidObjectType = (value: unknown): value is ShieldObjectType => objectTypes.includes(value as ShieldObjectType);

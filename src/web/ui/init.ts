@@ -1,4 +1,3 @@
-import localMKData from "../state/localMKData";
 import defCss from './styles/def.css?raw'
 import {addGzStyle, initVueApp} from "../core/util/defUtil.ts";
 import App from "./App.vue";
@@ -53,12 +52,6 @@ onDomReady(() => {
     // 主题同步（跟随 B 站深色主题，切换面板根节点的 Fluent 令牌作用域）
     darkTheme.startThemeSync();
 })
-
-GM_addStyle(`
-[gz_bezel]{
-border:1px solid ${localMKData.getBorderColor()}
-}
-`);
 
 GM_addStyle(defCss)
 

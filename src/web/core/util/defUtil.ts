@@ -69,24 +69,12 @@ const handleFileReader = (event: Event): Promise<{ file: File; content: string }
     });
 }
 
-/**
- * 判断对象是否可迭代
- * 1.array可迭代
- * 2.string可迭代
- * 3.map可迭代
- * 4.set可迭代
- * 5.类数组对象可迭代
- * @param obj {any}
- * @returns {boolean}
- */
+/** 判断对象是否可迭代（array / string / map / set / 类数组） */
 const isIterable = (obj: any): boolean => {
     return obj != null && typeof obj[Symbol.iterator] === 'function';
 }
 
-/**
- * 返回当前时间
- * @returns {String}
- */
+/** 返回当前时间字符串 */
 const toTimeString = (): string => {
     return new Date().toLocaleString();
 }
@@ -124,59 +112,6 @@ function throttle<T extends (...args: any[]) => any>(func: T, limit: number): (.
     };
 }
 
-
-/**
- * 异步节流函数
- * @param asyncFunc {function} 需要节流的异步函数
- * @param limit {number} 节流时间，单位毫秒，默认为 1000毫秒
- * @returns {(function(...[*]): Promise<void>)|*}
- */
-function throttleAsync<T extends (...args: any[]) => Promise<any>>(asyncFunc: T, limit: number) {
-    let isThrottled = false;
-    let pendingArgs: Parameters<T> | null = null;
-    let pendingContext: any = null;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    let pendingPromiseResolve: ((value: any) => void) | null = null;
-
-    const throttled = async function (this: any, ...args: Parameters<T>): Promise<ReturnType<T>> {
-        const context = this;
-
-        if (isThrottled) {
-            return new Promise((resolve) => {
-                pendingArgs = args;
-                pendingContext = context;
-                pendingPromiseResolve = resolve;
-            }) as Promise<ReturnType<T>>;
-        }
-
-        isThrottled = true;
-
-        try {
-            return await asyncFunc.apply(context, args);
-        } finally {
-            timeoutId = setTimeout(() => {
-                isThrottled = false;
-
-                if (pendingArgs) {
-                    throttled.apply(pendingContext, pendingArgs).then(pendingPromiseResolve as any);
-                    pendingArgs = null;
-                    pendingContext = null;
-                    pendingPromiseResolve = null;
-                }
-            }, limit);
-        }
-    };
-
-    (throttled as any).cancel = () => {
-        clearTimeout(timeoutId);
-        isThrottled = false;
-        pendingArgs = null;
-        pendingContext = null;
-        pendingPromiseResolve = null;
-    };
-
-    return throttled as T & { cancel: () => void };
-}
 
 /**
  *获取localStorage指定key数据
@@ -266,13 +201,7 @@ const formatTimestamp = (timestamp: number | string, options: FormatTimestampOpt
         .replace(/s/g, String(timeObj.seconds))
 }
 
-/**
- * 求点赞率
- * 由于精度问题，其值为整数，如 结果0.9，等于90%返回值为90
- * @param likeCount {number} 点赞数
- * @param viewCount {number} 播放数
- * @returns {number}
- */
+/** 求点赞率，返回整数百分比（0.9 → 90） */
 const calculateLikeRate = (likeCount: number, viewCount: number): number => {
     if (viewCount === 0) {
         return 0;
@@ -280,42 +209,22 @@ const calculateLikeRate = (likeCount: number, viewCount: number): number => {
     return parseInt((likeCount / viewCount) * 100 as any)
 }
 
-/**
- * 求互动率
- * @param danmaku {number} 弹幕数
- * @param reply {number} 评论数
- * @param view {number} 播放数
- */
+/** 求互动率 (danmaku+reply)/view，返回整数百分比 */
 const calculateInteractionRate = (danmaku: number, reply: number, view: number): number => {
     return parseInt((danmaku + reply) / view * 100 as any)
 }
 
-/**
- * 求视频三连率
- * @param favorite {number} 收藏数
- * @param coin {number} 投币数
- * @param share {number} 分享数
- * @param view {number} 播放数
- */
+/** 求三连率 (favorite+coin+share)/view，返回整数百分比 */
 const calculateTripleRate = (favorite: number, coin: number, share: number, view: number): number => {
     return parseInt((favorite + coin + share) / view * 100 as any)
 }
 
-/**
- * 求投币点赞比
- * @param coin {number} 投币数
- * @param like {number} 点赞数
- * @returns {number}
- */
+/** 求投币/点赞比，返回整数百分比 */
 const calculateCoinLikesRatioRate = (coin: number, like: number): number => {
     return parseInt((coin / like) * 100 as any)
 }
 
-/**
- * 插个人常用样式
- * @param el {Document}该元素下是否已经插入过样式
- * @param insertionPosition {Element|Document} 要插入样式的位置
- */
+/** 插入脚本通用样式（幂等：已插入则跳过） */
 export const addGzStyle = (el: Document | Element, insertionPosition: Element | Document = document.head): void => {
     const styleEl = el.querySelector("style[gz_style]");
     if (styleEl !== null) {
@@ -336,14 +245,7 @@ export function initVueApp(el: string | Element, RootComponent: any, props: Reco
     return app;
 }
 
-/**
- * 计算未来时间戳
- * @param {number} days - 天数偏移量，默认为0
- * @param {number} hours - 小时数偏移量，默认为0
- * @param {number} minutes - 分钟数偏移量，默认为0
- * @param {number} seconds - 秒数偏移量，默认为0
- * @returns {number} 未来时间戳-毫秒级
- */
+/** 计算从现在起偏移若干天/时/分/秒后的毫秒级时间戳 */
 export function getFutureTimestamp(days: number = 0, hours: number = 0, minutes: number = 0, seconds: number = 0): number {
     const now = new Date();
 

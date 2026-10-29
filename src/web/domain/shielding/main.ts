@@ -27,7 +27,6 @@ import type {
     ExactFuzzyMatchConfig,
     Dimension,
     TeamMember,
-    TimeRangeItem,
     DynamicContentRuleArrMap,
 } from "@/types/shielding";
 

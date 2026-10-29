@@ -15,7 +15,7 @@ import msgReply from "../pages/message/reply.ts";
 import msgWhisper from "../pages/message/whisper.ts";
 import topicDetail from "../pages/topicDetail.ts";
 
-const observeNetwork = (url: string, windowUrl: string, winTitle: string, initiatorType: string): void => {
+const observeNetwork = (url: string, windowUrl: string, winTitle: string): void => {
     if (!url.includes('api')) return;
     if (checkAndExcludePage(windowUrl)) {
         throw new Error('stopPerformanceObserver')

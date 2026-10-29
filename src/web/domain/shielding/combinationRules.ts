@@ -19,12 +19,6 @@ interface CombinationRuleItem {
     value: string;
 }
 
-interface CombinationRulePlan {
-    name: string;
-    status: boolean;
-    ruleList: CombinationRuleItem[];
-}
-
 interface CombinationRuleData {
     title: string;
     tags: string[];
@@ -51,7 +45,7 @@ const verifyCombinationRuleItem = (data: CombinationRuleData, ruleList: Combinat
         return false
     }
     for (let itemRule of ruleList) {
-        const {key, mode, value} = itemRule
+        const {key, value} = itemRule
         if (key === "videoTitle") {
             if (title.search(value) === -1) {
                 return false

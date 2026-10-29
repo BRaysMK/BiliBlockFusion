@@ -5,7 +5,6 @@ import type {
     BarrageRule,
     BarrageBlockingResult,
     AttentionResult,
-    VideoStat,
     VideoInfo,
     UserInfo,
     FetchVideoInfoResult,

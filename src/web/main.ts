@@ -19,7 +19,7 @@ import liveRoomModel from "./pages/live/roomModel.ts";
 const onPageLoad = () => {
     console.log('页面加载完成');
     router.staticRoute(document.title, window.location.href);
-    watchUtil.addEventListenerUrlChange((newUrl, oldUrl, title) => {
+    watchUtil.addEventListenerUrlChange((newUrl, _oldUrl, title) => {
         router.dynamicRouting(title, newUrl);
     })
 }
@@ -31,8 +31,8 @@ if (document.readyState === 'complete') {
     window.addEventListener('load', onPageLoad)
 }
 
-watchUtil.addEventListenerNetwork((url, windowUrl, winTitle, initiatorType) => {
-    observeNetwork.observeNetwork(url, windowUrl, winTitle, initiatorType)
+watchUtil.addEventListenerNetwork((url, windowUrl, winTitle) => {
+    observeNetwork.observeNetwork(url, windowUrl, winTitle)
 }, (url, winUrl) => {
     if (url.search('https://i1.hdslb.com/bfs/live/.*.png') !== -1 && liveRoomModel.isLiveRoom(winUrl)) {
         return liveRoomModel.sendBulletGloryLevelList()

@@ -4,52 +4,8 @@ import type {
     GloryLevelMappingItem,
     GloryLevelLimitItem,
     FansLevelLimitItem,
-    CombinationRuleItem,
     CombinationRuleListItem,
 } from "@/types/storage";
-
-/** 设置面板边框颜色 */
-const setBorderColor = (color: string): void => {
-    GM_setValue("borderColor", color)
-}
-
-const defBorderColor: string = "rgb(0, 243, 255)"
-
-/** 获取面板边框颜色，默认 rgb(0, 243, 255) */
-const getBorderColor = (): string => {
-    return GM_getValue("borderColor", defBorderColor)
-}
-
-/** 设置输出信息字体颜色 */
-const setOutputInformationFontColor = (color: string): void => {
-    GM_setValue("output_information_font_color", color)
-}
-
-const defOutputInformationFontColor: string = "rgb(119,128,248)"
-
-/** 获取输出信息字体颜色，默认 rgb(119,128,248) */
-const getOutputInformationFontColor = (): string => {
-    return GM_getValue("output_information_font_color", defOutputInformationFontColor)
-}
-
-/** 设置高亮信息颜色 */
-const setHighlightInformationColor = (color: string): void => {
-    GM_setValue("highlight_information_color", color)
-}
-
-const defHighlightInformationColor: string = "rgb(234, 93, 93)"
-
-/** 获取高亮信息颜色，默认 rgb(234, 93, 93) */
-const getHighlightInformationColor = (): string => {
-    return GM_getValue("highlight_information_color", defHighlightInformationColor)
-}
-
-/** 设置配置默认颜色（边框、输出字体、高亮信息） */
-const setDefaultColorInfo = (): void => {
-    setBorderColor(defBorderColor)
-    setOutputInformationFontColor(defOutputInformationFontColor)
-    setHighlightInformationColor(defHighlightInformationColor)
-}
 
 /** 获取是否只对首页屏蔽 */
 const getBOnlyTheHomepageIsBlocked = (): boolean => {
@@ -535,14 +491,10 @@ export const getHomeFeedLoadAttemptsGm = (): number => {
 export type ShieldMode = 'remove' | 'overlay' | 'hide';
 
 /**
- * 获取视频屏蔽方式，默认 remove（删除网格项，后续卡片顶上）
+ * 获取视频屏蔽方式，默认 remove。
  *
- * - remove：删除整个网格项外壳，卡片真正消失、后续卡片顶上来（默认）
- * - overlay：保留卡片并覆盖半透明遮罩，显示屏蔽原因
- * - hide：仅 display:none，保留占位（页面会出现空白）
- *
- * 注意：BewlyBewly 下只删除 .video-card 会留下 279px 的空壳占位，
- * 因此 remove 模式必须删整个网格项（见 overlay.ts 的 removeGridItem）。
+ * remove 删整个网格项（只删 .video-card 会留 279px 空壳）、overlay 盖遮罩、hide 仅 display:none。
+ * 兼容旧键：hide_video_mode = true 视为 hide。
  */
 export const getShieldModeGm = (): ShieldMode => {
     const value: unknown = GM_getValue('shield_mode', 'remove')
@@ -591,15 +543,8 @@ export const isDelLiveBottomBannerAdGm = (): boolean => {
 export default {
     getTripleRate,
     isTripleRateBlockingStatus,
-    setBorderColor,
-    getBorderColor,
-    setOutputInformationFontColor,
-    getOutputInformationFontColor,
-    setHighlightInformationColor,
-    getHighlightInformationColor,
     getBOnlyTheHomepageIsBlocked,
     getAdaptationBAppCommerce,
-    setDefaultColorInfo,
     isCompatible_BEWLY_BEWLY,
     isDiscardOldCommentAreas,
     isShowRightTopMainButSwitch,

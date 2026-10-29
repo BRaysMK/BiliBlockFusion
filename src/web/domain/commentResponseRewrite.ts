@@ -1,5 +1,4 @@
 import localMKData, {isCloseCommentBlockingGm, isCommentResponseRewriteGm} from "../state/localMKData.ts";
-import {eventEmitter} from "../core/EventEmitter.ts";
 import {sendShieldLog} from "../core/shieldLog.ts";
 import comments_shielding from "./shielding/comments.ts";
 

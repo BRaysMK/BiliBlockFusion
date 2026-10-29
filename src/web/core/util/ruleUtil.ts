@@ -17,12 +17,7 @@ interface VerificationResult {
     res: string | number;
 }
 
-/**
- *验证输入框的值
- * @param ruleValue 规则的实际值
- * @param type 类型
- * @returns {{status: boolean, res: string|number}} 返回验证结果
- */
+/** 校验规则值：int 类型必须是数字，其余按字符串判空 */
 const verificationInputValue = (ruleValue: string | number | null, type: string): VerificationResult => {
     if (ruleValue === null) return {status: false, res: '内容不能为空'};
     if (isRuleIntType(type)) {
@@ -43,11 +38,7 @@ const verificationInputValue = (ruleValue: string | number | null, type: string)
 }
 
 
-/**
- * 添加规则
- * @param ruleValue {string|number} 规则的实际值
- * @param type {string} 类型
- */
+/** 添加单条规则，已存在则返回失败 */
 const addRule = (ruleValue: string | number, type: string): VerificationResult => {
     const verificationRes = verificationInputValue(ruleValue, type);
     if (!verificationRes.status) {
@@ -67,12 +58,7 @@ interface BatchAddResult {
     failList: (string | number)[];
 }
 
-/**
- * 批量添加指定类型
- * @param ruleValues {[string]|[number]}
- * @param type {string}
- * @returns {{successList: [string|number], failList: [string|number]}}
- */
+/** 批量添加规则，返回成功/失败清单 */
 const batchAddRule = (ruleValues: (string | number)[], type: string): BatchAddResult => {
     const successList: (string | number)[] = [];
     const failList: (string | number)[] = [];
@@ -102,12 +88,7 @@ const batchAddRule = (ruleValues: (string | number)[], type: string): BatchAddRe
     }
 }
 
-/**
- * 删除单个规则值
- * @param type {string}
- * @param value {string|number}
- * @returns {{status: boolean, res: (string|number)}|{res: string, status: boolean}}
- */
+/** 删除单条规则值 */
 const delRule = (type: string, value: string | number): VerificationResult => {
     const verificationRes = verificationInputValue(value, type);
     if (!verificationRes.status) {
@@ -124,11 +105,7 @@ const delRule = (type: string, value: string | number): VerificationResult => {
     return {status: true, res: "移除成功"}
 }
 
-/**
- * 删除规则对话框
- * @param type {string}
- * @returns {null}
- */
+/** 弹出输入框删除指定规则 */
 const showDelRuleInput = async (type: string): Promise<void> => {
     let ruleValue: string;
     try {
@@ -146,12 +123,7 @@ interface RuleMap {
     [key: string]: (string | number)[];
 }
 
-/**
- *获取本地规则内容
- * @param isToStr {boolean} 是否转为字符串，默认true
- * @param space {number} 缩进
- * @return {string|{[string]: [string|number]}}
- */
+/** 导出本地全部规则，isToStr 为 true 时返回 JSON 字符串 */
 const getRuleContent = (isToStr: boolean = true, space: number = 0): string | RuleMap => {
     const ruleMap: RuleMap = {};
     for (let ruleKeyListDatum of ruleKeyListData.getRuleKeyListData()) {
@@ -166,13 +138,8 @@ const getRuleContent = (isToStr: boolean = true, space: number = 0): string | Ru
     return ruleMap;
 }
 
-/**
- * 验证规则内容并获取核心的规则
- * @param keyArr {Array}
- * @param content {string}
- * @returns {boolean|Object}
- */
-const verificationRuleMap = (keyArr: any[], content: string): false | RuleMap => {
+/** 解析导入的规则 JSON，丢弃空数组与非法值 */
+const verificationRuleMap = (_keyArr: any[], content: string): false | RuleMap => {
     let parse: any;
     try {
         parse = JSON.parse(content);
@@ -197,10 +164,7 @@ const verificationRuleMap = (keyArr: any[], content: string): false | RuleMap =>
     return newRule;
 }
 
-/**
- * 覆盖导入规则
- * @param content {string}
- */
+/** 覆盖导入规则 */
 const overwriteImportRules = (content: string): boolean => {
     const map = verificationRuleMap(ruleKeyListData.getRuleKeyList(), content);
     if (map === false) return false;
@@ -210,10 +174,7 @@ const overwriteImportRules = (content: string): boolean => {
     return true;
 }
 
-/**
- * 追加导入规则
- * @param content {string}
- */
+/** 追加导入规则（去重） */
 const appendImportRules = (content: string): boolean => {
     const map = verificationRuleMap(ruleKeyListData.getRuleKeyList(), content);
     if (map === false) return false;
@@ -229,12 +190,7 @@ const appendImportRules = (content: string): boolean => {
     return true;
 }
 
-/**
- * 添加精确uid
- * @param uid {number}
- * @param isTip {boolean} 是否提示，默认true，则默认提示，如果为false则不提示，返回结果
- * @returns {{res: string, status: boolean}|{res: string, status: boolean}}
- */
+/** 添加精确 uid，isTip 为 false 时由调用方自行提示 */
 const addRulePreciseUid = (uid: number, isTip: boolean = true): VerificationResult => {
     const results = addRule(uid, "precise_uid");
     if (isTip) {
@@ -281,12 +237,7 @@ const delRUlePreciseUid = (uid: number, isTip: boolean = true): VerificationResu
     return results
 }
 
-/**
- * 添加精确name
- * @param name {string}
- * @param tip {boolean} 是否提示,默认true，则默认提示，如果为false则不提示，返回结果
- * @returns {{status: boolean, res: string}|null}
- */
+/** 添加精确用户名，tip 为 false 时由调用方自行提示 */
 const addRulePreciseName = (name: string, tip: boolean = true): VerificationResult => {
     const results = addRule(name, "precise_name");
     if (tip) {
@@ -295,12 +246,7 @@ const addRulePreciseName = (name: string, tip: boolean = true): VerificationResu
     return results;
 }
 
-/**
- * 查找规则项，返回匹配的值，如果找不到则返回null
- * @param type {string}
- * @param value {string|number}
- * @returns {number|string|null}
- */
+/** 查找规则项，找不到返回 null */
 const findRuleItemValue = (type: string, value: string | number): number | string | null => {
     return (GM_getValue(type, []) as (string | number)[]).find(item => item === value) || null
 }
@@ -310,12 +256,7 @@ interface AddItemRuleResult {
     msg: string;
 }
 
-/**
- * 添加规则项
- * @param arr {[]} 要添加的内容数组
- * @param key {string}
- * @param coverage {boolean} 是否覆盖，默认true，如果为false则追加
- */
+/** 批量写入规则项；coverage 为 true 覆盖、false 追加去重 */
 const addItemRule = (arr: (string | number)[], key: string, coverage: boolean = true): AddItemRuleResult => {
     const complianceList: (string | number)[] = []
     for (let v of arr) {
@@ -336,13 +277,7 @@ const addItemRule = (arr: (string | number)[], key: string, coverage: boolean = 
     return {status: true, msg: '添加成功-追加模式，新增数量：' + newList.length}
 }
 
-/**
- * 批量添加精确uid项
- * @param uidArr {[]} uid数组
- * @param isTip {boolean} 是否提示，默认true，则默认提示，如果为false则不提示，返回结果
- * @param coverage {boolean} 是否覆盖，默认true，如果为false则追加
- * @returns {{msg:string, status: boolean}|null|boolean}
- */
+/** 批量添加精确 uid；isTip 为 true 时弹提示并只返回状态 */
 const addPreciseUidItemRule = (uidArr: number[], isTip: boolean = true, coverage: boolean = true): AddItemRuleResult | boolean => {
     const {status, msg} = addItemRule(uidArr, 'precise_uid', coverage)
     if (isTip) {

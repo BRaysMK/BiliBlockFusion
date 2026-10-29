@@ -7,12 +7,6 @@ import {
 import {eventEmitter} from "../core/EventEmitter.ts"
 import {returnTempVal} from "../config/globalValue.ts"
 
-interface ReplaceKeywordItem {
-    findVal: string
-    replaceVal: string
-    actionScopes: string[]
-}
-
 interface ReplaceResult {
     state: boolean
     content?: string
@@ -57,7 +51,7 @@ interface CommentsData {
 }
 
 eventEmitter.on('event-评论通知替换关键词', (commentsData: CommentsData): void => {
-    const {contentsEl, name, uid} = commentsData
+    const {contentsEl, name} = commentsData
     if (!contentsEl) return
     const spanEls = contentsEl.querySelectorAll('span')
     const imgEls = contentsEl.querySelectorAll('img')

@@ -2,16 +2,6 @@ import Dexie, {Table} from "dexie"
 import {getFutureTimestamp} from "../util/defUtil.ts"
 import {getExpiresMaxAgeGm} from "../../state/localMKData.ts"
 
-interface VideoStat {
-    view: number
-    danmaku: number
-    reply: number
-    favorite: number
-    coin: number
-    share: number
-    like: number
-}
-
 interface VideoInfoData {
     staff?: any[]
     tname: string

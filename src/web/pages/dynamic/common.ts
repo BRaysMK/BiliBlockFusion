@@ -1,6 +1,5 @@
 import elUtil from "../../core/util/elUtil.ts";
 import {blockCheckWhiteUserUid, blockDynamicItemContent} from "@/domain/shielding/main.ts";
-import {eventEmitter} from "@/core/EventEmitter.ts";
 import {sendShieldLog} from "@/core/shieldLog.ts";
 import {
     isBlockAppointmentDynamicGm,
@@ -112,12 +111,10 @@ const getDynamicCardModulesData = (vueData: any) => {
 
 
 /**
- * 动态内容如遇到引用其他动态或内容，不用匹配时排除.reference
- * 1.尝试获取动态内容，不包括嵌套动态，赋值content。获取不到时为空串
- * 2.当动态有主标题时，会把主标题拼接在content前
- * 2.动态为视频类型时，获取其标题和简介，为空时为空串
- * 3.暂不考虑处理嵌套动态内容，待后续改动
- * @returns {Promise<[{}]>}
+ * 提取动态列表数据
+ *
+ * content 只取动态自身内容（排除 .reference 引用的其他动态）；有主标题时拼在 content 前；
+ * 视频类动态另取标题与简介。嵌套动态暂不处理。
  */
 const getDataList = async () => {
     const elList = await elUtil.findElements(".bili-dyn-list__items>.bili-dyn-list__item");

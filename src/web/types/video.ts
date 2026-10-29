@@ -2,87 +2,54 @@ import type { BlockResult } from "./shielding"
 
 /** 页面中提取的视频基本数据，用于快速同步屏蔽检查 */
 export interface VideoData {
-    /** 视频标题 */
     title: string;
-    /** up主uid */
+    /** up主 uid */
     uid?: number;
-    /** up主名称 */
     name: string;
-    /** 视频时长 */
+    /** 视频时长（秒） */
     nDuration?: number;
-    /** 弹幕数 */
     nBulletChat?: number;
-    /** 播放量 */
     nPlayCount?: number;
-    /** 视频BV号 */
     bv?: string | null;
-    /** 视频对应的DOM元素 */
+    /** 卡片 DOM 元素 */
     el: HTMLElement;
 
     [key: string]: any;
 }
 
-/** 通过API请求获取的视频详细信息结果，用于屏蔽链异步检查 */
+/** 通过 API 获取的视频详细信息，用于异步屏蔽链检查 */
 export interface VideoShieldData {
-    /** 视频标签列表 */
     tags: string[];
-    /** 用户信息 */
     userInfo: {
-        /** 用户uid */
         uid: number;
-        /** 用户名称 */
         name: string;
-        /** 粉丝数 */
         follower: number;
-        /** 是否硬核会员 */
         is_senior_member: boolean;
-        /** 创作团队成员id */
         mid?: any;
-        /** 当前等级 */
         current_level?: number;
-        /** 性别 */
         sex?: string;
-        /** 会员信息 */
         vip?: any;
-        /** 投稿视频数量 */
         archive_count?: number;
-        /** 头像挂件信息 */
         pendant?: any;
-        /** 用户签名 */
         sign?: string;
-        /** 是否已关注该用户 */
         following?: boolean;
         [key: string]: any;
     };
-    /** 视频信息 */
     videoInfo: {
-        /** 视频分辨率 */
         dimension?: any;
-        /** 版权类型，1原创2转载 */
+        /** 1 原创、2 转载 */
         copyright?: number;
-        /** 是否充电专属视频 */
         is_upower_exclusive?: boolean;
-        /** 是否已关注该UP主 */
         following?: boolean;
-        /** 点赞数 */
         like: number;
-        /** 播放数 */
         view: number;
-        /** 弹幕数 */
         danmaku: number;
-        /** 评论数 */
         reply: number;
-        /** 收藏数 */
         favorite: number;
-        /** 投币数 */
         coin: number;
-        /** 分享数 */
         share: number;
-        /** 发布时间戳 */
         pubdate?: number;
-        /** 视频简介 */
         desc?: string;
-        /** 争议警告消息 */
         argue_msg?: string;
         [key: string]: any;
     };
@@ -92,10 +59,8 @@ export interface VideoShieldData {
 
 /** 屏蔽视频元素事件数据 */
 export interface ShieldVideoEventData {
-    /** 屏蔽检查结果 */
     res: BlockResult;
-    /** 屏蔽方式，remove或hide */
+    /** 调用方显式指定的屏蔽方式，目前只有 hide 会覆盖全局 shield_mode */
     method: string;
-    /** 视频基本数据 */
     videoData: VideoData;
 }

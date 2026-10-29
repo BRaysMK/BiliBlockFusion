@@ -10,7 +10,6 @@ const compatibleBEWLYBEWLY: boolean = localMKData.isCompatible_BEWLY_BEWLY()
 const bOnlyTheHomepageIsBlocked: boolean = localMKData.getBOnlyTheHomepageIsBlocked()
 
 export const httpLocalHost: string = 'http://localhost:3000'
-export const wsLocalHost: string = 'ws://localhost:3011'
 
 export const returnTempVal: { state: boolean } = {state: false}
 

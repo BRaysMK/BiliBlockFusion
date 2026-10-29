@@ -6,7 +6,7 @@ import liveRoomListAdaptiveCss from '../ui/styles/live_room_list_adaptive.css?ra
 import liveRoomDefCss from '../ui/styles/liveRoomDef.css?raw'
 
 export default {
-    run(url?: string, title?: string): void {
+    run(): void {
         if (localMKData.isHideAddSeeLater()) {
             elUtil.installStyle(videoCardHideAddSeeLaterButCss, {
                 type: "class",

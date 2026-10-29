@@ -58,7 +58,7 @@ const staticRoute = (title: string, url: string): void => {
     if (checkAndExcludePage(url)) return;
     homeStaticRoute(title, url)
     hotSearch.run();
-    cssManager.run(url, title);
+    cssManager.run();
     if (globalValue.bOnlyTheHomepageIsBlocked) return;
     topInput.processTopInputContent()
     hotSearch.startShieldingHotList()

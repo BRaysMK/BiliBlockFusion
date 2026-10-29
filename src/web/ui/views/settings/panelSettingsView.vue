@@ -1,45 +1,16 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {ref, watch} from 'vue';
 import localMKData, {getDrawerShortcutKeyGm} from "../../../state/localMKData.ts";
 import {eventEmitter} from "@/core/EventEmitter.ts";
-import {ElMessage, ElNotification, ElMessageBox} from 'element-plus';
+import {ElMessage, ElNotification} from 'element-plus';
 
-const input_color = ref<string | null>(null);
 const showRightTopMainButSwitch = ref(localMKData.isShowRightTopMainButSwitch());
 const isFirstFullDisplay = ref(localMKData.isFirstFullDisplay());
 const isHalfHiddenIntervalAfterInitialDisplay = ref(localMKData.isHalfHiddenIntervalAfterInitialDisplay());
-const devToolsInputVal = ref('');
 const drawerShortcutKeyVal = ref(getDrawerShortcutKeyGm());
 const theKeyPressedKeyVal = ref('');
 const isShowBackToTopVal = ref(localMKData.isShowBackToTopBtn());
 
-const setBorderColorBut = () => {
-  ElMessageBox.confirm('是否设置面板边框颜色', '提示').then(() => {
-    localMKData.setBorderColor(input_color.value!);
-    ElMessageBox.alert("已设置面板边框颜色，刷新生效");
-  });
-};
-const setDefFontColorForOutputInformationBut = () => {
-  ElMessageBox.confirm("是否设置输出信息默认字体颜色", "提示").then(() => {
-    localMKData.setOutputInformationFontColor(input_color.value!);
-    ElMessageBox.alert("已设置输出信息默认字体颜色，刷新生效");
-  });
-};
-const setTheFontColorForOutputInformationBut = () => {
-  ElMessageBox.confirm('是要设置输出信息高亮字体颜色吗？').then(() => {
-    localMKData.setHighlightInformationColor(input_color.value!);
-    ElMessageBox.alert("已设置输出信息高亮字体颜色，刷新生效");
-  });
-};
-const setDefInfoBut = () => {
-  localMKData.setDefaultColorInfo();
-  ElMessageBox.alert("已恢复默认颜色，刷新生效");
-};
-const changeDevToolsInput = () => {
-  const toolsInputVal = devToolsInputVal.value;
-  if (toolsInputVal.trim()) return;
-  eventEmitter.send(toolsInputVal);
-};
 const setDrawerShortcutKeyBut = () => {
   const theKeyPressedKey = theKeyPressedKeyVal.value;
   const drawerShortcutKey = drawerShortcutKeyVal.value;
@@ -79,21 +50,6 @@ eventEmitter.on('event-keydownEvent', (event: KeyboardEvent) => {
   <div>
     <el-card shadow="never">
       <template #header>
-        <span>颜色设置</span>
-      </template>
-      <div class="el-horizontal-center">
-        选择器
-        <el-color-picker v-model="input_color"/>
-      </div>
-      <el-button @click="setBorderColorBut">设置边框色</el-button>
-      <el-button @click="setDefFontColorForOutputInformationBut">设置输出信息默认字体色</el-button>
-      <el-button @click="setTheFontColorForOutputInformationBut">设置输出信息高亮字体色</el-button>
-      <el-tooltip content="刷新页面生效">
-        <el-button @click="setDefInfoBut">恢复默认</el-button>
-      </el-tooltip>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>
         <span>页面右侧悬浮按钮设置</span>
       </template>
       <el-switch v-model="showRightTopMainButSwitch" active-text="显示按钮"></el-switch>
@@ -111,19 +67,10 @@ eventEmitter.on('event-keydownEvent', (event: KeyboardEvent) => {
       <template #header>
         <span>快捷键</span>
       </template>
-      <div>1.默认情况下，按键盘tab键上的~键为展开关闭主面板</div>
-      <div>2.当前展开关闭主面板快捷键：
-        <el-tag>{{ drawerShortcutKeyVal }}</el-tag>
-      </div>
-      当前按下的键
-      <el-tag>{{ theKeyPressedKeyVal }}</el-tag>
+      <div>默认快捷键为反引号 <code>`</code>（Tab 键上方），可在下方按键后保存修改。</div>
+      <div>当前快捷键：<el-tag>{{ drawerShortcutKeyVal }}</el-tag></div>
+      <div>当前按下的键：<el-tag>{{ theKeyPressedKeyVal }}</el-tag></div>
       <el-button @click="setDrawerShortcutKeyBut">设置打开关闭主面板快捷键</el-button>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>
-        <span>devTools</span>
-      </template>
-      <el-input v-model.trim="devToolsInputVal" @keyup.enter="changeDevToolsInput"></el-input>
     </el-card>
   </div>
 </template>

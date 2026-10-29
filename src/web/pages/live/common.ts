@@ -1,6 +1,5 @@
 import cssContent from '../../ui/styles/live-partition.css?raw';
 import elUtil from "../../core/util/elUtil.ts";
-import {eventEmitter} from "@/core/EventEmitter.ts";
 import {sendShieldLog} from "@/core/shieldLog.ts";
 
 const addStyle = () => {

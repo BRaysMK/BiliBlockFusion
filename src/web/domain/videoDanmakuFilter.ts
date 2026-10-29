@@ -1,5 +1,4 @@
 import shielding from "./shielding/main.ts";
-import {eventEmitter} from "../core/EventEmitter.ts";
 import {sendShieldLog} from "../core/shieldLog.ts";
 import crc32Util from "../core/util/crc32Util.ts";
 import bFetch from "../core/http/bFetch.ts";
@@ -10,14 +9,10 @@ const {crc32} = crc32Util;
 /**
  * 视频弹幕过滤
  *
- * 新版播放器弹幕引擎(bili-danmaku-x)在 blob Worker 内拉取并解析弹幕数据，
- * 以对象数组形态 postMessage 回主线程（元素含 stime/text/uhash 等字段）。
- * 本模块在 Worker 构造时注册首个 message 监听（早于播放器自身的监听），
- * 对弹幕列表原位剔除命中规则的元素，播放器拿到的是过滤后的列表，
- * 被屏蔽弹幕不会进入渲染队列。
+ * 新版播放器弹幕引擎（bili-danmaku-x）在 blob Worker 内解析弹幕，以对象数组 postMessage 回主线程。
+ * 本模块在 Worker 构造时注册首个 message 监听（早于播放器自身），原位剔除命中规则的弹幕，
+ * 播放器拿到的是过滤后的列表，被屏蔽弹幕不会进入渲染队列。
  */
-
-// ==================== 弹幕数据存储 ====================
 
 /**
  * 已渲染弹幕的数据存储（key: dmid），供弹幕详情检查器查询
