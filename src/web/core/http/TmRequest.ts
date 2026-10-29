@@ -105,7 +105,6 @@ function createAxiosLikeClient(): AxiosLikeClient {
 
         get(url: string, config: RequestConfig = {}): Promise<TmResponse<any>> {
             if (config.params) {
-                debugger
                 const params = new URLSearchParams(config.params).toString();
                 url += url.includes('?') ? `&${params}` : `?${params}`;
             }

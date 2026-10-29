@@ -87,9 +87,9 @@ describe("屏蔽方式三态（overlay.ts + video.ts）", () => {
     const readVideo = (): string =>
         fs.readFileSync(resolve(process.cwd(), "src/web/domain/shielding/video.ts"), "utf8");
 
-    it("overlay.ts 提供 createOverlay / removeOverlay / findGridItem / removeGridItem", () => {
+    it("overlay.ts 提供 createOverlay / findGridItem / removeGridItem", () => {
         const src = readOverlay();
-        for (const fn of ["createOverlay", "removeOverlay", "findGridItem", "removeGridItem"]) {
+        for (const fn of ["createOverlay", "findGridItem", "removeGridItem"]) {
             expect(src, `缺少 ${fn}`).toContain(fn);
         }
     });
@@ -112,5 +112,11 @@ describe("屏蔽方式三态（overlay.ts + video.ts）", () => {
         expect(src).toContain("getShieldModeGm");
         expect(src).toContain("removeGridItem");
         expect(src).toContain("createOverlay");
+    });
+
+    it("调用方显式传 hide 时覆盖全局 shield_mode（BLBLGate 依赖）", () => {
+        const src = readVideo();
+        // 曾因三态重构丢掉 method，导致 BLBLGate 传的 hide 被静默忽略
+        expect(src).toMatch(/method === 'hide' \? 'hide' : getShieldModeGm\(\)/);
     });
 });

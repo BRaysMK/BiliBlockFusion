@@ -12,7 +12,6 @@ import shielding, {
 import type { BlockResult } from "@/types/shielding";
 import {returnTempVal} from "@/config/globalValue.ts";
 import localMKData from "../../state/localMKData.ts";
-import LocalMKData from "../../state/localMKData.ts";
 
 interface LiveRoomData {
     name: string;
@@ -34,24 +33,6 @@ interface LiveRoomContent {
     el: HTMLElement;
     roomId: number | string;
     gloryLevelSrc?: string | null;
-}
-
-interface GloryLevelMappingItem {
-    src: string;
-    level: number;
-}
-
-interface GloryLevelLimitItem {
-    roomId: number;
-    status: boolean;
-    limitLevel?: number;
-    level?: number;
-}
-
-interface FansLevelLimitItem {
-    name: string;
-    status: boolean;
-    limitLevel: number;
 }
 
 export const blockLiveRoomId = (liveRoomId: number | string): BlockResult => {
@@ -98,10 +79,10 @@ const blockGloryLevel = (roomId: number | string, gloryLevelSrc: string | null):
     const find = listGm.find(item => item.src === gloryLevelSrc);
     if (find === undefined) return returnTempVal;
     const findLevel = find.level
-    const levelLimitListGm: any[] = LocalMKData.getGloryLevelLimitListGm();
-    const globalItem = levelLimitListGm.find(item => item.roomId === 0)
-    if (globalItem.status) {
-        if (findLevel >= globalItem.limitLevel!) {
+    const levelLimitListGm = localMKData.getGloryLevelLimitListGm();
+    const globalItem = levelLimitListGm.find(item => String(item.roomId) === '0')
+    if (globalItem !== undefined && globalItem.status) {
+        if (findLevel >= globalItem.limitLevel) {
             return returnTempVal
         }
         return {
@@ -110,10 +91,12 @@ const blockGloryLevel = (roomId: number | string, gloryLevelSrc: string | null):
             matching: `用户等级${findLevel}<=全局限制等级${globalItem.limitLevel}`
         }
     }
-    for (let limitItem of levelLimitListGm) {
-        if (limitItem.roomId !== roomId) continue
-        if (!limitItem.status) break;
-        if (findLevel <= limitItem.level!) {
+    // 房间号在存储里可能是 number 也可能是 string（URL 解析得到的是字符串），统一按字符串比较
+    for (const limitItem of levelLimitListGm) {
+        if (String(limitItem.roomId) !== String(roomId)) continue
+        // 该房间的配置被关闭时只跳过这一条，不能 break（否则后面房间的配置全部失效）
+        if (!limitItem.status) continue;
+        if (findLevel <= limitItem.limitLevel) {
             return {
                 state: true,
                 type: "荣耀等级屏蔽",

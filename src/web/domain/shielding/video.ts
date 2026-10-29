@@ -9,7 +9,7 @@ import localMKData, {
     getMinimumPlayGm,
     isCommentDisabledVideosBlockedGm,
     isEffectiveUIDShieldingOnlyVideo,
-    isFollowers7DaysOnlyVideosBlockedGm,
+    isFollowers7DaysOnlyVideosBlockedGm,
     getShieldModeGm,
     isOverlayOnlyTypeGm,
     isMaximumBarrageGm,
@@ -218,13 +218,8 @@ export const shieldingVideo = (videoData: SyncVideoData): BlockResult => {
     return returnTempVal;
 }
 
-/* ==========================================================================
-   去重：避免每轮轮询重复跑规则匹配与 API 请求
-   --------------------------------------------------------------------------
-   首页列表由 IntervalExecutor 每 3 秒轮询一次，同一批卡片会被反复扫描。
-   若不记录已处理状态，每轮都要重跑全部同步规则、并对未命中缓存的 BV
-   重复发起网络请求——这是脚本卡顿的主要来源。
-   ========================================================================== */
+/* 去重：首页列表每 3 秒轮询一次，同一批卡片会被反复扫描。不记录已处理状态，
+   每轮都要重跑全部同步规则并对未命中缓存的 BV 重复发请求——这是卡顿的主要来源。 */
 
 /** 已完整处理过的 BV（同步规则命中或异步链路已走完），避免重复处理 */
 const processedBVs = new Set<string>();
@@ -249,16 +244,6 @@ const addProcessedBV = (bv: string): void => {
             processedBVs.delete(key);
         }
     }
-};
-
-/**
- * 清除某个 BV 的已处理标记
- *
- * 白名单解除屏蔽、规则被删除后需要重新处理该视频时调用。
- * @param bv 视频 bv 号
- */
-export const clearProcessedBV = (bv: string): void => {
-    processedBVs.delete(bv);
 };
 
 /** 装饰版异步视频屏蔽：先同步检查，通过后触发异步获取详细视频信息进行深度检查 */
@@ -327,23 +312,16 @@ eventEmitter.on('event:检查其他视频参数', async (videoData: VideoData, m
 /**
  * 统一屏蔽视频元素事件处理
  *
- * 默认走叠加层模式：在卡片上盖半透明遮罩，不删除节点、不改 display。
- * 原因：BewlyBewly 是 Vue 虚拟列表，删除 .video-card 后其外层 Vue 组件外壳
- * 仍保留原高度，网格中出现大量空壳占位、页面大片空白，后续卡片无法顶上来。
- *
- * 隐藏模式（设置项 hide_video_mode = true）保留原有 remove / display:none 行为，
- * 适用于非 Bewly 页面或用户明确希望卡片直接消失的场景。
+ * 实际行为由 shield_mode 三态决定（remove / overlay / hide），调用方显式传 hide 时覆盖全局设置。
  */
 eventEmitter.on('event-屏蔽视频元素', ({res, method = "remove", videoData}: ShieldVideoEventData) => {
     if (!res) return
     const {type, matching} = res
     const {el} = videoData
     if (!el) return
-    // 三种模式：
-    // - remove（默认）：删除整个网格项外壳，后续卡片顶上来
-    // - overlay：保留 DOM，覆盖半透明遮罩
-    // - hide：仅 display:none，保留占位
-    const mode = getShieldModeGm();
+    // 调用方显式指定 hide（如 Bilibili-Gate 适配）时优先于全局设置，
+    // 否则按全局 shield_mode：remove 删网格项 / overlay 遮罩 / hide 仅 display:none
+    const mode = method === 'hide' ? 'hide' : getShieldModeGm();
     if (mode === 'overlay') {
         const typeText: string = type ?? '已屏蔽';
         const reason: string = isOverlayOnlyTypeGm()

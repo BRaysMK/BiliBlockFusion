@@ -91,23 +91,22 @@ const importMapUrlBut = () => {
     //json类验证
     inputPattern: /^(\{.*}|\[.*])$/
   }).then(({value}: any) => {
-    /**
-     * @type{{level:number,src:string}[]}
-     */
-    const parse = JSON.parse(value);
+    let parse: any[];
     try {
-      for (const item of parse) {
-        if (item['level'] <= 0 || item['level'] <= 80) {
-          ElMessage.warning('');
-          return;
-        }
-      }
+      parse = JSON.parse(value);
     } catch (e) {
-      console.warn(e);
-      ElMessage.warning('导入的内容有误！');
+      ElMessage.warning('导入的内容有误：不是合法的 JSON');
       return;
     }
-    console.log(parse);
+    if (!Array.isArray(parse) || parse.some(item => !(Number(item?.level) >= 1 && Number(item?.level) <= 80))) {
+      ElMessage.warning('导入的内容有误：每项需包含 1~80 的 level 字段');
+      return;
+    }
+    for (const item of parse) {
+      const target = mappingList.value.find(m => m.level === Number(item.level));
+      if (target !== undefined) target.src = String(item.src ?? '');
+    }
+    ElMessage.success('已导入映射关系，需手动点击保存配置');
   });
 };
 

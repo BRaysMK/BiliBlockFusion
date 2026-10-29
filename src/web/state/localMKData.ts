@@ -527,7 +527,7 @@ export const isRoomBackgroundHideGm = (): boolean => {
 
 /** 是否隐藏直播间礼物面板 */
 export const isHideLiveGiftPanelGm = (): boolean => {
-    return GM_getValue('is_room_background_hide_gm', false)
+    return GM_getValue('is_hide_live_gift_panel_gm', false)
 }
 
 /** 是否屏蔽Bilibili-Gate脚本中非视频类 */
