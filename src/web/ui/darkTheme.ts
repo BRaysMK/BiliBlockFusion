@@ -1,16 +1,8 @@
 /**
  * 主面板主题同步（Fluent 2 令牌驱动）
  *
- * B 站深色主题通过 html/body 上的 bili_dark 类标记，但部分页面（如空间页）没有该类，
- * 而是靠 B 站自己的深色 CSS 变量驱动，因此检测需三重兜底。
- *
- * 与旧实现的差异：
- * - 旧实现用 @resource 远程拉取 Element Plus 的深色 CSS 并把 html.dark 改写成 :root 注入；
- * - 新实现改用 Fluent 2 令牌（亮/暗两套 459 个令牌随产物内联），只切换面板根节点的
- *   .gz-theme-light / .gz-theme-dark 类，不再依赖远程资源，离线可用且无 @resource 声明。
- *
- * 深色检测逻辑（三重兜底）保持不变——这是踩过坑的资产：
- * 空间页深色时 html/body 上没有 bili_dark 类，只能靠 --bg1 的固定值判定。
+ * 令牌随产物内联，只切换面板根节点的 .gz-theme-light / .gz-theme-dark 类，不依赖远程资源。
+ * 深色检测必须三重兜底：空间页深色时 html/body 上没有 bili_dark 类，只能靠 --bg1 判定。
  */
 import {applyThemeClass, installFluentTokens, type ThemeMode} from './theme/fluentVars.ts';
 
@@ -37,12 +29,9 @@ const isBiliDark = (): boolean => {
 }
 
 /**
- * B 站深色主题统一 CSS 变量特征检测
+ * 按 --bg1 的亮度判断深色
  *
- * 部分页面（如空间页 space.bilibili.com）深色时 html/body 上没有 bili_dark 类，
- * 而是通过 B 站深色主题 CSS 变量驱动（--bg1 等）。实测深色时 --bg1 恒为 #17181A，
- * 跨页面一致，可作为无类页面下的可靠深色标记。
- * @returns 是否命中 B 站深色变量特征
+ * 不能再做精确值比对：新版主题改用 hsl() 写法，BewlyCat 还会覆写成自定义色。
  */
 const isBiliDarkByCssVar = (): boolean => {
     const bg1 = getComputedStyle(document.body).getPropertyValue('--bg1').trim().toLowerCase();
@@ -57,12 +46,7 @@ const isBiliDarkByCssVar = (): boolean => {
     return luminance < 128;
 }
 
-/**
- * 把 CSS 颜色字符串解析为 RGB 三元组
- * 支持 #rgb / #rrggbb / rgb() / rgba() / hsl() / hsla()
- * @param color CSS 颜色字符串
- * @returns [r,g,b] 或 null（无法解析）
- */
+/** 把 CSS 颜色字符串解析为 RGB 三元组，支持 #rgb / #rrggbb / rgb() / rgba() / hsl() / hsla() */
 const cssColorToRgb = (color: string): [number, number, number] | null => {
     const hex = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
     if (hex !== null) {
@@ -82,13 +66,7 @@ const cssColorToRgb = (color: string): [number, number, number] | null => {
     return null;
 }
 
-/**
- * HSL → RGB
- * @param h 色相 0-360
- * @param s 饱和度 0-1
- * @param l 亮度 0-1
- * @returns [r,g,b] 0-255
- */
+/** HSL(0-360, 0-1, 0-1) → RGB(0-255) */
 const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
     const c = (1 - Math.abs(2 * l - 1)) * s;
     const hp = ((h % 360) + 360) % 360 / 60;
@@ -104,11 +82,8 @@ const hslToRgb = (h: number, s: number, l: number): [number, number, number] => 
     return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
 }
 
-/**
- * 把当前主题应用到主面板根节点
- *
- * 面板尚未挂载时静默跳过：init 流程里主题同步可能先于 Vue 挂载完成。
- */
+/** 把当前主题应用到主面板根节点；面板尚未挂载时静默跳过 */
+
 const syncTheme = (): void => {
     const mode: ThemeMode = isBiliDark() ? 'dark' : 'light';
     if (mode === currentMode) return;

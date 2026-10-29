@@ -24,14 +24,7 @@ const isSearchVideoNetWorkUrl = (netUrl: any) => {
     //非该接口时返回false
     if (!netUrl.includes('api.bilibili.com/x/web-interface/wbi/search/type')) return false;
     const parseUrl = urlUtil.parseUrl(netUrl);
-    /**
-     * 判断是否为搜索网络请求的url
-     * 当search_type等于
-     * media_bangumi为番剧
-     * media_ft为影视
-     * live为直播,live_user为主播
-     * article为专栏,bili_user为用户
-     */
+    // search_type 取 video 才是视频搜索（media_bangumi=番剧、live=直播、bili_user=用户等）
     const search_type = parseUrl.queryParams['search_type'] || null;
     return search_type === 'video';
 }

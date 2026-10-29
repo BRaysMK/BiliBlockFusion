@@ -24,18 +24,9 @@ const tabsActiveName = ref(GM_getValue('mainTabsActiveName', '规则管理'));
 const debug_panel_show = ref(__DEV__);
 const isShowBackToTopVal = ref(localMKData.isShowBackToTopBtn());
 
-/**
- * 面板开合动画完全交给 Element Plus 原生的 Vue Transition 驱动。
- *
- * 历史教训（三条弯路，都已验证是错的）：
- * 1. 用 Web Animations API 手写滑入/滑出：与 EP 自带的 .el-drawer-fade-* 过渡
- *    争抢同一个 transform，表现为开合抽搐；finalize() 强行 display:none
- *    又打断了 leave 过渡，导致关闭无动画。
- * 2. 在 watch 里清理过渡类：清理时机与 Vue Transition 的类切换冲突，
- *    反而让 Transition 完全不运行（实测开合瞬间类名全程不变）。
- * 3. 因此这里不再对 drawer 的 DOM 做任何干预，纯靠 EP 的 v-model 驱动 Transition。
- *    动画时长与曲线在下方 <style> 里通过 CSS 覆盖。
- */
+// 开合动画完全交给 Element Plus 原生的 Transition 驱动，不要对 drawer 的 DOM 做任何干预：
+// 手写 WAAPI 或清理过渡类都会与 EP 的 .el-drawer-fade-* 争抢 transform，导致抽搐或动画不执行。
+// 时长与曲线在下方 <style> 里用 CSS 覆盖。
 
 watch(tabsActiveName,(n)=>{
   GM_setValue('mainTabsActiveName', n);
@@ -44,6 +35,44 @@ watch(tabsActiveName,(n)=>{
 eventEmitter.on('主面板开关', () => {
   drawer.value = !drawer.value;
 });
+
+/**
+ * 点击面板外空白处关闭面板
+ *
+ * 面板用 :modal="false"（不用 EP 遮罩层，否则会挡住整个 B 站页面），
+ * 因此 EP 自带的 close-on-click-modal 不生效，只能自己监听 document 点击。
+ * 面板本体、被 teleport 到 body 的 EP 浮层、右侧悬浮按钮都不算「外部空白」。
+ */
+const handleDocumentClick = (event: MouseEvent): void => {
+  if (!drawer.value) return;
+
+  // 面板正在播放开合动画时不处理：
+  // 实测打开动画期间点击面板外，会与 enter 过渡叠加成
+  // "enter-from + leave-active" 的冲突状态，面板卡在视口外。
+  // 等动画结束（约 280ms）后再允许点击外部关闭。
+  const wrapEl = document.querySelector('.is-drawer.el-modal-drawer');
+  if (wrapEl !== null && /el-drawer-fade-(enter|leave)-active/.test(wrapEl.className)) return;
+
+  const target = event.target as HTMLElement | null;
+  if (target === null) return;
+
+  // 面板本体内部（.gz-main-drawer 是真正的抽屉元素）→ 不关闭
+  if (target.closest('.gz-main-drawer') !== null) return;
+  // EP 浮层（弹窗/下拉/气泡/消息框等被 teleport 到 body 下）→ 不关闭，
+  // 否则点下拉选项会把面板一起关掉
+  if (target.closest('.el-popper, .el-overlay, .el-message-box, .el-notification, .el-message') !== null) return;
+  // 浮动开关按钮 → 不关闭，交给它自己的 handler 做开关切换
+  // （不能靠「先关再被按钮打开」来兜底，那样会在开合动画上产生一次抖动）
+  if (target.closest('.gz-float-btn, [class*="float"], [class*="right-top"]') !== null) return;
+
+  // 其余：点击面板外空白 → 关闭
+  drawer.value = false;
+};
+// 用 mousedown 而非 click：click 要等 mouseup 才触发，
+// 用户在面板外按下拖动时不会误关；同时避免与面板内按钮的 click 竞争。
+// 捕获阶段监听，保证在页面自身的点击处理之前拿到事件。
+document.addEventListener('mousedown', handleDocumentClick, true);
+
 document.addEventListener('keydown', (event) => {
   eventEmitter.emit('event-keydownEvent', event);
   if (event.key === getDrawerShortcutKeyGm()) {
@@ -154,11 +183,19 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   border: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
   border-radius: var(--fluent-border-radius-x-large);
   box-shadow: var(--fluent-shadow-4);
-  overflow: hidden;
-  /* 注意：这里曾用 height:100% + flex 撑满高度，副作用是把内容区高度锁死，
-     导致内容超出时不产生溢出、抽屉 body 的 overflow:auto 失效、面板无法滚动。
-     改为 min-height 让内容自然撑高，由抽屉 body 统一滚动。 */
+  /* 注意 1：这里不能用 overflow:hidden。它虽然能让圆角裁切子元素，
+     但会成为内部 sticky 元素的滚动容器，导致左侧子页签吸顶失效
+     （实测 sticky 相对它定位而非抽屉 body，滚动时页签跟着滚出视野）。
+     圆角效果改由下方子元素的 border-radius 继承实现。
+     注意 2：也不能用 height:100% + flex，那会把内容区高度锁死、
+     抽屉 body 的 overflow:auto 失效、面板无法滚动。用 min-height 让内容自然撑高。 */
+  overflow: visible;
   min-height: 100%;
+}
+
+/* 顶栏自身圆角裁切（替代父级 overflow:hidden） */
+#gz-drawer-tabs.el-tabs--border-card > .el-tabs__header {
+  border-radius: var(--fluent-border-radius-x-large) var(--fluent-border-radius-x-large) 0 0;
 }
 
 /* 内容区不再限制高度：内容多时自然撑高，交给抽屉 body 滚动 */
@@ -175,7 +212,7 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   top: 0;
   z-index: 10;
   border-radius: 0;
-  /* 面板宽 60% 时 12 个页签放不下，允许横向滚动而不是挤压换行 */
+  /* 页签较多时允许横向滚动而不是挤压换行 */
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -197,9 +234,7 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   border: none;
   height: 44px;
   line-height: 44px;
-  /* 水平 padding 用 S(8px) 而非 L(16px)：实测 12 个页签文字总宽 728px，
-     16px 两侧会让总宽达到 1112px 而溢出容器（978px）；
-     降到 8px 后总宽 824px，全部页签一屏可见，无需滚动或省略 */
+  /* 水平 padding 取 S(8px) 而非 L(16px)：16px 时页签总宽会溢出容器，8px 可一屏放下 */
   padding: 0 var(--fluent-spacing-horizontal-s);
   white-space: nowrap;
   flex-shrink: 0;
@@ -267,6 +302,34 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   transition: transform 280ms cubic-bezier(0.33, 0, 0.67, 1) !important;
 }
 
+/* ---- 内层左侧页签吸顶（规则管理 / 页面处理 / 诊断 / 关于 都用 tab-position="left"）----
+   这些子页签跟随面板 body 一起滚动，内容长时页签会被滚出视野。
+
+   关键：EP 的 .el-tabs--left 默认带 overflow:hidden，它会让 sticky 失效
+   （overflow 非 visible 的祖先会成为 sticky 的滚动容器，导致 sticky 相对它定位而非视口）。
+   因此必须先把 overflow 改成 visible，sticky 才能相对抽屉 body 生效。 */
+.el-drawer .el-tabs--left {
+  overflow: visible;
+}
+
+.el-drawer .el-tabs--left > .el-tabs__header {
+  position: sticky;
+  /* top 要避开抽屉 body 的 padding(20px) 与外层页签栏(约 43px)，
+     否则页签会滑到外层页签栏底下被遮住。实测 offset 为 79px，
+     取 63px（20+43）让内层页签恰好贴在外层页签栏下沿。 */
+  top: 63px;
+  align-self: flex-start;
+  /* 避免吸顶时下方内容透出 */
+  background: var(--fluent-color-neutral-background-1);
+  z-index: 2;
+}
+
+/* 页签列内部：长列表时页签自身可滚动，不把面板撑高 */
+.el-drawer .el-tabs--left > .el-tabs__header .el-tabs__nav-wrap {
+  max-height: calc(70vh - 120px);
+  overflow-y: auto;
+}
+
 /* 浮层右侧描边，强化「悬浮卡片」的边界感 */
 .el-drawer.gz-main-drawer::before {
   content: '';
@@ -300,7 +363,4 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   background: var(--fluent-color-neutral-stroke-1);
 }
 
-/* 开合动画由 App.vue 的 animateDrawer 用 Web Animations API 驱动（见 script 区）：
-   - 动画前清理 Vue Transition 残留动画类（避免 enter-from 锁死 transform），动画后强制 transform 归位，
-     从而绕开 B 站页面环境下 Vue Transition 动画偶发不完成导致的"面板卡在视口外" */
 </style>

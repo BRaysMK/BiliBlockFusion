@@ -10,22 +10,15 @@ const isSpacePage = (url: any = window.location.href) => {
     return url.startsWith('https://space.bilibili.com/')
 }
 
-/**
- *url是否是用户空间动态页面
- *
- * @param url {string}
- * @returns {boolean}
- */
+/** url 是否是用户空间动态页 */
 const isUserSpaceDynamicPage = (url: any) => {
     return url.search("space.bilibili.com/\\d+/dynamic") !== -1;
 }
 
 /**
  * 是否个人主页
- * todo 目前会出现非个人主页的情况但会返回true的情况，待后续修复
- * todo 2025年1月13日23:52:56，改成判断localStorage中值来作为是否是个人主页，待后续观察
- * todo 2025年1月26日18:44:11 改成检查顶部选项卡里是否有设置选项，有表明示个人主页，反之不是
- * @returns {Promise<boolean>}
+ *
+ * 判定依据是顶部选项卡里有没有「设置」项（有则是本人主页）。曾试过 localStorage 标记，不可靠已弃用。
  */
 const isPersonalHomepage = async () => {
     const keyStr = 'isPersonalHomepage';

@@ -74,15 +74,9 @@ const getRightTabs = async () => {
 /**
  * BewlyBewly 首页视频卡片选择器
  *
- * 历史演进（每次 BewlyCat 改版都会让旧选择器静默失配，表现为「屏蔽完全不生效」）：
- * - ≤1.7.x：.grid-adaptive > .video-card-container（卡片即 grid item）
- * - 1.8.0 ：.grid-adaptive > .video-card-slot（grid item 是 slot 包裹层）
- * - 1.6.5 ：.virtual-rows > .virtual-item（虚拟滚动）
- * - 新版   ：grid item 变成无 class 的 div 包裹层，卡片本体是 .video-card，
- *            上述选择器全部命中 0 个元素，必须直接选卡片本体。
- *
- * 因此选择器按「从具体到通用」排列，并保留 .video-card 兜底：
- * 新结构下只有它命中，旧结构下前面的选择器先命中，行为保持不变。
+ * 每次 BewlyCat 改版都会让旧选择器静默失配（表现为「屏蔽完全不生效」但无报错）。
+ * 新版 grid item 是无 class 的 div 包裹层，只有 .video-card 能命中，因此它必须排在最前作兜底；
+ * 后面三条是 ≤1.7.x / 1.8.0 / 1.6.5 的旧结构兼容。
  */
 const homeVideoCardListSelector = [
     '.video-card',                            // 新版（当前 BewlyCat）：卡片本体

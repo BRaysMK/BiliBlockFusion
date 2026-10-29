@@ -75,8 +75,6 @@ const applyReplyLayoutByStyle = (commentsData: any, style: string): void => {
 /** 按"评论屏蔽按钮位置"设置向单条新版评论分发入口（default按钮 / hide无 / more菜单项 / after楼中层评论后） */
 const addCommentBlockEntryByStyle = (commentsData: any): void => {
     const style = getCommentBlockButtonStyleGm();
-    // 楼中层用户名与评论内容的位置关系随位置选项调整：仅"用户名后面"模式需要块级布局（按钮内联在用户名后），
-    // 其余模式保持 B 站原生同行布局，避免破坏用户名与评论的位置
     if (commentsData.el?.tagName === 'BILI-COMMENT-REPLY-RENDERER') {
         applyReplyLayoutByStyle(commentsData, style);
     }
@@ -103,18 +101,9 @@ const addCommentBlockEntryByStyle = (commentsData: any): void => {
     }, "gz_shielding_comment_button", [], true);
 }
 
-/**
- * 评论添加屏蔽按钮
- * 根据"评论屏蔽按钮位置"设置分发（仅新版评论区生效）：
- * - default: 用户名后内联按钮（保留现状）
- * - hide:    不创建任何入口
- * - more:    注入到原生三点菜单
- * 旧版评论区、直播间排行榜、消息回复列表等旧式结构不受影响，保持用户名后按钮
- * @param commentsData {{}}评论数据
- */
+/** 评论添加屏蔽按钮：按「评论屏蔽按钮位置」设置分发，仅新版评论区生效，旧式结构保持用户名后按钮 */
 eventEmitter.on('评论添加屏蔽按钮', (commentsData) => {
-    // 新版评论区自定义元素 tag 以 BILI-COMMENT 开头（bili-comment-thread-renderer / bili-comment-reply-renderer），
-    // 旧式结构（.reply-item / .list-item 等）不受位置选项影响
+    // 新版评论区自定义元素 tag 以 BILI-COMMENT 开头，旧式结构（.reply-item 等）不受位置选项影响
     const elTag = commentsData.el?.tagName ?? '';
     if (!elTag.startsWith('BILI-COMMENT')) {
         shielding.addBlockButton({

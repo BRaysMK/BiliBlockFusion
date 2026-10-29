@@ -38,18 +38,10 @@ interface FindElementConfig {
 }
 
 /**
- * 持续查找单个元素，每次查找之间有指定的间隔时间，直到找到为止
- * 查找时存在则直接返回，
- * 结合异步操作 await 可用于监听元素加载完成之后继续执行
- * @param {string} selector - CSS 选择器，用于选择元素
- * @param {Object} [config={}] - 配置对象
- * @param {Document|Element|ShadowRoot} [config.doc=document] - 查找的文档对象
- * @param {number} [config.interval=1000] - 每次查找之间的间隔时间（毫秒）
- * @param {number} [config.timeout=-1] - 超时时间（毫秒，-1 表示无限等待）
- * @param {boolean} [config.parseShadowRoot=false] - 是否解析 shadowRoot（当元素有 shadowRoot 时返回 shadowRoot）
- * @param {boolean} [config.cacheInProgress=true] - 是否缓存进行中的查询（避免重复轮询）
- * @param {function(config: {}): Element|ShadowRoot,selector:string} [config.validationElFun] - 找到的元素的验证函数，返回元素/ShadowRoot，或者 null
- * @returns {Promise<Element|ShadowRoot|null>} - 返回找到的元素/ShadowRoot，超时返回 null
+ * 持续轮询查找单个元素，找到即返回；timeout 默认 -1 表示无限等待。
+ *
+ * 不要改成「匹配 0 个立即返回」：首页屏蔽链路没有外层重试，会导致整体静默失效
+ * （已踩坑回退，回归测试见 tests/homeShieldRegression.test.ts）。
  */
 const findElement = async (selector: string, config: FindElementConfig = {}): Promise<Element | ShadowRoot | null> => {
     const defConfig: FindElementConfig = {
@@ -116,21 +108,7 @@ interface FindElementChainResult {
     get(): Promise<Element | ShadowRoot | null>;
 }
 
-/**
- * 持续查找单个元素，每次查找之间有指定的间隔时间，直到找到为止，可链式调用，最后用get异步方法获取结果
- * 查找时存在则直接返回，
- * 结合异步操作 await 可用于监听元素加载完成之后继续执行
- * @param {string} selector - CSS 选择器，用于选择元素
- * @param {Object} [config={}] - 配置对象
- * @param {Document|Element|ShadowRoot} [config.doc=document] - 查找的文档对象
- * @param {number} [config.interval=1000] - 每次查找之间的间隔时间（毫秒）
- * @param {number} [config.timeout=-1] - 超时时间（毫秒，-1 表示无限等待）
- * @param {boolean} [config.parseShadowRoot=false] - 是否解析 shadowRoot（当元素有 shadowRoot 时返回 shadowRoot）
- * @param {boolean} [config.allparseShadowRoot=false] - 查找队列中是否所有都解析 shadowRoot（当元素有 shadowRoot 时返回 shadowRoot）
- * @param {boolean} [config.cacheInProgress=true] - 是否缓存进行中的查询（避免重复轮询）
- * @param {string} [config.separator] - 选择器间隔符，用于拆分选择器链式查找
- * @param {function(element: Element): boolean} [config.validationFun] - 找到的元素是否满足条件该方法返回布尔值
- */
+/** findElement 的链式版本：多次 find() 串成选择器链，最后 get() 异步取结果 */
 const findElementChain = (selector: string, config: FindElementChainConfig = {}): FindElementChainResult => {
     const paths: ChainPath[] = [];
     const chainObj: FindElementChainResult = {
@@ -192,18 +170,7 @@ interface FindElementsConfig {
     parseShadowRoot?: boolean;
 }
 
-/**
- * 持续查找多个个元素，每次查找之间有指定的间隔时间，直到找到为止
- * 结合异步操作await可用于监听元素加载完成之后继续执行
- * 如设置超时时间超过指定时间后，将返回空数组
- * @param {string} selector - CSS 选择器，用于选择元素
- * @param config{{}} 配置对象
- * @param config.doc {Document|Element|ShadowRoot}- 查找的文档对象，默认为document
- * @param config.interval  {number} - 每次查找之间的间隔时间（毫秒）默认1秒，即1000毫秒
- * @param config.timeout  {number} - 超时时间（毫秒）默认-1，去问问1即无限等待
- * @param config.parseShadowRoot  {boolean} - 如匹配元素为shadowRoot时，是否解析shadowRoot，默认为false
- * @returns {Promise<HTMLElement[]>}-返回找到的Element列表，如设置超时超出时间则返回空数组
- */
+/** 持续轮询查找多个元素，直到非空；timeout 默认 -1 表示无限等待（语义同 findElement，不可改成立即返回） */
 const findElements = async (selector: string, config: FindElementsConfig = {}): Promise<HTMLElement[]> => {
     const defConfig: FindElementsConfig = {doc: document, interval: 1000, timeout: -1, parseShadowRoot: false}
     config = {...defConfig, ...config}

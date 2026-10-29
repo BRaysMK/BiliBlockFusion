@@ -100,15 +100,13 @@ src/web/
 │   ├── message/          # 消息页
 │   ├── popular/          # 热门页
 │   ├── history/          # 历史记录
-│   ├── biliGame.ts       # B 站游戏页
 │   ├── partition.ts      # 分区页面处理
 │   ├── topicDetail.ts    # 话题详情页处理
 │   ├── commentSectionModel.ts  # 评论区通用模型
 │   ├── userProfile.ts    # 用户资料处理
 │   └── topColumnProcessing.ts  # 顶部栏处理
 ├── state/                # 运行时状态层
-│   ├── localMKData.ts    # GM_setValue/GM_getValue 封装（所有可配置项的 getter/setter）
-│   └── elData.ts         # DOM 元素缓存
+│   └── localMKData.ts    # GM_setValue/GM_getValue 封装（所有可配置项的 getter/setter）
 ├── ui/                   # UI 层（Vue 3 SFC，统一 `<script setup lang="ts">`）
 │   ├── App.vue           # 主面板根组件
 │   ├── init.ts           # UI 初始化：注入 EP 样式、创建应用、注册全局组件
@@ -134,14 +132,13 @@ src/web/
 │   │   └── UserLevelFilteringView.vue   # 用户等级过滤视图
 │   ├── styles/           # 样式文件：以 .css 为主，仅 defHome.less 用 Less；
 │   │                     #   均以 `?raw` 导入后由 GM_addStyle 注入
-│   ├── excludeURLs.ts    # URL 排除逻辑
-│   └── output_informationTab.ts # 输出信息标签
+│   └── excludeURLs.ts    # URL 排除逻辑
 ├── dev/                  # 开发辅助（生产包同样保留，由 GM 开关控制是否生效）
 │   ├── dev.ts            # 暴露 unsafeWindow.mk_window/elUtil/urlUtil，按开关连 ws
 │   └── webWs.ts          # WebSocket 客户端与沙箱执行
 ├── main.ts               # 脚本入口
 ├── router.ts             # 基于 URL 的页面路由
-├── menu.ts               # Tampermonkey 菜单注册
+├── menu.ts               # Tampermonkey 菜单注册（只有「主面板」一项）
 ├── element-plus.d.ts     # Element Plus 相关类型声明
 ├── global.d.ts           # 全局变量、`__DEV__`、window 扩展声明
 └── shims-vue.d.ts        # `.vue` 与 `*.css?raw` / `*.less?raw` 模块声明
@@ -155,7 +152,7 @@ src/web/
 
 脚本以 `@run-at document-start` 注入，`main.ts` 的启动顺序如下：
 
-1. **模块副作用导入**：四个响应层过滤模块（`homeResponseRewrite` / `searchResponseRewrite` / `commentResponseRewrite` / `liveSectionResponseRewrite`，需尽早安装页面侧 fetch hook）、`menu.ts`（注册菜单）、`externalLibraryVerification.ts`（验证 `window.Vue` / `window.ElementPlus` / `window.Dexie` 已由 `@require` 就绪，缺失即弹窗提示并抛错）、`ui/init.ts`（挂载 UI）、`notificationBlocking.ts`、`replaceKeywords.ts`、`videoDanmakuFilter.ts`、`videoDanmakuInspector.ts`、`dev/dev.ts`
+1. **模块副作用导入**：四个响应层过滤模块（`homeResponseRewrite` / `searchResponseRewrite` / `commentResponseRewrite` / `liveSectionResponseRewrite`，需尽早安装页面侧 fetch hook）、`menu.ts`（只注册「主面板」一项，其余外链入口都在面板「关于」页）、`externalLibraryVerification.ts`（验证 `window.Vue` / `window.ElementPlus` / `window.Dexie` 已由 `@require` 就绪，缺失即弹窗提示并抛错）、`ui/init.ts`（挂载 UI）、`notificationBlocking.ts`、`replaceKeywords.ts`、`videoDanmakuFilter.ts`、`videoDanmakuInspector.ts`、`dev/dev.ts`
 2. **路由初始化**：导入 `router.ts` 注册路由
 3. **首屏路由**：按 `document.readyState` 判断 —— 已是 `complete` 则立即执行 `router.staticRoute()`，否则监听 `window.load`（`@require` 拼接作用域下可能已错过事件）
 4. **监听注册**：
@@ -366,7 +363,7 @@ UI 初始化流程（`ui/init.ts`，DOM 就绪后执行）：
 
 ### Vue 3 / Element Plus 组件写法约定
 
-48 个 `.vue` 组件已在迁移中统一为 Composition API，新增组件沿用同一套约定：
+全部 `.vue` 组件已统一为 Composition API，新增组件沿用同一套约定：
 
 - 一律 `<script setup lang="ts">`，不使用 Options API
 - 弹窗消息用 `ElMessage` / `ElNotification` / `ElMessageBox`（从 `element-plus` 导入），不再使用 `this.$message` 等实例方法
