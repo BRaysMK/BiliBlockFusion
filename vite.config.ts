@@ -105,7 +105,11 @@ function writePublishShell(): void {
     const appCode = readFileSync(resolve(distRelease, 'local_build.js'), 'utf-8');
     const inlineCode = vueBridgeCode + epUmdCode + '\n' + appCode + '\n';
     // 单文件发布产物：头部（含 @require）+ 内联代码（头部以 ==/UserScript== 结束，代码直接续在其后）
-    writeFileSync(resolve(distRelease, 'publish.user.js'), header + '\n' + inlineCode, 'utf-8');
+    const publishContent = header + '\n' + inlineCode;
+    writeFileSync(resolve(distRelease, 'publish.user.js'), publishContent, 'utf-8');
+    // dist/BiliBlockFusion.user.js 是被 git 白名单跟踪的发布件（README 安装链接指向它）。
+    // 这里同步写一份：否则 `pnpm build` 的 emptyOutDir 会把它从工作区删掉，git status 常态出现 D。
+    writeFileSync(resolve(__dirname, 'dist/BiliBlockFusion.user.js'), publishContent, 'utf-8');
 }
 
 /**
