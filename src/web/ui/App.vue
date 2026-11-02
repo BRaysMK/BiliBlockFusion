@@ -46,12 +46,11 @@ eventEmitter.on('主面板开关', () => {
 const handleDocumentClick = (event: MouseEvent): void => {
   if (!drawer.value) return;
 
-  // 面板正在播放开合动画时不处理：
-  // 实测打开动画期间点击面板外，会与 enter 过渡叠加成
-  // "enter-from + leave-active" 的冲突状态，面板卡在视口外。
-  // 等动画结束（约 280ms）后再允许点击外部关闭。
-  const wrapEl = document.querySelector('.is-drawer.el-modal-drawer');
-  if (wrapEl !== null && /el-drawer-fade-(enter|leave)-active/.test(wrapEl.className)) return;
+  // 面板正在播放开合动画时不处理：enter 过渡期间关闭会与动画叠加，
+  // 面板可能卡在视口外。只查主面板自己的外层容器——页面上还有多个
+  // .is-drawer.el-modal-drawer（子抽屉的遮罩），全局 querySelector 可能取到别人。
+  const wrapEl = document.querySelector('.gz-main-drawer')?.parentElement;
+  if (wrapEl && /el-drawer-fade-(enter|leave)-active/.test(wrapEl.className)) return;
 
   const target = event.target as HTMLElement | null;
   if (target === null) return;
@@ -61,9 +60,9 @@ const handleDocumentClick = (event: MouseEvent): void => {
   // EP 浮层（弹窗/下拉/气泡/消息框等被 teleport 到 body 下）→ 不关闭，
   // 否则点下拉选项会把面板一起关掉
   if (target.closest('.el-popper, .el-overlay, .el-message-box, .el-notification, .el-message') !== null) return;
-  // 浮动开关按钮 → 不关闭，交给它自己的 handler 做开关切换
-  // （不能靠「先关再被按钮打开」来兜底，那样会在开合动画上产生一次抖动）
-  if (target.closest('.gz-float-btn, [class*="float"], [class*="right-top"]') !== null) return;
+  // 浮动开关按钮 → 不关闭，交给它自己的 handler 做开关切换。
+  // 若这里不拦住，mousedown 会先关面板、随后的 click 又把它打开，表现为「点几次都关不掉」。
+  if (target.closest('.gz-float-btn') !== null) return;
 
   // 其余：点击面板外空白 → 关闭
   drawer.value = false;
@@ -101,8 +100,14 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
 <template>
   <div>
     <!-- 浮层形态（对齐魔改版）：宽 60%、高 70%、距顶 15%，从左侧滑入。
-         EP 的 size 只控制宽度，高度由样式覆盖 -->
+         EP 的 size 只控制宽度，高度由样式覆盖。
+         - lock-scroll=false：面板是常驻浮层，锁 body 滚动没有意义；EP 的锁屏清理有 200ms 延迟，
+           快速开关时会把 el-popup-parent--hidden 永久留在 body 上，导致整页无法滚动/点击。
+         - modal-penetrable：modal=false 时 EP 仍会渲染一个覆盖全屏、pointer-events:auto 的外层 div，
+           它会吞掉页面和悬浮按钮的点击；加上该属性后外层 pointer-events:none，只有抽屉本体可点。 -->
     <el-drawer :modal="false"
+               :modal-penetrable="true"
+               :lock-scroll="false"
                v-model="drawer"
                :with-header="false"
                direction="ltr"
@@ -198,11 +203,6 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   border-radius: var(--fluent-border-radius-x-large) var(--fluent-border-radius-x-large) 0 0;
 }
 
-/* 内容区不再限制高度：内容多时自然撑高，交给抽屉 body 滚动 */
-#gz-drawer-tabs > .el-tabs__content {
-  overflow: visible;
-}
-
 /* ---- 标签页头：次级表面 + 吸顶 ---- */
 #gz-drawer-tabs.el-tabs--border-card > .el-tabs__header {
   background: var(--fluent-color-neutral-background-2);
@@ -268,7 +268,8 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   border-radius: var(--fluent-border-radius-circular);
 }
 
-/* 标签页内容内边距：Fluent 用 16px 基准留白 */
+/* 标签页内容内边距：Fluent 用 16px 基准留白。
+   放在 pane 而不是抽屉 body 上——body 的 padding 会形成滚动时内容穿透吸顶栏的缝隙 */
 #gz-drawer-tabs .el-tab-pane {
   padding: var(--fluent-spacing-vertical-l) var(--fluent-spacing-horizontal-l);
 }
@@ -308,16 +309,14 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
    关键：EP 的 .el-tabs--left 默认带 overflow:hidden，它会让 sticky 失效
    （overflow 非 visible 的祖先会成为 sticky 的滚动容器，导致 sticky 相对它定位而非视口）。
    因此必须先把 overflow 改成 visible，sticky 才能相对抽屉 body 生效。 */
-.el-drawer .el-tabs--left {
+.gz-main-drawer .el-tabs--left {
   overflow: visible;
 }
 
-.el-drawer .el-tabs--left > .el-tabs__header {
+.gz-main-drawer .el-tabs--left > .el-tabs__header {
   position: sticky;
-  /* top 要避开抽屉 body 的 padding(20px) 与外层页签栏(约 43px)，
-     否则页签会滑到外层页签栏底下被遮住。实测 offset 为 79px，
-     取 63px（20+43）让内层页签恰好贴在外层页签栏下沿。 */
-  top: 63px;
+  /* 贴住外层页签栏下沿：外层页签栏高 43px，抽屉 body 已无 padding，故 top=43 */
+  top: 43px;
   align-self: flex-start;
   /* 避免吸顶时下方内容透出 */
   background: var(--fluent-color-neutral-background-1);
@@ -325,7 +324,7 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
 }
 
 /* 页签列内部：长列表时页签自身可滚动，不把面板撑高 */
-.el-drawer .el-tabs--left > .el-tabs__header .el-tabs__nav-wrap {
+.gz-main-drawer .el-tabs--left > .el-tabs__header .el-tabs__nav-wrap {
   max-height: calc(70vh - 120px);
   overflow-y: auto;
 }
@@ -341,25 +340,26 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   background: var(--fluent-color-neutral-stroke-2);
 }
 
-.el-drawer__body {
-  padding: var(--fluent-spacing-vertical-l) var(--fluent-spacing-horizontal-l);
+/* 抽屉 body 不能留 padding：吸顶的页签栏贴在内容盒顶端，而 padding 区属于
+   body 的滚动视口，滚动时内容会从 padding 缝里穿到页签栏上方。
+   内边距改由 .el-tab-pane 提供。
+   选择器带上 .gz-main-drawer 提高优先级，避免被 EP 默认的 .el-drawer__body 覆盖。 */
+.el-drawer.gz-main-drawer .el-drawer__body {
+  padding: 0;
   overflow-y: auto;
 }
 
 /* 滚动条：Fluent 的细滚动条 */
-.el-drawer__body::-webkit-scrollbar,
-#gz-drawer-tabs > .el-tabs__content::-webkit-scrollbar {
+.gz-main-drawer .el-drawer__body::-webkit-scrollbar {
   width: 8px;
 }
 
-.el-drawer__body::-webkit-scrollbar-thumb,
-#gz-drawer-tabs > .el-tabs__content::-webkit-scrollbar-thumb {
+.gz-main-drawer .el-drawer__body::-webkit-scrollbar-thumb {
   background: var(--fluent-color-neutral-stroke-2);
   border-radius: var(--fluent-border-radius-circular);
 }
 
-.el-drawer__body::-webkit-scrollbar-thumb:hover,
-#gz-drawer-tabs > .el-tabs__content::-webkit-scrollbar-thumb:hover {
+.gz-main-drawer .el-drawer__body::-webkit-scrollbar-thumb:hover {
   background: var(--fluent-color-neutral-stroke-1);
 }
 

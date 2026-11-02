@@ -44,7 +44,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-show="panelShow" ref="divRef"
+  <!-- gz-float-btn 是主面板「点击外部关闭」逻辑的豁免标记，改名需同步 App.vue -->
+  <div v-show="panelShow" ref="divRef" class="gz-float-btn"
        style="position: fixed;z-index: 9000;right: 0;top: 13%;transition: transform 0.5s;"
        @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
     <div>
