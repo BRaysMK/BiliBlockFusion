@@ -125,39 +125,46 @@ export const classifyHomeItem = (item: any): HomeFilterItem => {
 
 interface HomeItemDecision {
     blocked: boolean;
-    reason: string;
+    /** 命中规则名；未屏蔽时为空 */
+    type: string;
+    /** 命中的具体值；规则本身无值（如广告）时为空 */
+    matching: string;
 }
 
+/** 决策直接返回规则名与匹配值两个字段，不要拼成一个字符串再由调用方用括号切回来 */
 const getHomeItemDecision = (classified: HomeFilterItem): HomeItemDecision => {
     switch (classified.kind as HomeItemKind) {
         case "ad":
-            return {blocked: true, reason: "广告"};
+            return {blocked: true, type: "广告卡片", matching: ""};
         case "video": {
             const result = classified.video ? shieldingVideo(classified.video) : null;
             return {
                 blocked: Boolean(result?.state),
-                reason: result?.state ? `${result.type ?? "基础视频规则"}${result.matching ? `（${result.matching}）` : ""}` : ""
+                type: result?.state ? (result.type ?? "基础视频规则") : "",
+                matching: result?.state && result.matching !== undefined ? String(result.matching) : ""
             };
         }
         case "live": {
             if (!classified.live || getReleaseTypeCardsGm().includes("直播")) {
-                return {blocked: false, reason: "直播已放行"};
+                return {blocked: false, type: "", matching: ""};
             }
             const result = shieldingLiveRoom(classified.live);
             return {
                 blocked: result.state,
-                reason: result.state ? `${result.type ?? "直播规则"}${result.matching ? `（${result.matching}）` : ""}` : ""
+                type: result.state ? (result.type ?? "直播规则") : "",
+                matching: result.state && result.matching !== undefined ? String(result.matching) : ""
             };
         }
         case "release": {
             const releaseType = classified.releaseType ?? "未知发布类型";
             return {
                 blocked: !getReleaseTypeCardsGm().includes(releaseType),
-                reason: !getReleaseTypeCardsGm().includes(releaseType) ? `未放行${releaseType}` : `${releaseType}已放行`
+                type: "发布类型未放行",
+                matching: releaseType
             };
         }
         default:
-            return {blocked: false, reason: "未知类型已放行"};
+            return {blocked: false, type: "", matching: ""};
     }
 };
 
@@ -257,33 +264,33 @@ const createFilterRequestHandler = (expectedToken: string) => (event: MessageEve
         const classified = classifyHomeItem(entry.item);
         classified.index = entry.index;
         const decision = getHomeItemDecision(classified);
-         if (decision.blocked) {
-             blockedIndexes.push(entry.index);
-             blockedItems.push({entry, classified, decision});
-         }
-     });
-     blockedItems.forEach(({entry, classified, decision}) => {
-         const item = entry.item as any;
-         const data: Record<string, unknown> = {
-             name: classified.video?.name ?? classified.live?.name,
-             uid: classified.video?.uid ?? classified.live?.uid,
-             title: classified.video?.title ?? classified.live?.title ?? item?.title,
-             bvid: classified.video?.bv,
-             roomid: classified.live?.roomId,
-             videoUrl: classified.video?.bv ? `https://www.bilibili.com/video/${classified.video.bv}` : undefined,
-             liveUrl: classified.live?.roomId ? `https://live.bilibili.com/${classified.live.roomId}` : undefined
-         };
-         const objectType = classified.kind === "video" ? "视频" : classified.kind === "live" ? "直播间" : classified.kind === "ad" ? "广告" : "发布卡片";
-         sendShieldLog({
-             source: "响应层过滤",
-             sourceLabel: "首页推荐",
-             ruleType: decision.reason.replace(/（.*）$/, ""),
-             matching: decision.reason.match(/（(.*)）$/)?.[1],
-             objectType,
-             data,
-             original: entry.item
-         });
-     });
+        if (decision.blocked) {
+            blockedIndexes.push(entry.index);
+            blockedItems.push({entry, classified, decision});
+        }
+    });
+    blockedItems.forEach(({entry, classified, decision}) => {
+        const item = entry.item as any;
+        const data: Record<string, unknown> = {
+            name: classified.video?.name ?? classified.live?.name,
+            uid: classified.video?.uid ?? classified.live?.uid,
+            title: classified.video?.title ?? classified.live?.title ?? item?.title,
+            bvid: classified.video?.bv,
+            roomid: classified.live?.roomId,
+            videoUrl: classified.video?.bv ? `https://www.bilibili.com/video/${classified.video.bv}` : undefined,
+            liveUrl: classified.live?.roomId ? `https://live.bilibili.com/${classified.live.roomId}` : undefined
+        };
+        const objectType = classified.kind === "video" ? "视频" : classified.kind === "live" ? "直播间" : classified.kind === "ad" ? "广告" : "发布卡片";
+        sendShieldLog({
+            source: "响应层过滤",
+            sourceLabel: "首页推荐",
+            ruleType: decision.type,
+            matching: decision.matching,
+            objectType,
+            data,
+            original: entry.item
+        });
+    });
     const response: FilterResponseData = {
         type: responseType,
         token: expectedToken,

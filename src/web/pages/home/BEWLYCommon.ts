@@ -106,23 +106,22 @@ const getVideoList = async () => {
         const userUrl = (userUrlEl as HTMLAnchorElement)?.href ?? '';
         const uid = urlUtil.getUrlUID(userUrl);
         const name = userUrlEl?.textContent.trim() ?? '';
-        let nDuration, nPlayCount, bulletChat;
+        // 字段名必须是 nPlayCount / nBulletChat：shieldingVideo 按这两个名字解构，
+        // 写成 bulletChat 会让弹幕数规则在 Bewly 页面静默失效。
+        let nDuration: any, nPlayCount: any, nBulletChat: any;
         if (isBEWLYCatPluginVal) {
             const statsEl = el.querySelector('.video-card-cover-stats')
             nDuration = statsEl?.querySelector('.video-card-cover-stats__item--duration')?.textContent.trim() ?? null
             const othersStatsEls = statsEl?.querySelectorAll('.video-card-cover-stats__items>.video-card-cover-stats__item>.video-card-cover-stats__value')
             nPlayCount = othersStatsEls?.[0]?.textContent.trim() ?? null;
-            bulletChat = othersStatsEls?.[1]?.textContent.trim() ?? null;
-            bulletChat = parseInt(bulletChat ?? '')
+            nBulletChat = othersStatsEls?.[1]?.textContent.trim() ?? null;
         } else {
             const playInfoEl = el.querySelector('[flex="~ items-center gap-1 wrap"]>div');
             nDuration = el.querySelector('[class*="group-hover:opacity-0"]')?.textContent.trim() || null;
             nPlayCount = playInfoEl?.querySelector('span:first-child')?.textContent.trim() || null;
-            bulletChat = playInfoEl?.querySelector('span:last-of-type')?.textContent.trim() || null;
+            nBulletChat = playInfoEl?.querySelector('span:last-of-type')?.textContent.trim() || null;
             if ((playInfoEl?.querySelectorAll('span').length ?? 0) < 2) {
-                bulletChat = -1
-            } else {
-                bulletChat = strFormatUtil.toPlayCountOrBulletChat(bulletChat)
+                nBulletChat = -1
             }
             // 新版 BewlyCat 没有 .video-card-cover-stats 与 flex 布局的播放信息容器，
             // 数据改为纯文本放在 .group/desc 内，形如「7364 次•3  弹幕」「5 天前」。
@@ -137,13 +136,15 @@ const getVideoList = async () => {
                         const playMatch = statLine.match(/([\d.]+\s*[万亿]?)\s*次/);
                         const danmakuMatch = statLine.match(/•\s*([\d.]+\s*[万亿]?)/);
                         nPlayCount = playMatch ? playMatch[1].trim() : null;
-                        bulletChat = danmakuMatch ? danmakuMatch[1].trim() : null;
+                        nBulletChat = danmakuMatch ? danmakuMatch[1].trim() : null;
                     }
                 }
             }
         }
         nDuration = strFormatUtil.timeStringToSeconds(nDuration)
         nPlayCount = strFormatUtil.toPlayCountOrBulletChat(nPlayCount)
+        // 统一走同一套单位换算：卡片上的「1.2万」直接 parseInt 会得到 1
+        nBulletChat = strFormatUtil.toPlayCountOrBulletChat(nBulletChat)
         const videoUrl = el.querySelector('[href*="https://www.bilibili.com/video"]')?.href ?? '';
         const bv = urlUtil.getUrlBV(videoUrl)
         // 屏蔽按钮插入点：新版用 .group/desc（标题+UP+数据的信息区），旧版用 .video-card-meta。
@@ -157,7 +158,7 @@ const getVideoList = async () => {
             explicitSubjectEl = el
         }
         list.push({
-            title, name, uid, bv, userUrl, videoUrl, nPlayCount, bulletChat, nDuration, el,
+            title, name, uid, bv, userUrl, videoUrl, nPlayCount, nBulletChat, nDuration, el,
             insertionPositionEl, explicitSubjectEl
         })
     }

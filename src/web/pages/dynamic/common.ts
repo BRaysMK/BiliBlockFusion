@@ -1,5 +1,5 @@
 import elUtil from "../../core/util/elUtil.ts";
-import {blockCheckWhiteUserUid, blockDynamicItemContent} from "@/domain/shielding/main.ts";
+import {blockCheckWhiteUserUid, blockDynamicItemContent, blockTopicTag} from "@/domain/shielding/main.ts";
 import {sendShieldLog} from "@/core/shieldLog.ts";
 import {
     isBlockAppointmentDynamicGm,
@@ -150,6 +150,18 @@ const checkEachItem = (dynamicData: any, ruleArrMap: any) => {
     const {desc, name, uid = -1, videoTitle = null, orig = null} = dynamicData;
     // uid白名单最高优先：命中则跳过该用户的所有动态屏蔽检查（含转发类等类型规则）
     if (uid !== -1 && blockCheckWhiteUserUid(uid)) return false;
+    // 话题 tag 规则只在动态卡片上可用，此前没有调用点导致配置永不生效
+    const topicTagRes = blockTopicTag(dynamicData.topic);
+    if (topicTagRes.state) {
+        sendShieldLog({
+            source: "屏蔽",
+            ruleType: topicTagRes.type ?? "话题tag",
+            matching: topicTagRes.matching,
+            objectType: "动态",
+            data: {name, uid, content: dynamicData.topic}
+        })
+        return true;
+    }
     const blockRepostDynamicGm = isBlockRepostDynamicGm();
     if (orig && blockRepostDynamicGm) {
         sendShieldLog({source: "屏蔽", ruleType: "转发类动态", objectType: "动态", data: {name, uid, content: desc, type: "转发"}})

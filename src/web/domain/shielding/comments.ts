@@ -61,7 +61,13 @@ const shieldingComment = (commentsData: CommentData): BlockResult => {
     return returnVal;
 }
 
-const shieldingCommentAsync = async (commentsData: CommentData): Promise<any> => {
+/**
+ * 屏蔽单条评论，返回是否命中屏蔽
+ *
+ * 「仅看硬核会员」命中时 state=true 但语义是保留，必须返回 false，
+ * 否则硬核会员的评论会被删掉。
+ */
+const shieldingCommentAsync = async (commentsData: CommentData): Promise<boolean> => {
     const {state, type, matching} = shieldingComment(commentsData);
     eventEmitter.send('event-评论通知替换关键词', commentsData)
     if (type === '保留硬核会员') {
@@ -77,26 +83,21 @@ const shieldingCommentAsync = async (commentsData: CommentData): Promise<any> =>
             level: commentsData.level
         };
         sendShieldLog({source: "DOM层过滤", ruleType: type ?? "评论规则", matching, objectType: "评论", data: safeData, original: safeData});
-        return state;
+        return true;
     }
-    return state;
+    return false;
 }
 
 const shieldingCommentsAsync = async (commentsDataList: CommentData[]): Promise<void> => {
     for (let commentsData of commentsDataList) {
-        const {state, type, matching} = await shieldingCommentAsync(commentsData);
-        eventEmitter.send('event-评论通知替换关键词', commentsData)
-        const {replies = []} = commentsData;
-        if (type === '保留硬核会员') continue
-        if (state) continue;
+        // 屏蔽按钮只挂在未被屏蔽的评论上：先判命中，再决定是否加按钮。
+        // 这里不能从返回值里解构 type/matching——该函数只返回布尔值。
+        if (await shieldingCommentAsync(commentsData)) continue;
         eventEmitter.send('评论添加屏蔽按钮', commentsData)
+        const {replies = []} = commentsData;
         for (let reply of replies) {
             if (await shieldingCommentAsync(reply)) continue;
             eventEmitter.send('评论添加屏蔽按钮', reply)
-        }
-        if (state) {
-            commentsData.el?.remove()
-            sendShieldLog({source: "DOM层过滤", ruleType: type ?? "评论规则", matching, objectType: "评论", data: commentsData, original: commentsData});
         }
     }
 }

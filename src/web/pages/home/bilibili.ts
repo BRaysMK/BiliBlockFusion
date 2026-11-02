@@ -100,9 +100,12 @@ const hideHomeTopHeaderBannerImage = (hide: any) => {
 const getVideoData = (el: any) => {
     const title = el.querySelector(".bili-video-card__info--tit").title;
     const name = el.querySelector(".bili-video-card__info--author").textContent.trim();
-    let nPlayCount: any = el.querySelector('.bili-video-card__stats--text')?.textContent.trim()
+    // 卡片统计区是「播放量 + 弹幕数」两个 .bili-video-card__stats--item（个别卡片只渲染播放量）。
+    // 不能两次都取第一个 stats--text：那会把播放量同时当成弹幕数，指标类规则全部错判。
+    const statsItems = el.querySelectorAll('.bili-video-card__stats--item');
+    let nPlayCount: any = statsItems[0]?.textContent.trim()
     nPlayCount = strFormatUtil.toPlayCountOrBulletChat(nPlayCount)
-    let nBulletChat: any = el.querySelector('.bili-video-card__stats--text')?.textContent.trim()
+    let nBulletChat: any = statsItems[1]?.textContent.trim()
     nBulletChat = strFormatUtil.toPlayCountOrBulletChat(nBulletChat)
     let nDuration: any = el.querySelector('.bili-video-card__stats__duration')?.textContent.trim()
     nDuration = strFormatUtil.timeStringToSeconds(nDuration)

@@ -37,6 +37,8 @@ export interface VideoShieldData {
     };
     videoInfo: {
         dimension?: any;
+        /** 合作视频的创作团队成员，普通视频没有该字段 */
+        staff?: Array<{mid: number; name: string}>;
         /** 1 原创、2 转载 */
         copyright?: number;
         is_upower_exclusive?: boolean;

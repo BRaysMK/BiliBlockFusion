@@ -75,7 +75,8 @@ const getVVideoDataList = async () => {
         nPlayCount = strFormatUtil.toPlayCountOrBulletChat(nPlayCount)
         let nBulletChat: any = playAndDmu[1]?.textContent.trim()
         nBulletChat = strFormatUtil.toPlayCountOrBulletChat(nBulletChat)
-        nDuration = strFormatUtil.toPlayCountOrBulletChat(nDuration)
+        // 时长是 mm:ss 格式，必须按时间解析；用播放量换算会得到 10 这类错误秒数
+        nDuration = strFormatUtil.timeStringToSeconds(nDuration)
         const title = titleEl.textContent.trim()
         const videoUrl = titleEl.href ?? '';
         const userUrl = userEl.href ?? '';

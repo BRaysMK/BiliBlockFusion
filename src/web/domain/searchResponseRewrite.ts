@@ -37,7 +37,10 @@ interface SearchItemDecision {
     kind: SearchItemKind;
     title: string;
     blocked: boolean;
-    reason: string;
+    /** 命中规则名；未屏蔽时为空 */
+    type: string;
+    /** 命中的具体值；规则本身无值时为空 */
+    matching: string;
 }
 
 const parseDuration = (value: unknown): number => {
@@ -96,6 +99,7 @@ const classifyItem = (searchType: SearchType, item: any): {kind: SearchItemKind;
     return live ? {kind: "live", live} : {kind: "unknown"};
 };
 
+/** 决策直接返回规则名与匹配值两个字段，不要拼成字符串再由调用方用括号切回来 */
 const getDecision = (searchType: SearchType, entry: SearchFilterEntry): SearchItemDecision => {
     const classified = classifyItem(searchType, entry.item);
     const title = typeof (entry.item as any)?.title === "string" ? (entry.item as any).title : "";
@@ -106,12 +110,13 @@ const getDecision = (searchType: SearchType, entry: SearchFilterEntry): SearchIt
             kind: "video",
             title,
             blocked: result.state,
-            reason: result.state ? `${result.type ?? "基础视频规则"}${result.matching ? `（${result.matching}）` : ""}` : ""
+            type: result.state ? (result.type ?? "基础视频规则") : "",
+            matching: result.state && result.matching !== undefined ? String(result.matching) : ""
         };
     }
     if (classified.kind === "live") {
         if (!isClearLiveCardGm()) {
-            return {index: entry.index, kind: "live", title, blocked: false, reason: "直播卡片已放行"};
+            return {index: entry.index, kind: "live", title, blocked: false, type: "", matching: ""};
         }
         const result = shieldingLiveRoom(classified.live!);
         return {
@@ -119,10 +124,11 @@ const getDecision = (searchType: SearchType, entry: SearchFilterEntry): SearchIt
             kind: "live",
             title,
             blocked: result.state,
-            reason: result.state ? `${result.type ?? "直播规则"}${result.matching ? `（${result.matching}）` : ""}` : ""
+            type: result.state ? (result.type ?? "直播规则") : "",
+            matching: result.state && result.matching !== undefined ? String(result.matching) : ""
         };
     }
-    return {index: entry.index, kind: "unknown", title, blocked: false, reason: "未知结构已放行"};
+    return {index: entry.index, kind: "unknown", title, blocked: false, type: "", matching: ""};
 };
 
 const isSearchPage = (): boolean => window.location.hostname === "search.bilibili.com";
@@ -206,8 +212,8 @@ const createFilterRequestHandler = (expectedToken: string) => (event: MessageEve
         sendShieldLog({
             source: "响应层过滤",
             sourceLabel,
-            ruleType: decision.reason.replace(/（.*）$/, ""),
-            matching: decision.reason.match(/（(.*)）$/)?.[1],
+            ruleType: decision.type,
+            matching: decision.matching,
             objectType: decision.kind === "video" ? "视频" : "直播间",
             data: {
                 name: itemData?.name,

@@ -47,17 +47,16 @@ const verifyCombinationRuleItem = (data: CombinationRuleData, ruleList: Combinat
     for (let itemRule of ruleList) {
         const {key, value} = itemRule
         if (key === "videoTitle") {
-            if (title.search(value) === -1) {
-                return false
-            }
-        }
-        if (key === "videoDesc") {
-            if (desc.search(value) === -1) {
-                return false
-            }
-        }
-        const valueTag = value.split(',').filter(str => str.trim() !== '').map(str => str.trim())
-        if (!arrUtil.arrayContains(tags, valueTag)) {
+            if (title.search(value) === -1) return false
+        } else if (key === "videoDesc") {
+            if (desc.search(value) === -1) return false
+        } else if (key === "videoTag") {
+            // 原先三个判断是并列的：标题/简介规则命中后仍会继续走 tag 校验，
+            // 于是「标题正则」永远要求标题同时是视频 tag，规则实际不生效。
+            const valueTag = value.split(',').filter(str => str.trim() !== '').map(str => str.trim())
+            if (!arrUtil.arrayContains(tags, valueTag)) return false
+        } else {
+            // 未知字段（旧数据或手改配置）不能当成命中，否则该方案会误屏蔽
             return false
         }
     }

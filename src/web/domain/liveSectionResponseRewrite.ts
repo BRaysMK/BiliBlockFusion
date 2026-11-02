@@ -47,9 +47,10 @@ const getLiveItemDecision = (item: unknown): {blocked: boolean; type: string; ma
         return {blocked: false, type: "", matching: null, liveData};
     }
     const result = shieldingLiveRoom(liveData);
+    // 未命中时不能填兜底规则名：日志只在 blocked 时写入，但留空可避免将来误用成「已命中」的证据
     return {
         blocked: result.state,
-        type: result.type ?? "直播规则",
+        type: result.state ? (result.type ?? "直播规则") : "",
         matching: result.matching ?? "",
         liveData,
     };

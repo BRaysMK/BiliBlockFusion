@@ -36,7 +36,11 @@ interface LiveRoomContent {
 }
 
 export const blockLiveRoomId = (liveRoomId: number | string): BlockResult => {
-    if (GM_getValue('precise_liveRoomId', [] as (string | number)[]).includes(liveRoomId)) {
+    // 规则由输入框写入，可能是 number 也可能是 string；URL 解析出来的房间号是字符串，
+    // 直接 includes 会因类型不同而漏匹配，统一转字符串比较。
+    const roomIdStr = String(liveRoomId);
+    const ruleList = GM_getValue('precise_liveRoomId', [] as (string | number)[]);
+    if (ruleList.some(item => String(item) === roomIdStr)) {
         return {state: true, type: "精确直播间id", matching: liveRoomId};
     }
     return returnTempVal;
@@ -59,8 +63,10 @@ const blockLiveTitle = (title: string): BlockResult => {
 }
 
 const blockLiveUserId = (liveUid: number): BlockResult => {
-    if (ruleMatchingUtil.exactMatch(GM_getValue('precise_live_uid', []), liveUid)) {
-        return {state: true, type: "精确uid(直播区)"};
+    // 同 blockLiveRoomId：规则列表可能混有字符串，精确匹配前统一成数字再比
+    const ruleList = GM_getValue('precise_live_uid', []);
+    if (ruleMatchingUtil.exactMatch(ruleList, liveUid) || ruleMatchingUtil.exactMatch(ruleList, String(liveUid))) {
+        return {state: true, type: "精确uid(直播区)", matching: liveUid};
     }
     return returnTempVal;
 }

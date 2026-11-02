@@ -384,7 +384,14 @@ const shieldingOtherVideoParameter = async (result: VideoShieldData, videoData: 
         .then(() => asyncBlockChargeVideo(videoInfo?.is_upower_exclusive!))
         .then(() => asyncBlockFollowedVideo(videoInfo?.following!))
         .then(() => asyncBlockSeniorMember(userInfo.is_senior_member ? 1 : 0))
-        .then(() => asyncBlockVideoTeamMember(userInfo.mid!))
+        .then(() => {
+            // 合作视频的成员列表在 videoInfo.staff；普通视频没有该字段，检查无意义。
+            // 原先传的是 up 主 mid（number），函数按数组遍历会直接抛错，开关也从未生效。
+            if (!localMKData.isCheckTeamMember()) return;
+            const staff = videoInfo.staff;
+            if (!Array.isArray(staff) || staff.length === 0) return;
+            return asyncBlockVideoTeamMember(staff.map((item: any) => ({mid: item.mid, name: item.name})))
+        })
         .then(() => asyncBlockVideoLikeRate(videoInfo.like, videoInfo.view))
         .then(() => asyncBlockVideoInteractiveRate(videoInfo.danmaku, videoInfo.reply, videoInfo.view))
         .then(() => asyncBlockVideoTripleRate(videoInfo.favorite, videoInfo.coin, videoInfo.share, videoInfo.view))

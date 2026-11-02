@@ -33,9 +33,10 @@ const getVideoList = async () => {
         const name = nameEl.textContent?.trim() ?? ''
         const nDuration = strFormatUtil.timeStringToSeconds(durationEl.textContent?.trim() ?? '');
         const nPlayCount = strFormatUtil.toPlayCountOrBulletChat(viewEl.textContent?.trim() ?? '')
-        let bulletChat: any = -1;
+        // 字段名必须是 nBulletChat：shieldingVideo 按该名字解构，写 bulletChat 会让弹幕规则静默失效
+        let nBulletChat: any = -1;
         if (danmakuEl) {
-            bulletChat = strFormatUtil.toPlayCountOrBulletChat(danmakuEl.textContent?.trim() ?? '')
+            nBulletChat = strFormatUtil.toPlayCountOrBulletChat(danmakuEl.textContent?.trim() ?? '')
         }
         let explicitSubjectEl;
         explicitSubjectEl = el.querySelector('.vertical-card-cover+div');
@@ -44,7 +45,7 @@ const getVideoList = async () => {
         }
         const insertionPositionEl = nameEl.parentElement ?? el;
         list.push({
-            title, name, uid, bv, userUrl, videoUrl, nPlayCount, bulletChat, nDuration, el,
+            title, name, uid, bv, userUrl, videoUrl, nPlayCount, nBulletChat, nDuration, el,
             insertionPositionEl, explicitSubjectEl
         })
     }

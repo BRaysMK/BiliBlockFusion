@@ -27,7 +27,8 @@ const regexMatch = (ruleList: string[] | null | undefined, value: string): strin
     if (bFuzzyAndRegularMatchingWordsToLowercase) {
         value = value.toLowerCase();
     }
-    value = value.split(/[\t\r\f\n\s]*/g).join("")
+    // 不要预处理 value（例如删掉空白）：正则是用户手写的精确模式，
+    // 任何隐式改写都会让带空格或 \s 的规则永远匹配不上。
     const find = ruleList.find(item => {
         try {
             return value.search(item) !== -1;
@@ -49,7 +50,10 @@ const regexMatch = (ruleList: string[] | null | undefined, value: string): strin
 const fuzzyMatch = (ruleList: string[] | null | undefined, value: string | null): string | null => {
     if (ruleList === null || ruleList === undefined || value === null) return null;
     if (!Array.isArray(ruleList)) return null
-    const find = ruleList.find(item => value.toLowerCase().includes(item));
+    // 模糊匹配固定忽略大小写（历史行为），两侧必须同时转小写：
+    // 只转 value 时，规则里带一个大写字母就永远匹配不上。
+    const lowerValue = value.toLowerCase();
+    const find = ruleList.find(item => typeof item === 'string' && lowerValue.includes(item.toLowerCase()));
     return find === undefined ? null : find;
 }
 

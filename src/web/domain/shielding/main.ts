@@ -560,10 +560,11 @@ export const asyncBlockUserUidAndName = async (uid: number, name: string): Promi
 
 /** 检查视频创作团队成员屏蔽，只要有一个成员命中规则即屏蔽该视频 */
 export const blockVideoTeamMember = (teamMember: TeamMember[]): BlockResult => {
-    if (!teamMember) {
+    if (!Array.isArray(teamMember)) {
         return returnTempVal
     }
     for (let u of teamMember) {
+        if (!u) continue;
         const returnVal = blockUserUidAndName(u.mid, u.name)
         if (returnVal.state) {
             return returnVal
@@ -595,14 +596,31 @@ export const blockVideoOrOtherTitle = (title: string): BlockResult => {
     })
 }
 
-/** uid范围屏蔽检查，检查uid是否在用户设定的uid区间内 */
+/**
+ * 根据话题 tag 执行精确/模糊/正则屏蔽检查
+ *
+ * 动态列表项自带话题名，这是「话题tag标签」三条规则的唯一数据来源；
+ * 之前动态重构后没有任何调用方，三条规则配置了也永远不生效。
+ */
+export const blockTopicTag = (tag: string | null | undefined): BlockResult => {
+    if (!tag) return returnTempVal
+    return blockExactAndFuzzyMatching(tag, {
+        exactKey: 'precise_tag', exactTypeName: '精确话题tag',
+        fuzzyKey: 'tag', fuzzyTypeName: '模糊话题tag',
+        regexKey: 'tagCanonical', regexTypeName: '正则话题tag'
+    })
+}
+
+/** uid范围屏蔽检查，检查uid是否在用户设定的uid区间内（闭区间） */
 export const blockByUidRange = (uid: number): BlockResult => {
     if (!localMKData.isUidRangeMaskingStatus()) {
         return returnTempVal
     }
     const [head, tail] = localMKData.getUidRangeMasking();
-    if ((head >= uid) && (uid <= tail)) {
-        return {state: true, type: "uid范围屏蔽", matching: `${head}=>${uid}<=${tail}`}
+    // 区间语义是「最小 <= uid <= 最大」。写成 head >= uid 会把区间外的用户全部命中，
+    // 表现为「开了范围屏蔽后几乎所有用户都被屏蔽」。
+    if (head <= uid && uid <= tail) {
+        return {state: true, type: "uid范围屏蔽", matching: `${head}<=${uid}<=${tail}`}
     }
     return returnTempVal
 }
@@ -642,13 +660,15 @@ export const blockTimeRangeMasking = (timestamp: number): BlockResult => {
     }
     for (let {status, r: [startTimestamp, endTimestamp]} of timeRangeMaskingArr) {
         if (!status) continue
+        // 配置里存的是 13 位毫秒时间戳，入参 timestamp 是 10 位秒级，统一换算后再比。
+        // 不能写成 (a >= b) <= c 这样的链式比较：JS 会先把布尔值转成 0/1，条件几乎恒成立。
         const startSecondsTimestamp = Math.floor(startTimestamp / 1000)
         const endSecondsTimestamp = Math.floor(endTimestamp / 1000)
-        if ((startSecondsTimestamp >= timestamp as any) <= endSecondsTimestamp) {
+        if (startSecondsTimestamp <= timestamp && timestamp <= endSecondsTimestamp) {
             const startToTime = new Date(startTimestamp).toLocaleString();
             const endToTime = new Date(endTimestamp).toLocaleString();
             const timestampToTime = new Date(timestamp * 1000).toLocaleString();
-            return {state: true, type: "时间范围屏蔽", matching: `${startToTime}=>${timestampToTime}<=${endToTime}`}
+            return {state: true, type: "时间范围屏蔽", matching: `${startToTime}<=${timestampToTime}<=${endToTime}`}
         }
     }
     return returnTempVal
@@ -714,7 +734,7 @@ export const asyncBlockUserVideoNumLimit = async (num: number): Promise<void> =>
 
 /** 根据动态内容执行屏蔽检查，支持模糊匹配和正则匹配；如传入视频标题则追加视频标题匹配 */
 export const blockDynamicItemContent = (content: string, videoTitle: string | null = null, ruleArrMap: DynamicContentRuleArrMap = {}): BlockResult => {
-    let res: BlockResult;
+    let res: BlockResult = returnTempVal;
     if (content !== '') {
         res = blockExactAndFuzzyMatching(content, {
             fuzzyKey: 'dynamic',
@@ -726,6 +746,8 @@ export const blockDynamicItemContent = (content: string, videoTitle: string | nu
         if (res.state) return res;
     }
     if (videoTitle) {
+        // 内容为空或未命中时都要回落到视频标题规则；原先只在内层赋值，
+        // 内容为空时会把 undefined 返回给调用方，导致调用方解构报错。
         res = blockExactAndFuzzyMatching(videoTitle, {
             fuzzyKey: 'dynamic_video',
             fuzzyTypeName: '动态视频(模糊匹配)',
@@ -733,7 +755,7 @@ export const blockDynamicItemContent = (content: string, videoTitle: string | nu
             regexTypeName: '动态视频(正则匹配)'
         })
     }
-    return res!
+    return res
 }
 
 export default {
