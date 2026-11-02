@@ -40,7 +40,7 @@
   {
     "key": "precise_live_uid",
     "type": "int",
-    "name": "直播分区用户uid(精确匹配)"
+    "name": "直播间UP主uid(精确匹配)"
   },
   {
     "key": "commentOn",
@@ -52,7 +52,7 @@
   },
   {
     "key": "precise_fanCard",
-    "name": "粉丝牌(精确匹配)"
+    "name": "直播粉丝牌(精确匹配)"
   },
   {
     "key": "dynamic",
@@ -72,19 +72,19 @@
   },
   {
     "key": "precise_tag",
-    "name": "话题tag标签(精确匹配)"
+    "name": "动态话题tag(精确匹配)"
   },
   {
     "key": "tag",
-    "name": "话题tag标签(模糊匹配)"
+    "name": "动态话题tag(模糊匹配)"
   },
   {
     "key": "tagCanonical",
-    "name": "话题tag标签(正则匹配)"
+    "name": "动态话题tag(正则匹配)"
   },
   {
     "key": "precise_partition",
-    "name": "直播分区(精确匹配)"
+    "name": "直播分区名(精确匹配)"
   },
   {
     "key": "precise_liveRoomId",

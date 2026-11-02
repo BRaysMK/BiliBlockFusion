@@ -7,28 +7,29 @@ import CardSlider from "../../components/cardSlider.vue";
 /**
  * 视频指标过滤页面
  */
+// 描述统一成「公式 + 阈值判定」，不写默认值——默认值随用户上次设置变化，写死会误导
 const metricsFilterList = [
   {
     headerTitle: '视频点赞率屏蔽',
-    describe: '限制的点赞率，默认为2%，小于或等于值限时制的屏蔽该视频，公式【点赞率=点赞数/播放量*100】',
+    describe: '点赞率 = 点赞数 / 播放量 × 100%，低于或等于阈值时屏蔽',
     mkRateStatusKey: 'video_like_rate_blocking_status',
     mkTypeRateKey: 'video_like_rate'
   },
   {
     headerTitle: '视频互动率屏蔽',
-    describe: '限制的占比率，默认为2%，小于或等于值限时制的屏蔽该视频，公式【(弹幕数+评论数)/播放数*100】',
+    describe: '互动率 = (弹幕数 + 评论数) / 播放量 × 100%，低于或等于阈值时屏蔽',
     mkRateStatusKey: 'interactive_rate_blocking_status',
     mkTypeRateKey: 'interactive_rate'
   },
   {
     headerTitle: '视频三连率屏蔽',
-    describe: '限制的占比率，默认为2%，小于或等于值限时制的屏蔽该视频，公式【(收藏数+投币数+分享数)/播放数*100】',
+    describe: '三连率 = (收藏数 + 投币数 + 分享数) / 播放量 × 100%，低于或等于阈值时屏蔽',
     mkRateStatusKey: 'triple_rate_blocking_status',
     mkTypeRateKey: 'triple_rate'
   },
   {
     headerTitle: '视频投币/点赞比（内容价值）屏蔽',
-    describe: '限制的占比率，默认为2%，小于或等于值限时制的屏蔽该视频，投币成本较高，比值越高内容越优质。公式【投币数 / 获赞数】',
+    describe: '投币/点赞比 = 投币数 / 点赞数 × 100%，低于或等于阈值时屏蔽。投币成本更高，比值越高通常内容越优质',
     mkRateStatusKey: 'coin_likes_ratio_rate_blocking_status',
     mkTypeRateKey: 'coin_likes_ratio_rate'
   }

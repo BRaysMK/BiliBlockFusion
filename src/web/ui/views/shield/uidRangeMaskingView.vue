@@ -42,7 +42,7 @@ tail.value = arr[1];
         uid范围屏蔽
       </template>
       <div style="margin-bottom: 10px">
-        范围内的uid都会被屏蔽掉，改动需重新设置方可生效，且再下次检查时屏蔽(如视频列表加载，评论加载)。比较关系【最小>=uid<=最大】
+        闭区间：最小 &le; uid &le; 最大 的 uid 会被屏蔽。修改后需点「设置」保存，下次检查（列表加载、评论加载等）时生效。
       </div>
       <el-switch v-model="status" active-text="启用" style="margin-bottom: 10px"/>
       <el-input v-model.number="head" style="width: 30%;">

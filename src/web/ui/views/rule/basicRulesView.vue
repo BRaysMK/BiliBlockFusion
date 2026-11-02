@@ -124,39 +124,28 @@ for (let newRuleKeyListElement of ruleKeyListData.getRuleKeyListData()) {
         </el-card>
       </el-col>
       <el-col :span="14">
-        <!-- 使用说明改为折叠面板：10 条说明共 471 字，原先平铺占满首屏，
-             普通用户几乎不会读，反而挤掉了真正需要看的「规则信息」。
-             默认收起，需要时展开，内容一条不少。 -->
+        <!-- 使用说明默认收起：平铺会挤掉真正需要看的「规则信息」 -->
         <el-card shadow="never">
           <template #header>
             <span>使用说明（点击展开）</span>
           </template>
           <el-collapse>
-            <el-collapse-item title="查看 10 条使用说明" name="tips">
+            <el-collapse-item title="查看使用说明" name="tips">
           <gz-space align-items="flex-start" direction="vertical">
-            <span>1.基础规则类型较多，下拉框支持搜索定位，鼠标点击出现光标时支持筛选</span>
-            <span>2.大部分情况下模糊匹配比精确匹配好用</span>
-            <span>3.如果可以的话，请优先考虑根据uid精确屏蔽，而非使用用户名相关屏蔽，因用户名可以随意更改</span>
-            <span>4.如果用户要添加自己的正则匹配相关的规则时，建议先去该网址进行测试再添加，避免浪费时间
+            <span>1. 下拉框支持搜索：点开下拉后直接输入文字即可筛选规则类型</span>
+            <span>2. 优先用 uid 精确屏蔽：用户名可以随时改，改了就绕过了用户名规则</span>
+            <span>3. 模糊匹配 = 包含即命中；精确匹配 = 整值相同；正则匹配 = 按正则表达式匹配</span>
+            <span>4. 添加正则规则前建议先在线验证，避免写出无效表达式
               <el-link href="https://www.jyshare.com/front-end/854/" target="_blank"
                        type="primary">>>>正则表达式在线测试<<<
               </el-link>
             </span>
-            <span>
-              5.如果更新脚本之后规则全没了，请点击下面的【旧规则自动转新规则】按钮，进行转换，如不行请通过关于和问题反馈选项卡中的反馈渠道联系作者
-            </span>
-            <span>6.改动实时生效</span>
-            <span>7. 分区包括子分区属于视频tag范畴,如需按分区屏蔽在对应视频tag类型添加</span>
-            <span>8.
-              基础规则中的项和组合规则互斥，如xxx添加到视频tag多重规则，则不能添加到对应基础规则视频tag，反之同理，限类型，如组合精确匹配
-            </span>
-            <span>
-              9.装扮id和装扮收藏集id目前仅支持在评论区中处理，添加方式可以通过评论中的快捷屏蔽按钮添加，或者查阅使用日志中【装扮id和装扮收藏集id获取方式
-              】
-            </span>
-            <span>
-              10.部分规则基于api请求获取，当提示禁用根据bv号网络请求获取视频信息时，请不要马上关闭禁用，等一会，或者半小时之后，再关闭禁用
-            </span>
+            <span>5. 规则改动保存后即时生效，无需刷新页面（正则转小写开关除外，需刷新）</span>
+            <span>6. 视频分区（含子分区）按视频 tag 处理，要按分区屏蔽请用「视频tag」规则</span>
+            <span>7. 「精确视频tag(组合匹配)」中的组合不能再出现在「视频tag(精确/模糊匹配)」里，反之亦然</span>
+            <span>8. 装扮 id / 装扮收藏集 id 只在评论区生效，用评论旁的快捷屏蔽按钮添加最省事</span>
+            <span>9. 部分规则需要请求 B 站接口。提示「禁用根据bv号网络请求获取视频信息」时说明接口被风控，
+              稍等片刻（或半小时）再关闭该禁用，不要立刻重试</span>
           </gz-space>
             </el-collapse-item>
           </el-collapse>

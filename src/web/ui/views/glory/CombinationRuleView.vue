@@ -154,15 +154,11 @@ refresh();
         <el-card shadow="never">
           <template #header>说明</template>
           <gz-space align-items="flex-start" direction="">
-            <span>视频tag匹配值多个时用英文逗号隔开</span>
-            <span>正则匹配包含模糊匹配</span>
-            <span>标题和简介强制正则匹配方式，修改无效</span>
-            <span>每个方案中的规则列表只有要有一个匹配不上算匹配失败</span>
-            <span>字段类型：视频标题、视频tag、视频简介,后续再考虑拓展</span>
-            <span>点击保存方案才生效</span>
-            <span>如启用
-              <span title="条件限制选项卡中的开关">禁用根据bv号网络请求获取视频信息】</span>
-              则所有组合规则方案都无效</span>
+            <span>一个方案内所有规则都命中，该方案才算命中</span>
+            <span>视频标题、视频简介按正则表达式匹配</span>
+            <span>视频tag 的匹配值多个时用英文逗号分隔，需全部命中</span>
+            <span>点击「保存方案」后生效</span>
+            <span>这些规则依赖按 bv 号请求视频详情；若开启「条件限制 → 禁用根据bv号网络请求获取视频信息」，组合规则全部失效</span>
           </gz-space>
         </el-card>
       </el-col>

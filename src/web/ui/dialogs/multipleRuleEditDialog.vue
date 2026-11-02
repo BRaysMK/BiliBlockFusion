@@ -108,12 +108,11 @@ eventEmitter.on('打开多重规则编辑对话框', (newTypeMap) => {
       <el-tag>{{ typeMap.name }}</el-tag>
       <el-card>
         <template #header>说明</template>
-        <div>1.组合类型每条项至少大于1</div>
-        <div>2.不能添加空项</div>
-        <div>3.每组中的项不能超过15个字符</div>
-        <div>4.不能重复添加已有的组合</div>
-        <div>5.每组不能添加过包括已有的组合</div>
-        <div>6.不能添加视频tag(精确匹配)已有的项，如需要，请先移除对应的项！包括视频tag(模糊匹配)</div>
+        <div>1. 输入时用英文逗号分隔多个项，至少两项（例：原神,崩坏）</div>
+        <div>2. 不能有空项，单个项不超过 15 个字符</div>
+        <div>3. 组合内所有项都出现在视频 tag 里才算命中</div>
+        <div>4. 不能与已有组合完全相同或互相包含（如已有「A,B」时不能再加「A」）</div>
+        <div>5. 不能与「视频tag(精确匹配)」「视频tag(模糊匹配)」中已有的项重复，需要时先移除那边的规则</div>
       </el-card>
       <el-card>
         <el-input
