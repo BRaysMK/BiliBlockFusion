@@ -5,7 +5,12 @@ import {sendShieldLog} from "@/core/shieldLog.ts";
 import userProfile from "../userProfile.ts";
 import ruleUtil from "../../core/util/ruleUtil.ts";
 import defUtil from "../../core/util/defUtil.ts";
-import {isDelLivePageRightSidebarGm, isHideLiveGiftPanelGm, isRoomBackgroundHideGm} from "@/state/localMKData.ts";
+import {
+    isDelLiveBottomBannerAdGm,
+    isDelLivePageRightSidebarGm,
+    isHideLiveGiftPanelGm,
+    isRoomBackgroundHideGm
+} from "@/state/localMKData.ts";
 import {asyncBlockByLevel, asyncBlockComment, asyncBlockUserUidAndName, blockCheckWhiteUserUid} from "@/domain/shielding/main.ts";
 import liveCommon from "./common.ts";
 import cssManager from "../../domain/cssManager.ts";
@@ -207,8 +212,9 @@ const startShieldingLiveChatContents = defUtil.throttle(async () => {
 }, 2000)
 
 //删除直播间礼物栏下方横幅广告
-const delLivePageRightSidebarAd = () => {
-    if (isDelLivePageRightSidebarGm()) {
+// 判断的是底部横幅开关：此前误用右侧侧边栏开关，导致「移除底部横幅广告」写进 GM 后无人消费。
+const delLivePageBottomBannerAd = () => {
+    if (isDelLiveBottomBannerAdGm()) {
         elUtil.findElement('.flip-view.p-relative.over-hidden.w-100').then(el => {
             if (!el) return;
             el.remove();
@@ -224,7 +230,7 @@ const run = async () => {
         userProfile.run()
         listeningSC();
         checkSCList();
-        delLivePageRightSidebarAd()
+        delLivePageBottomBannerAd()
     }
     setInterval(() => {
         startShieldingLiveChatContents();
@@ -270,7 +276,7 @@ const run = async () => {
 
 export default {
     isLiveRoom, setRoomBackgroundDisplay, setGiftControlPanelDisplay,
-    run, isLiveRoomActivity, delLivePageRightSidebarAd,
+    run, isLiveRoomActivity, delLivePageBottomBannerAd,
     //发送直播间弹幕列表中的荣耀等级图片链接列表
     sendBulletGloryLevelList() {
         return getBulletGloryLevelList().then(imgSrcList => {

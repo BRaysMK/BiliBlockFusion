@@ -262,9 +262,9 @@ const delBottomCommentApp = () => {
 
 //屏蔽页面元素管理
 const delElManagement = () => {
-    if (localMKData.isDelPlayerPageRightVideoList()) {
-        delAd()
-    }
+    // 每个函数自己会读对应的 GM 开关，不能在这里再用别的开关做前置判断：
+    // 曾经 delAd 被 isDelPlayerPageRightVideoList 包着，导致「屏蔽页面元素广告」单独开启时永远不执行。
+    delAd()
     delRightVideoList()
     delBottomCommentApp()
 }
