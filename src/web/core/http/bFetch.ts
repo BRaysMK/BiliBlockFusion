@@ -2,40 +2,12 @@ import video_zoneData from "../../config/video_zoneData.ts"
 import {eventEmitter} from "../EventEmitter.ts"
 import {bilibiliEncoder} from "../BilibiliEncoder.ts"
 import type {
-    BarrageRule,
-    BarrageBlockingResult,
     AttentionResult,
     VideoInfo,
     UserInfo,
     FetchVideoInfoResult,
     ReplyBoxResult,
 } from "@/types/http";
-
-/** 请求获取B站弹幕屏蔽词，过滤掉type=2的用户屏蔽规则 */
-const fetchGetBarrageBlockingWords = (): Promise<BarrageBlockingResult> => {
-    return new Promise((resolve, reject) => {
-        fetch('https://api.bilibili.com/x/dm/filter/user', {
-            credentials: 'include'
-        })
-            .then(response => response.json())
-            .then(({code, data, message}: { code: number; data: any; message: string }) => {
-                if (code !== 0) {
-                    reject({state: false, msg: `请求相应内容失败：msg=${message} code=` + code})
-                    return
-                }
-                const {rule} = data
-                const list: BarrageRule[] = []
-                for (let r of rule) {
-                    const {type, filter, ctime} = r
-                    if (type === 2) {
-                        continue
-                    }
-                    list.push({type, filter, ctime})
-                }
-                resolve({state: true, data, list, msg: '获取成功'})
-            })
-    })
-}
 
 /** 请求获取用户关注信息，返回对方与当前用户的关注关系 */
 const fetchGetAttentionInfo = (uid: string | number): Promise<AttentionResult> => {
@@ -232,7 +204,6 @@ window.fetchGetVideoReplyBoxDescription = fetchGetVideoReplyBoxDescription
 
 export default {
     fetchGetVideoInfo,
-    fetchGetBarrageBlockingWords,
     fetchGetAttentionInfo,
     fetchUserInfoByMid
 }

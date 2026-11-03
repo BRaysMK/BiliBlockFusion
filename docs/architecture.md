@@ -135,7 +135,6 @@ src/web/
 │   │   ├── DiagnosticTabsView.vue # 顶层「诊断与关于」页
 │   │   ├── aboutAndFeedbackView.vue  # 关于与反馈视图
 │   │   ├── blacklistManagementView.vue  # 黑名单管理视图
-│   │   ├── bulletWordManagementView.vue # 弹幕词管理视图
 │   │   ├── commentWordLimitView.vue     # 评论字数限制视图
 │   │   ├── otherParameterFilterView.vue # 其他参数过滤视图
 │   │   ├── replProcessingView.vue       # 回复处理视图

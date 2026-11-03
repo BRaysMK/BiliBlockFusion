@@ -1,20 +1,3 @@
-/** 弹幕屏蔽规则 */
-export interface BarrageRule {
-    /** 0 文本、1 正则、2 屏蔽用户 */
-    type: number
-    filter: string
-    ctime: number
-}
-
-/** 弹幕屏蔽词获取结果 */
-export interface BarrageBlockingResult {
-    state: boolean
-    data?: any
-    /** 过滤掉 type=2（屏蔽用户）后的规则列表 */
-    list?: BarrageRule[]
-    msg: string
-}
-
 /** 关注信息获取结果 */
 export interface AttentionResult {
     state: boolean
