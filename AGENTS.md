@@ -27,6 +27,7 @@ pnpm test             # Vitest 单元测试（tests/**/*.test.ts，不在构建�
 - **产物与环境**：`pnpm build` 与 `pnpm watch:dev` 输出 `dist/`，是**开发构建**（`__DEV__=true`、不压缩、保留注释，主面板「诊断与关于」下显示"调试测试"/"弹幕词管理"子页签）；只有 `pnpm build:release` 是生产构建（`__DEV__=false`、压缩、去注释）。判定在 `vite.config.ts` 的 `isProd = IS_PUBLISH`——**不能用 `process.env.NODE_ENV` 判定**（Vite 执行任意 `vite build` 都会把它设为 'production'）。
 - **`elUtil.findElements` 是无限轮询等待**（`timeout: -1` 默认永不超时）：元素延迟加载时能等到；**不要改成"匹配 0 个立即返回"**——首页屏蔽链路无外层重试，会导致整体静默失效（已踩坑回退，回归测试见 `tests/homeShieldRegression.test.ts`）。开发构建下未匹配会输出 `[elUtil][dev] findElements 未匹配到元素` 日志，可用于排查选择器失配。
 - **`PanelShell` 的面板内容首次打开后不可卸载**：`EventEmitter.on` 对同名事件**静默忽略重复注册**（`core/EventEmitter.ts`），一旦卸载，重挂载后视图里所有 `eventEmitter.on(...)` 都变成空操作，旧闭包仍指向已销毁的实例——屏蔽日志、刷新规则信息等监听会永久失效。开关只切 `gz-panel--opened` 类与 `visibility`，不要改回 `v-if` 卸载。
+- **EP 浮层被 teleport 到 body，不在面板 DOM 内**：`usePopperContainer` 把下拉/气泡挂到 `body > #el-popper-container-<prefix>`，面板的 `visibility:hidden` 管不到它们。点空白/点悬浮按钮关闭时浮层是被 EP 自己的 click-outside 顺带收掉的，快捷键关闭不产生点击，必须由 `PanelShell` 的 `dismissDetachedPoppers()` 往面板表面补发 mousedown/mouseup。**构造事件时不要传 `view: window`**——油猴沙箱里 `window` 是代理对象，`MouseEvent` 构造函数会抛 `Failed to convert value to 'Window'`，整段逻辑静默失效。同理，浮层字号也不在 `.gz-panel` 作用域内，需在 `ui/theme/elementPlusBridge.css` 单独钉住。
 - **AI 规则的新增配置项必须登记**：`config/aiRuleSettingSpec.ts` 是 Prompt 清单的唯一来源，新增规则键或设置项若没登记，外部 AI 根本不知道它存在，用户写的需求会被静默丢弃。
 - **`tamper_monkey.json` 的 `@version` 与线上发布版本不同步**（发布版本由脚本猫等发布渠道管理），日常修复**不顺手改版本号**。
 - **CSS 导入必须带 `?raw`**（`import css from './x.css?raw'`），不带 `?raw` 会被 Vite 注入页面而不是返回字符串。

@@ -431,3 +431,34 @@
   color: var(--fluent-color-neutral-foreground-3);
   font-weight: var(--fluent-font-weight-medium);
 }
+
+/* --------------------------------------------------------------------------
+   4. teleport 浮层的字号
+   --------------------------------------------------------------------------
+   EP 把下拉/气泡/提示挂到 body 下的 #el-popper-container-*，不在 .gz-panel 内，
+   拿不到面板正文的 14px，于是同一个级联下拉里出现三种字号：
+   .el-popper 自带 12px；菜单项是 <li>，被宿主页面的
+   `button, dd, dl, ol, ul { font-size: 16px }` 重置顶成 16px；.el-cascader-menu 又是 14px。
+   这里把浮层字号钉到 --el-font-size-base（已映射到 Fluent base-300 = 14px）。
+   不钉 font-family：BewlyCat 会给整页（含面板）统一注入 --bew-fonts，钉死反而让浮层与面板不一致。 */
+.gz-theme-light .el-popper,
+.gz-theme-dark .el-popper {
+  font-size: var(--el-font-size-base);
+}
+
+/* 宿主页面的元素重置虽只有 (0,0,1)，但 EP 没在这些标签上设字号，
+   必须逐层 inherit 才压得住；直接写死 14px 会盖掉 EP 对个别项的更大字号。 */
+.gz-theme-light .el-popper ul,
+.gz-theme-dark .el-popper ul,
+.gz-theme-light .el-popper ol,
+.gz-theme-dark .el-popper ol,
+.gz-theme-light .el-popper dl,
+.gz-theme-dark .el-popper dl,
+.gz-theme-light .el-popper dd,
+.gz-theme-dark .el-popper dd,
+.gz-theme-light .el-popper li,
+.gz-theme-dark .el-popper li,
+.gz-theme-light .el-popper button,
+.gz-theme-dark .el-popper button {
+  font-size: inherit;
+}
