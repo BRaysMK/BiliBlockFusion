@@ -56,14 +56,16 @@ const STYLE_ID = 'gz-fluent-tokens';
 /**
  * 把亮/暗两套令牌注入为两个作用域的 CSS 规则。
  *
- * body.gz-theme-dark 是兜底：EP 的浮层会被 teleport 到 body，不在面板根节点内。
+ * body.gz-theme-* 是兜底：EP 的浮层会被 teleport 到 body，不在面板根节点内。
+ * 亮色也必须有 body 规则——否则 body 上虽然带了 gz-theme-light 类却没有任何令牌可继承，
+ * 浮层里的 Fluent 与 EP 变量全部落空，退回 EP 默认配色。
  */
 export const installFluentTokens = (target: HTMLElement | Document = document.head): void => {
     if (document.getElementById(STYLE_ID) !== null) return;
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = [
-        `.gz-theme-light{${LIGHT_CSS}}`,
+        `.gz-theme-light,body.gz-theme-light{${LIGHT_CSS}}`,
         `.gz-theme-dark,body.gz-theme-dark{${DARK_CSS}}`,
     ].join('\n');
     (target === document ? document.head : target).appendChild(style);
