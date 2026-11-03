@@ -2,6 +2,7 @@
 import {computed, ref} from 'vue';
 import {eventEmitter} from "../../../core/EventEmitter.ts";
 import defUtil from "../../../core/util/defUtil.ts";
+import {copyText} from "../../../core/util/clipboardUtil.ts";
 import {ElMessage, ElMessageBox, ElNotification} from 'element-plus';
 import {
   areShieldLogRecordsSame,
@@ -169,28 +170,6 @@ const showOriginal = (info: OutputInfo) => {
   originalDialogTitle.value = `${info.shield?.objectType ?? '对象'}原文`;
   originalDialogText.value = text;
   originalDialogVisible.value = true;
-};
-
-const copyText = async (text: string): Promise<boolean> => {
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch {
-    // Clipboard API 失败时尝试兼容旧页面环境。
-  }
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.setAttribute('readonly', '');
-  textarea.style.position = 'fixed';
-  textarea.style.opacity = '0';
-  document.body.appendChild(textarea);
-  textarea.select();
-  let copied = false;
-  try { copied = document.execCommand('copy'); } catch { copied = false; }
-  textarea.remove();
-  return copied;
 };
 
 const copyOriginal = async (info: OutputInfo) => {

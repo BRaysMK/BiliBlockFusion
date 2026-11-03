@@ -1,6 +1,6 @@
 import ruleKeyListDataJson from './ruleKeyListDataJson.json'
 
-interface RuleKeyItem {
+export interface RuleKeyItem {
     key: string
     name: string
     type?: string
