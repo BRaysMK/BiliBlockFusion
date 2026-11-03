@@ -6,19 +6,12 @@ import cssManager from "../../../domain/cssManager.ts";
 import PartitionTagWhiterListPanel from "./PatitionTagWhiterListPanel.vue";
 
 const isRoomListAdaptiveVal = ref(isRoomListAdaptiveGm());
-const isDelLivePartitionPageRightSidebarVal = ref(false);
 const isLiveSectionResponseRewriteVal = ref(isLiveSectionResponseRewriteGm());
 
 watch(isRoomListAdaptiveVal, (n) => {
   GM_setValue('is_room_list_adaptive_gm', n);
   if (liveSectionModel.isLiveSection()) {
     cssManager.liveStreamPartitionStyle(n);
-  }
-});
-watch(isDelLivePartitionPageRightSidebarVal, (n) => {
-  GM_setValue('is_del_live_partition_page_right_sidebar_gm', n);
-  if (liveSectionModel.isLiveSection()) {
-    // cssManager
   }
 });
 watch(isLiveSectionResponseRewriteVal, (n) => {
@@ -30,7 +23,6 @@ watch(isLiveSectionResponseRewriteVal, (n) => {
   <div>
     <el-card shadow="never">
       <el-switch v-model="isRoomListAdaptiveVal" active-text="房间列表自适应"/>
-      <el-switch v-model="isDelLivePartitionPageRightSidebarVal" active-text="屏蔽右侧侧边栏"/>
       <el-tooltip content="在页面渲染前过滤掉命中屏蔽规则的直播间，避免渲染后再删除导致列表高度骤降；过滤后列表过短时右下角按钮会变红呼吸提示，点击即可自动补满一屏，修改后请刷新分区页">
         <el-switch v-model="isLiveSectionResponseRewriteVal" active-text="响应层过滤直播间列表（默认开启）"/>
       </el-tooltip>
