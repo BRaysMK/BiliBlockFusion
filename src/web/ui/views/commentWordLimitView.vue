@@ -2,14 +2,16 @@
 import {ref, watch} from 'vue';
 import localMKData from "../../state/localMKData.ts";
 import {ElNotification} from 'element-plus';
+import SettingRow from '../components/SettingRow.vue';
 
 /**
- * 评论字数限制布局组件
+ * 评论字数限制
+ *
+ * 低于 3 视为关闭——阈值本身没有「关」开关，靠这个约定表达。
  */
 const value = ref(localMKData.getCommentWordLimitVal());
 
 watch(value, (newVal, oldVal) => {
-  //如果旧值小于3，则不做任何处理
   if (oldVal <= 3) return;
   if (newVal < 3) {
     ElNotification({
@@ -23,12 +25,15 @@ watch(value, (newVal, oldVal) => {
 </script>
 
 <template>
-  <div>
-    <el-card shadow="never">
-      <template #header>评论字数限制</template>
-      <div>超出设置限制的字数时屏蔽(不包括)，低于3则不生效</div>
-      <div>改动即生效</div>
-      <el-input-number v-model="value"/>
-    </el-card>
-  </div>
+  <SettingRow description="评论字数超过该值时屏蔽，低于 3 则不生效（相当于关闭）" label="评论字数限制">
+    <el-input-number v-model="value" :min="0" controls-position="right" size="small"/>
+    <span class="gz-comment-word-limit__unit">字</span>
+  </SettingRow>
 </template>
+
+<style scoped>
+.gz-comment-word-limit__unit {
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-neutral-foreground-3);
+}
+</style>

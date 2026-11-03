@@ -175,37 +175,66 @@ const saveTableBut = () => {
 refreshTableData();
 </script>
 <template>
-  <div>
-    <el-table :data="tableData" border stripe>
-      <el-table-column label="状态" width="120px">
-        <template #default="scope">
-          <el-switch v-model="scope.row.status" active-text="启用" @change="tableSwitchChange(scope.row)"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="时间范围" width="400px">
-        <template #default="scope">
-          <el-date-picker
-              v-model="scope.row.r"
-              :shortcuts="pickerShortcuts"
-              end-placeholder="结束日期"
-              range-separator="至"
-              start-placeholder="开始日期"
-              type="datetimerange"
-              @change="tableDatePickerChange(scope.row)">
-          </el-date-picker>
-          <el-tag>{{ scope.row.r }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column>
-        <template #header>
-          <el-button type="info" @click="addBut">添加</el-button>
-          <el-button @click="refreshTableData">刷新</el-button>
-          <el-button @click="saveTableBut">保存</el-button>
-        </template>
-        <template #default="scope">
-          <el-button type="warning" @click="delItemBut(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+  <div class="gz-time-range-table">
+    <div class="gz-time-range-table__toolbar">
+      <el-button size="small" type="primary" @click="addBut">添加</el-button>
+      <el-button size="small" @click="refreshTableData">刷新</el-button>
+      <el-button size="small" @click="saveTableBut">保存</el-button>
+    </div>
+    <!-- 每条范围两行：选择器独占一行，开关与删除并排在下一行。
+         面板内容区只有 452px，三列并排会把日期选择器压到无法点选。 -->
+    <div v-for="row in tableData" :key="row.index" class="gz-time-range-table__item">
+      <el-date-picker
+          v-model="row.r"
+          :shortcuts="pickerShortcuts"
+          end-placeholder="结束日期"
+          range-separator="至"
+          size="small"
+          start-placeholder="开始日期"
+          type="datetimerange"
+          @change="tableDatePickerChange(row)"/>
+      <div class="gz-time-range-table__item-footer">
+        <el-switch v-model="row.status" active-text="启用" @change="tableSwitchChange(row)"/>
+        <el-button size="small" type="danger" plain @click="delItemBut(row)">删除</el-button>
+      </div>
+    </div>
+    <div v-if="tableData.length === 0" class="gz-time-range-table__empty">
+      还没有时间范围，点上方「添加」新增一条
+    </div>
   </div>
 </template>
+
+<style scoped>
+.gz-time-range-table {
+  padding: var(--fluent-spacing-vertical-xs) var(--fluent-spacing-horizontal-s);
+}
+
+.gz-time-range-table__toolbar {
+  display: flex;
+  gap: var(--fluent-spacing-horizontal-s);
+  margin-bottom: var(--fluent-spacing-vertical-s);
+}
+
+.gz-time-range-table__item {
+  padding: var(--fluent-spacing-vertical-s) 0;
+  border-top: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
+}
+
+/* datetimerange 默认宽度约 360px，撑满可用宽度才不至于把结束日期挤出去 */
+.gz-time-range-table__item :deep(.el-date-editor) {
+  width: 100%;
+}
+
+.gz-time-range-table__item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--fluent-spacing-vertical-xs);
+}
+
+.gz-time-range-table__empty {
+  padding: var(--fluent-spacing-vertical-m) 0;
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-neutral-foreground-4);
+}
+</style>

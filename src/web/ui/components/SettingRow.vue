@@ -60,7 +60,10 @@ withDefaults(defineProps<{
   align-items: center;
   gap: 4px;
   flex: 1 1 auto;
+  /* 名称必须单行：内容区只有 613px，控件一多就会把中文名称挤成一列单字。
+     宁可让控件收窄，也不让名称换行。 */
   min-width: 0;
+  white-space: nowrap;
   font-size: var(--fluent-font-size-base-300);
   color: var(--fluent-color-neutral-foreground-2);
 }

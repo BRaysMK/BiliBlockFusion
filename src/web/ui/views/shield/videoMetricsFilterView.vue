@@ -1,34 +1,35 @@
 ﻿<script setup lang="ts">
 import {ref, watch} from 'vue';
 import {getLimitationFanSumGm, isFansNumBlockingStatusGm} from "@/state/localMKData.ts";
-import video_metrics_filter_item_view from '../../components/videoMetricsFilterItem.vue'
-import CardSlider from "../../components/cardSlider.vue";
+import VideoMetricsFilterItem from '../../components/videoMetricsFilterItem.vue';
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 /**
  * 视频指标过滤页面
  */
-// 描述统一成「公式 + 阈值判定」，不写默认值——默认值随用户上次设置变化，写死会误导
+// 说明写成「分子 / 分母」，用户在 ⓘ 气泡里能立刻对上 B 站卡片上的数字
 const metricsFilterList = [
   {
-    headerTitle: '视频点赞率屏蔽',
+    headerTitle: '点赞率',
     describe: '点赞率 = 点赞数 / 播放量 × 100%，低于或等于阈值时屏蔽',
     mkRateStatusKey: 'video_like_rate_blocking_status',
     mkTypeRateKey: 'video_like_rate'
   },
   {
-    headerTitle: '视频互动率屏蔽',
+    headerTitle: '互动率',
     describe: '互动率 = (弹幕数 + 评论数) / 播放量 × 100%，低于或等于阈值时屏蔽',
     mkRateStatusKey: 'interactive_rate_blocking_status',
     mkTypeRateKey: 'interactive_rate'
   },
   {
-    headerTitle: '视频三连率屏蔽',
+    headerTitle: '三连率',
     describe: '三连率 = (收藏数 + 投币数 + 分享数) / 播放量 × 100%，低于或等于阈值时屏蔽',
     mkRateStatusKey: 'triple_rate_blocking_status',
     mkTypeRateKey: 'triple_rate'
   },
   {
-    headerTitle: '视频投币/点赞比（内容价值）屏蔽',
+    headerTitle: '投币/点赞比',
     describe: '投币/点赞比 = 投币数 / 点赞数 × 100%，低于或等于阈值时屏蔽。投币成本更高，比值越高通常内容越优质',
     mkRateStatusKey: 'coin_likes_ratio_rate_blocking_status',
     mkTypeRateKey: 'coin_likes_ratio_rate'
@@ -46,20 +47,29 @@ watch(fansNumBlockingStatus, (n) => {
 </script>
 
 <template>
-  <div>
-    <el-card>
-      <template #header>指标屏蔽(改动实时生效)</template>
-      <video_metrics_filter_item_view v-for="item in metricsFilterList" :key="item.headerTitle"
-                                      :describe="item.describe"
-                                      :header-title="item.headerTitle"
-                                      :mk-rate-status-key="item.mkRateStatusKey"
-                                      :mk-type-rate-key="item.mkTypeRateKey"
-      />
-      <card_slider v-model="limitationFanSumVal" :max="90000"
-                   v-model:switch-val="fansNumBlockingStatus">
-        <template #header>粉丝数屏蔽</template>
-        <template #describe>限制的粉丝数，小于或等于值限时制的屏蔽该视频，限制上限9万</template>
-      </card_slider>
-    </el-card>
-  </div>
+  <SettingGroup description="改动实时生效" title="视频指标屏蔽">
+    <VideoMetricsFilterItem v-for="item in metricsFilterList"
+                            :key="item.mkTypeRateKey"
+                            :describe="item.describe"
+                            :header-title="item.headerTitle"
+                            :mk-rate-status-key="item.mkRateStatusKey"
+                            :mk-type-rate-key="item.mkTypeRateKey"/>
+    <SettingRow description="视频作者粉丝数小于或等于该值时屏蔽该视频，上限 9 万" label="粉丝数屏蔽">
+      <el-input-number v-model="limitationFanSumVal"
+                       :disabled="!fansNumBlockingStatus"
+                       :max="90000"
+                       :min="0"
+                       :step="100"
+                       class="gz-metrics-filter__fan-number"
+                       controls-position="right"
+                       size="small"/>
+      <el-switch v-model="fansNumBlockingStatus" size="small"/>
+    </SettingRow>
+  </SettingGroup>
 </template>
+
+<style scoped>
+.gz-metrics-filter__fan-number {
+  width: 104px;
+}
+</style>
