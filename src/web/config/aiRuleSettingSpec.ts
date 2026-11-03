@@ -119,7 +119,7 @@ export const AI_SETTING_SPECS: AiSettingSpec[] = [
         description: '评论最小用户等级限制的开关'
     },
     {
-        key: 'maximum_user_level_comment_gm', label: '评论最大用户等级', type: 'number', default: 0, min: 0, max: 7, integer: true,
+        key: 'maximum_user_level_comment_gm', label: '评论最大用户等级', type: 'number', default: 7, min: 0, max: 7, integer: true,
         description: '评论者的等级高于该值屏蔽'
     },
     {

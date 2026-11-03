@@ -41,7 +41,11 @@ const mountView = async (component: any): Promise<VueWrapper> => mount(component
                         "data-min": String(ctx.min),
                         "data-max": String(ctx.max),
                         "data-disabled": String(ctx.disabled),
-                        onInput: (e: Event) => ctx.$emit("update:modelValue", Number((e.target as HTMLInputElement).value)),
+                        // 复刻 EP 的 handleInput：值为空时 emit null 而不是 0
+                        onInput: (e: Event) => {
+                            const raw = (e.target as HTMLInputElement).value;
+                            ctx.$emit("update:modelValue", raw === "" ? null : Number(raw));
+                        },
                     }, []);
                 },
             },
@@ -95,7 +99,8 @@ describe("等级限制", () => {
         expect(boundsOf(wrapper, "评论·最小等级").min).toBe(0);
         expect(boundsOf(wrapper, "评论·最大等级").min).toBe(0);
         expect(numberInputOf(wrapper, "评论·最小等级").attributes("data-value")).toBe("0");
-        expect(numberInputOf(wrapper, "评论·最大等级").attributes("data-value")).toBe("0");
+        // 最大等级默认 7 而不是 0：默认 0 时一打开开关就屏蔽所有 1 级以上评论
+        expect(numberInputOf(wrapper, "评论·最大等级").attributes("data-value")).toBe("7");
     });
 
     it("两侧都未启用时，上界不互相限制", async () => {
@@ -161,6 +166,86 @@ describe("等级限制", () => {
 
         expect(store["is_enable_maximum_user_level_comment_gm"]).toBe(true);
         expect(store["maximum_user_level_comment_gm"]).toBe(7);
+    });
+
+    it("清空输入框不把 null 写进存储（null 会让等级判定静默失效或全屏蔽）", async () => {
+        const mod = await setup({maximum_user_level_video_gm: 5});
+        wrapper = await mountView(mod);
+        await nextTick();
+
+        // EP 的 handleInput 在值为空时 emit null；watch 必须拦下来，不能落盘
+        await numberInputOf(wrapper, "视频·最大等级").setValue("");
+
+        expect(store["maximum_user_level_video_gm"]).toBe(5);
+    });
+
+    it("存量 null 值读取时收敛成合法值，不会变成全屏蔽", async () => {
+        // GM_getValue 对「键存在但值为 null」不会回退默认值，旧版本会写出这种数据
+        const mod = await setup({maximum_user_level_comment_gm: null});
+        wrapper = await mountView(mod);
+        await nextTick();
+
+        const value = Number(numberInputOf(wrapper, "评论·最大等级").attributes("data-value"));
+        expect(Number.isFinite(value)).toBe(true);
+        expect(value).toBeGreaterThanOrEqual(0);
+        expect(value).toBeLessThanOrEqual(7);
+    });
+
+    it("0/0 同时打开两侧后不会留下 min === max（那等于屏蔽所有 1 级以上用户）", async () => {
+        // 0/0 是旧版本写进存储的评论默认值，两侧都启用后必须被拉开
+        const mod = await setup({
+            minimum_user_level_comment_gm: 0,
+            maximum_user_level_comment_gm: 0,
+        });
+        wrapper = await mountView(mod);
+        await nextTick();
+
+        const rowSwitch = (label: string) =>
+            wrapper!.findAll(".row").find((r) => r.attributes("data-label") === label)!.find(".fake-switch");
+
+        await rowSwitch("评论·最大等级").trigger("click");
+        await nextTick();
+        await rowSwitch("评论·最小等级").trigger("click");
+        await nextTick();
+
+        const min = Number(store["minimum_user_level_comment_gm"]);
+        const max = Number(store["maximum_user_level_comment_gm"]);
+        expect(min).toBeLessThan(max);
+    });
+
+    it("7/7 同时打开两侧后不会留下 min === max（+1 / -1 都会被上限钳回原地）", async () => {
+        const mod = await setup({
+            minimum_user_level_video_gm: 7,
+            maximum_user_level_video_gm: 7,
+        });
+        wrapper = await mountView(mod);
+        await nextTick();
+
+        const rowSwitch = (label: string) =>
+            wrapper!.findAll(".row").find((r) => r.attributes("data-label") === label)!.find(".fake-switch");
+
+        await rowSwitch("视频·最小等级").trigger("click");
+        await nextTick();
+        await rowSwitch("视频·最大等级").trigger("click");
+        await nextTick();
+
+        const min = Number(store["minimum_user_level_video_gm"]);
+        const max = Number(store["maximum_user_level_video_gm"]);
+        expect(min).toBeLessThan(max);
+    });
+
+    it("挂载时不改写已合法的存量值", async () => {
+        const mod = await setup({
+            is_enable_minimum_user_level_video_gm: true,
+            is_enable_maximum_user_level_video_gm: true,
+            minimum_user_level_video_gm: 2,
+            maximum_user_level_video_gm: 5,
+        });
+        wrapper = await mountView(mod);
+        await nextTick();
+
+        expect(store["minimum_user_level_video_gm"]).toBe(2);
+        expect(store["maximum_user_level_video_gm"]).toBe(5);
     });
 
     it("开关状态单独持久化，互不影响", async () => {

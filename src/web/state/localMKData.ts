@@ -377,9 +377,12 @@ export const getMinimumUserLevelCommentGm = (): number => {
     return GM_getValue('minimum_user_level_comment_gm', 0)
 }
 
-/** 获取最大用户等级限制-评论类 */
+/** 获取最大用户等级限制-评论类
+ *
+ * 默认 7 而不是 0：上限 7 表示「不限制」，用户打开这个开关后可以慢慢往下调；
+ * 默认 0 则一打开就屏蔽所有 1 级以上用户（B 站等级 0~6），是个会让人以为脚本坏了的坑。 */
 export const getMaximumUserLevelCommentGm = (): number => {
-    return GM_getValue('maximum_user_level_comment_gm', 0)
+    return GM_getValue('maximum_user_level_comment_gm', 7)
 }
 
 /** 是否启用最小用户等级限制-视频类 */
