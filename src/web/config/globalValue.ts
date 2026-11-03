@@ -5,6 +5,14 @@ const scriptCat_js_url: string = 'https://scriptcat.org/zh-CN/script-show-page/1
 const b_url: string = 'https://space.bilibili.com/473239155'
 const common_question_url: string = 'https://docs.qq.com/doc/DSlJNR1NVcGR3eEto'
 const update_log_url: string = 'https://docs.qq.com/doc/DSnhjSVZmRkpCd0Nj'
+// 本仓库（二次开发版）——与 tamper_monkey.json 的 @homepageURL / @supportURL 保持一致
+const repo_url: string = 'https://github.com/BRaysMK/BiliBlockFusion'
+const issues_url: string = 'https://github.com/BRaysMK/BiliBlockFusion/issues'
+// 原作者（BiBiBSPUserVideoMonkeyScript）
+const original_b_url: string = 'https://space.bilibili.com/473239155'
+const original_gitee_url: string = 'https://gitee.com/hangexi/BiBiBSPUserVideoMonkeyScript'
+const original_github_url: string = 'https://github.com/hgztask/BiBiBSPUserVideoMonkeyScript'
+const original_greasyfork_url: string = 'https://greasyfork.org/scripts/461382/'
 const adaptationBAppCommerce: boolean = localMKData.getAdaptationBAppCommerce()
 const compatibleBEWLYBEWLY: boolean = localMKData.isCompatible_BEWLY_BEWLY()
 const bOnlyTheHomepageIsBlocked: boolean = localMKData.getBOnlyTheHomepageIsBlocked()
@@ -27,6 +35,12 @@ export default {
     b_url,
     common_question_url,
     update_log_url,
+    repo_url,
+    issues_url,
+    original_b_url,
+    original_gitee_url,
+    original_github_url,
+    original_greasyfork_url,
     adaptationBAppCommerce,
     compatibleBEWLYBEWLY,
     bOnlyTheHomepageIsBlocked
