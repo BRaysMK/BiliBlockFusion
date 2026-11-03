@@ -21,8 +21,7 @@ const addRuleDialogRuleInfo = ref({
 
 const handleChangeCascader = (val: any) => {
   console.log(val);
-};
-const setRuleBut = () => {
+};const setRuleBut = () => {
   const [model, type] = cascaderVal.value;
   const typeMap = ruleInfoArr.value.find(item => item.type === type);
   if (model === '组合匹配') {
@@ -89,48 +88,38 @@ for (let newRuleKeyListElement of ruleKeyListData.getRuleKeyListData()) {
 </script>
 
 <template>
-  <div>
-    <el-row>
-      <el-col :span="10">
-        <el-card shadow="never">
-          <template #header>选择规则</template>
-          <el-cascader v-model="cascaderVal" :options="cascaderOptions"
-                       :props="{ expandTrigger: 'hover' }" filterable
-                       show-all-levels style="width: 60%;" @change="handleChangeCascader">
-            <template #default="{ node, data }">
-              <span>{{ data.label }}</span>
-              <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
-            </template>
-          </el-cascader>
-          <el-divider/>
-          <el-row>
-            <el-col :span="12">
-              <el-button-group>
-                <el-button size="small" @click="batchAddBut">批量添加</el-button>
-                <el-button size="small" @click="setRuleBut">修改</el-button>
-                <el-button size="small" @click="findItemAllBut">查看项内容</el-button>
-                <el-button size="small" @click="delBut">移除</el-button>
-              </el-button-group>
-            </el-col>
-            <el-col :span="12">
-              <div class="el-horizontal-right">
-                <el-button-group>
-                  <el-button type="danger" size="small" @click="clearItemRuleBut">清空项</el-button>
-                  <el-button type="danger" size="small" @click="delAllBut">全部移除</el-button>
-                </el-button-group>
-              </div>
-            </el-col>
-          </el-row>
-        </el-card>
-      </el-col>
-      <el-col :span="14">
-        <!-- 使用说明默认收起：平铺会挤掉真正需要看的「规则信息」 -->
-        <el-card shadow="never">
-          <template #header>
-            <span>使用说明（点击展开）</span>
+  <div class="gz-basic-rule">
+    <!-- 选择规则压成一条工具栏：原来独立成卡再并排两栏，面板只有 613px 宽，
+         两栏各剩 238/333px，规则名被截断、按钮换行，纵向还被拉长 -->
+    <el-card shadow="never" class="gz-basic-rule__toolbar">
+      <div class="gz-basic-rule__row">
+        <el-cascader v-model="cascaderVal" :options="cascaderOptions"
+                     :props="{ expandTrigger: 'hover' }" filterable
+                     show-all-levels class="gz-basic-rule__cascader" @change="handleChangeCascader">
+          <template #default="{ node, data }">
+            <span>{{ data.label }}</span>
+            <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
           </template>
-          <el-collapse>
-            <el-collapse-item title="查看使用说明" name="tips">
+        </el-cascader>
+        <el-button-group>
+          <el-button size="small" @click="batchAddBut">批量添加</el-button>
+          <el-button size="small" @click="setRuleBut">修改</el-button>
+          <el-button size="small" @click="findItemAllBut">查看项内容</el-button>
+          <el-button size="small" @click="delBut">移除</el-button>
+        </el-button-group>
+        <el-button-group>
+          <el-button type="danger" size="small" @click="clearItemRuleBut">清空项</el-button>
+          <el-button type="danger" size="small" @click="delAllBut">全部移除</el-button>
+        </el-button-group>
+      </div>
+    </el-card>
+
+    <ruleInformationView :rule-info-arr="ruleInfoArr"/>
+
+    <!-- 使用说明移到底部并默认收起：排在规则信息之前会把真正要看的列表挤出首屏 -->
+    <el-card shadow="never">
+      <el-collapse>
+        <el-collapse-item title="使用说明（点击展开）" name="tips">
           <gz-space align-items="flex-start" direction="vertical">
             <span>1. 下拉框支持搜索：点开下拉后直接输入文字即可筛选规则类型</span>
             <span>2. 优先用 uid 精确屏蔽：用户名可以随时改，改了就绕过了用户名规则</span>
@@ -147,14 +136,31 @@ for (let newRuleKeyListElement of ruleKeyListData.getRuleKeyListData()) {
             <span>9. 部分规则需要请求 B 站接口。提示「禁用根据bv号网络请求获取视频信息」时说明接口被风控，
               稍等片刻（或半小时）再关闭该禁用，不要立刻重试</span>
           </gz-space>
-            </el-collapse-item>
-          </el-collapse>
-        </el-card>
-        <ruleInformationView :rule-info-arr="ruleInfoArr"/>
-      </el-col>
-    </el-row>
+        </el-collapse-item>
+      </el-collapse>
+    </el-card>
+
     <ruleSetValueDialog/>
     <multipleRuleEditDialog/>
     <addRuleDialog v-model="addRuleDialogVisible" :rule-info="addRuleDialogRuleInfo"/>
   </div>
 </template>
+
+<style scoped>
+.gz-basic-rule__toolbar :deep(.el-card__body) {
+  padding: var(--fluent-spacing-vertical-m) var(--fluent-spacing-horizontal-l);
+}
+
+/* 窄面板下自动换行：一行放不下时按钮组整体折到下一行，不挤压下拉框 */
+.gz-basic-rule__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fluent-spacing-horizontal-s);
+}
+
+.gz-basic-rule__cascader {
+  flex: 1 1 200px;
+  min-width: 180px;
+}
+</style>

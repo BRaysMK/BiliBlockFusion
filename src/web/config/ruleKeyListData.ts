@@ -17,6 +17,14 @@ interface SelectOption {
     children: SelectOptionChild[]
 }
 
+/**
+ * 下拉第二级只显示实体名，匹配方式留给第一级
+ *
+ * 原标签 `用户uid(精确匹配)` 在「精确匹配」分组下会把方式重复一遍，
+ * 44 个选项里绝大多数是「实体 + 同样的后缀」，扫读成本高。
+ */
+const toOptionLabel = (name: string): string => name.replace(/\((模糊|精确|正则|组合)匹配\)$/, '')
+
 const getSelectOptions = (): SelectOption[] => {
     const options: SelectOption[] = [
         {
@@ -57,7 +65,7 @@ const getSelectOptions = (): SelectOption[] => {
         if (children) {
             children.push({
                 value: key,
-                label: name
+                label: toOptionLabel(name)
             })
         }
     }
