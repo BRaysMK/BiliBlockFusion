@@ -2,9 +2,10 @@
 import {ref, watch} from 'vue';
 import localMKData from "../../../state/localMKData.ts";
 import {ElMessage, ElMessageBox} from 'element-plus';
+import SettingRow from '../../components/SettingRow.vue';
 
 /**
- * uid范围屏蔽vue组件
+ * uid范围屏蔽
  */
 const status = ref(localMKData.isUidRangeMaskingStatus());
 const head = ref(0);
@@ -35,23 +36,25 @@ const arr = localMKData.getUidRangeMasking();
 head.value = arr[0];
 tail.value = arr[1];
 </script>
+
 <template>
-  <div>
-    <el-card>
-      <template #header>
-        uid范围屏蔽
-      </template>
-      <div style="margin-bottom: 10px">
-        闭区间：最小 &le; uid &le; 最大 的 uid 会被屏蔽。修改后需点「设置」保存，下次检查（列表加载、评论加载等）时生效。
-      </div>
-      <el-switch v-model="status" active-text="启用" style="margin-bottom: 10px"/>
-      <el-input v-model.number="head" style="width: 30%;">
-        <template #prepend>最小</template>
-      </el-input>
-      <el-input v-model.number="tail" style="width: 30%;">
-        <template #prepend>最大</template>
-      </el-input>
-      <el-button type="primary" size="small" @click="setRangeBut">设置</el-button>
-    </el-card>
-  </div>
+  <SettingRow label="启用">
+    <el-switch v-model="status" size="small"/>
+  </SettingRow>
+  <SettingRow label="uid 范围">
+    <el-input-number v-model="head" :controls="false" :min="0" class="gz-uid-range__number" size="small"/>
+    <span class="gz-uid-range__dash">~</span>
+    <el-input-number v-model="tail" :controls="false" :min="0" class="gz-uid-range__number" size="small"/>
+    <el-button size="small" type="primary" @click="setRangeBut">设置</el-button>
+  </SettingRow>
 </template>
+
+<style scoped>
+.gz-uid-range__number {
+  width: 108px;
+}
+
+.gz-uid-range__dash {
+  color: var(--fluent-color-neutral-foreground-4);
+}
+</style>

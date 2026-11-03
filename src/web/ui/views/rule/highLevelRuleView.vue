@@ -9,6 +9,8 @@ import localMKData, {
   isVideosInFeaturedCommentsBlockedGm
 } from "../../../state/localMKData.ts";
 import uidRangeMaskingView from "../shield/uidRangeMaskingView.vue";
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 /**
  * 高级规则
@@ -73,72 +75,82 @@ watch(isCommentDisabledVideosBlockedVal, (n) => {
 </script>
 
 <template>
-  <div>
+  <SettingGroup description="闭区间：最小 ≤ uid ≤ 最大的用户会被屏蔽，修改后需点「设置」保存">
     <uidRangeMaskingView/>
-    <el-card>
-      <template #header>投稿数屏蔽</template>
-      <div>启用后，视频列表中用户投稿数低于该值的屏蔽，改动即生效</div>
-      <el-switch v-model="isLimitationVideoSubmitStatusVal" active-text="启用"/>
-      <el-input-number v-model="LimitationContributeVal" :min="0"></el-input-number>
-    </el-card>
-    <el-card>
-      <template #header>视频类型</template>
-      <el-tooltip content="选中的类型会被屏蔽">
-        <el-radio-group v-model="copyrightRadioVal">
-          <el-radio-button value="原创">原创</el-radio-button>
-          <el-radio-button value="转载">转载</el-radio-button>
-          <el-radio-button value="不处理">不处理</el-radio-button>
-        </el-radio-group>
-      </el-tooltip>
-      <el-divider/>
-      <el-switch v-model="is_vertical_val" active-text="屏蔽竖屏类视频"/>
-      <el-switch v-model="blockFollowed" active-text="屏蔽已关注"/>
-      <el-switch v-model="is_up_owner_exclusive" active-text="屏蔽充电专属视频"></el-switch>
-      <el-switch v-model="is_senior_member_val" active-text="屏蔽硬核会员"/>
-      <el-divider/>
-      <div>下面三个选项尽量不要启用，任意一个启用都会增加对b站的请求次数，请酌情使用</div>
-      <el-tooltip content="视频评论区评论被up主精选后对所有人可见">
-        <el-switch v-model="isVideosInFeaturedCommentsBlockedVal" active-text="屏蔽精选评论区类视频"/>
-      </el-tooltip>
-      <el-switch v-model="isFollowers7DaysOnlyVideosBlockedVal" active-text="屏蔽关注UP主7天以上的人可发评论类视频"/>
-      <el-tooltip content="视频评论区输入框是禁止输入状态而非可输入类视频">
-        <el-switch v-model="isCommentDisabledVideosBlockedVal" active-text="屏蔽禁止评论类视频"/>
-      </el-tooltip>
-      <el-divider/>
-      <el-row>
-        <el-col :span="12">
-          <el-card shadow="never">
-            <template #header>会员类型屏蔽</template>
-            <el-radio-group v-model="vipTypeRadioVal">
-              <el-radio-button value="无">无</el-radio-button>
-              <el-radio-button value="月大会员">月大会员</el-radio-button>
-              <el-radio-button value="年度及以上大会员">年度及以上大会员</el-radio-button>
-              <el-radio-button value="不处理">不处理</el-radio-button>
-            </el-radio-group>
-          </el-card>
-        </el-col>
-        <el-col :span="12">
-          <el-card shadow="never">
-            <template #header>性别屏蔽</template>
-            <el-radio-group v-model="genderRadioVal">
-              <el-radio-button value="男性">男性</el-radio-button>
-              <el-radio-button value="女性">女性</el-radio-button>
-              <el-radio-button value="保密">保密</el-radio-button>
-              <el-radio-button value="不处理">不处理</el-radio-button>
-            </el-radio-group>
-          </el-card>
-        </el-col>
-      </el-row>
-      <el-card shadow="never">
-        <template #header>计算创作团队</template>
-        <el-tooltip content="当作者未匹配上时检查其他成员">
-          <el-switch v-model="is_check_team_member" active-text="检查创作团队中成员"/>
-        </el-tooltip>
-      </el-card>
-    </el-card>
-    <el-card>
-      <template #header>评论</template>
-      <el-switch v-model="isSeniorMemberOnlyVal" active-text="仅看硬核会员"/>
-    </el-card>
-  </div>
+  </SettingGroup>
+
+  <SettingGroup title="作者与内容">
+    <SettingRow description="视频作者的投稿数低于该值时屏蔽" label="投稿数屏蔽">
+      <el-input-number v-model="LimitationContributeVal" :disabled="!isLimitationVideoSubmitStatusVal"
+                       :min="0" class="gz-advanced__number" controls-position="right" size="small"/>
+      <el-switch v-model="isLimitationVideoSubmitStatusVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="选中的视频类型会被屏蔽，不处理则两种类型都放行" label="视频类型">
+      <el-radio-group v-model="copyrightRadioVal" size="small">
+        <el-radio-button value="原创">原创</el-radio-button>
+        <el-radio-button value="转载">转载</el-radio-button>
+        <el-radio-button value="不处理">不处理</el-radio-button>
+      </el-radio-group>
+    </SettingRow>
+    <SettingRow label="屏蔽竖屏类视频">
+      <el-switch v-model="is_vertical_val" size="small"/>
+    </SettingRow>
+    <SettingRow label="屏蔽已关注">
+      <el-switch v-model="blockFollowed" size="small"/>
+    </SettingRow>
+    <SettingRow description="UP 主充电专属（付费）视频" label="屏蔽充电专属视频">
+      <el-switch v-model="is_up_owner_exclusive" size="small"/>
+    </SettingRow>
+    <SettingRow description="硬核会员发布的视频" label="屏蔽硬核会员">
+      <el-switch v-model="is_senior_member_val" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup
+      description="任意一项启用都会额外请求 B 站接口，请酌情使用"
+      title="需要额外请求的判定">
+    <SettingRow description="视频评论区评论被 UP 主精选后对所有人可见" label="屏蔽精选评论区类视频">
+      <el-switch v-model="isVideosInFeaturedCommentsBlockedVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="评论区只有关注 UP 主满 7 天的人才能发言" label="屏蔽关注 7 天以上可评论类视频">
+      <el-switch v-model="isFollowers7DaysOnlyVideosBlockedVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="视频评论区输入框是禁止输入状态而非可输入类视频" label="屏蔽禁止评论类视频">
+      <el-switch v-model="isCommentDisabledVideosBlockedVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="用户属性">
+    <SettingRow description="命中该会员类型的用户会被屏蔽，不处理则不做限制" label="会员类型屏蔽">
+      <el-radio-group v-model="vipTypeRadioVal" size="small">
+        <el-radio-button value="无">无</el-radio-button>
+        <el-radio-button value="月大会员">月大会员</el-radio-button>
+        <el-radio-button value="年度及以上大会员">年度及以上</el-radio-button>
+        <el-radio-button value="不处理">不处理</el-radio-button>
+      </el-radio-group>
+    </SettingRow>
+    <SettingRow description="命中该性别的用户会被屏蔽，不处理则不做限制" label="性别屏蔽">
+      <el-radio-group v-model="genderRadioVal" size="small">
+        <el-radio-button value="男性">男性</el-radio-button>
+        <el-radio-button value="女性">女性</el-radio-button>
+        <el-radio-button value="保密">保密</el-radio-button>
+        <el-radio-button value="不处理">不处理</el-radio-button>
+      </el-radio-group>
+    </SettingRow>
+    <SettingRow description="作者本身未匹配上时，继续检查其创作团队中的其他成员" label="检查创作团队中成员">
+      <el-switch v-model="is_check_team_member" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="评论">
+    <SettingRow description="评论区只保留硬核会员的评论" label="仅看硬核会员">
+      <el-switch v-model="isSeniorMemberOnlyVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
 </template>
+
+<style scoped>
+.gz-advanced__number {
+  width: 92px;
+}
+</style>

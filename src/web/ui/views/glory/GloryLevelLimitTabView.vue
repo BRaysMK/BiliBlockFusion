@@ -64,49 +64,66 @@ refresh();
 </script>
 
 <template>
-  <el-card :body-style="{ padding: '0px' }" shadow="never">
-    <template #header>
-      <gz-space align-items="flex-start" direction="">
-        <span>荣誉等级限制</span>
-        <span>可为每个房间设置不同的荣耀等级限制和状态。房间号为0则全局直播间。限制等级小于等于时屏蔽。保存才算生效</span>
-      </gz-space>
-    </template>
-    <el-table :data="dataList" border>
-      <el-table-column label="房间号" width="120">
+  <div class="gz-glory-limit">
+    <div class="gz-glory-limit__toolbar">
+      <div class="gz-glory-limit__actions">
+        <el-button size="small" type="primary" @click="addBut">新增房间</el-button>
+        <el-button size="small" @click="refresh(true)">刷新</el-button>
+        <el-button size="small" type="success" @click="saveBut">保存</el-button>
+      </div>
+    </div>
+    <el-table :data="dataList" border size="small">
+      <el-table-column label="房间号" width="96">
         <template #default="scope">
-          <div v-if="scope.row.roomId===0||scope.row.roomId==='0'">全局</div>
-          <div v-else style="width: 100%;height: 100%" @click="updateRoomIdRowBut(scope.row)">{{
-              scope.row.roomId
-            }}
+          <span v-if="scope.row.roomId===0||scope.row.roomId==='0'">全局</span>
+          <div v-else class="gz-glory-limit__cell" @click="updateRoomIdRowBut(scope.row)">
+            {{ scope.row.roomId }}
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="限制荣耀等级" width="155">
+      <el-table-column label="限制等级" width="108">
         <template #default="scope">
-          <el-input-number v-model="scope.row.limitLevel" :max="80" :min="1" size="small"></el-input-number>
+          <el-input-number v-model="scope.row.limitLevel" :max="80" :min="1" class="gz-glory-limit__number"
+                           controls-position="right" size="small"/>
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="50">
+      <el-table-column label="启用" width="56">
         <template #default="scope">
-          <gz-space justify-content="center">
-            <el-checkbox v-model="scope.row.status"></el-checkbox>
-          </gz-space>
+          <el-switch v-model="scope.row.status" size="small"/>
         </template>
       </el-table-column>
       <el-table-column>
-        <template #header>
-          <gz-space>
-            <el-button type="success" @click="saveBut">保存</el-button>
-            <el-button @click="refresh(true)">刷新</el-button>
-            <el-button type="info" @click="addBut">新增</el-button>
-          </gz-space>
-        </template>
         <template #default="scope">
-          <el-button type="warning" @click="delBut(scope.row)">移除</el-button>
-          <el-button v-if="scope.row.roomId!==0" @click="updateRoomIdRowBut(scope.row)">修改房间号
-          </el-button>
+          <el-button v-if="scope.row.roomId!==0" size="small" @click="updateRoomIdRowBut(scope.row)">改房间号</el-button>
+          <el-button size="small" type="danger" plain @click="delBut(scope.row)">移除</el-button>
         </template>
       </el-table-column>
     </el-table>
-  </el-card>
+  </div>
 </template>
+
+<style scoped>
+.gz-glory-limit {
+  padding: 0 var(--fluent-spacing-horizontal-s);
+}
+
+.gz-glory-limit__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--fluent-spacing-vertical-xs) 0;
+}
+
+.gz-glory-limit__actions {
+  display: flex;
+  gap: var(--fluent-spacing-horizontal-xs);
+}
+
+.gz-glory-limit__cell {
+  cursor: pointer;
+}
+
+/* 默认 150px 会把「限制等级」列撑到溢出，收窄到列宽以内 */
+.gz-glory-limit__number {
+  width: 100%;
+}
+</style>

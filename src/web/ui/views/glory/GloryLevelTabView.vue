@@ -5,14 +5,12 @@ import localMKData from "../../../state/localMKData.ts";
 import GloryLevelLimitTabView from "./GloryLevelLimitTabView.vue";
 import defUtil from "../../../core/util/defUtil.ts";
 import {ElMessage, ElMessageBox, ElNotification} from 'element-plus';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 const imgList = ref<any[]>([]);
 const mappingList = ref<any[]>([]);
 const selectLevel = ref(-1);
 
-const printImgSrcListBut = () => {
-  console.log(imgList.value);
-};
 const mappingToLevelBut = (src: any) => {
   const tempSelectLevel = selectLevel.value;
   if (tempSelectLevel === -1) return;
@@ -63,6 +61,7 @@ const saveBut = () => {
 };
 const refreshMappingList = () => {
   const listGm = localMKData.getGloryLevelMappingListGm();
+  mappingList.value = [];
   for (let i = 1; i <= 80; i++) {
     const find = listGm.find(item => item.level === i);
     if (find) {
@@ -80,9 +79,8 @@ const clearBut = () => {
 };
 const exportMapUrlBut = () => {
   const toRaw = defUtil.toRaw(mappingList.value.filter(item => item.src));
-  console.log("导出的荣耀等级", toRaw);
   defUtil.saveTextAsFile(JSON.stringify(toRaw), '荣耀等级映射关系列表.json');
-  ElNotification({title: '', message: "已导出到浏览器控制台和尝试导出文件操作", position: "bottom-right"});
+  ElNotification({title: '', message: "已导出映射关系文件", position: "bottom-right"});
 };
 const importMapUrlBut = () => {
   ElMessageBox.prompt("粘贴荣耀等级映射内容到输入框中", {
@@ -125,65 +123,114 @@ eventEmitter.on('event:更新荣耀等级图片链接列表', (dataList: any[]) 
 </script>
 
 <template>
-  <div>
-    <el-row>
-      <el-col :span="8">
-        <GloryLevelLimitTabView/>
-      </el-col>
-      <el-col :span="8">
-        <el-card :body-style="{ padding: '5px' }" shadow="never">
-          <template #header>
-            <gz-space align-items="flex-start" direction="">
-              <div>荣耀等级图标映射(修改为零时状态，长期需手动点击保存)</div>
-              <div>
-                <el-button type="danger" size="small" @click="clearBut">清除</el-button>
-                <el-button @click="refreshMappingList">刷新</el-button>
-                <el-button type="primary" size="small" @click="saveBut">保存</el-button>
-                <el-button title="导出到剪切板和浏览器控制台" @click="exportMapUrlBut">导出</el-button>
-                <el-button @click="importMapUrlBut">导入</el-button>
-              </div>
-            </gz-space>
-          </template>
-          <el-table :data="mappingList" border height="865" highlight-current-row
-                    @row-click="selectRow">
-            <el-table-column label="映射url">
-              <template #default="scope">
-                <div style="width: 100%; height: 100%" @click="inputMappingUrlBut(scope.row)">
-                  {{ scope.row.src ? scope.row.src : "空白占位符" }}
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column label="预览" width="100">
-              <template #header>
-                {{ mappingLevelCount }}/{{ mappingList.length }}
-              </template>
-              <template #default="scope">
-                <el-image :src="scope.row.src" style="height: 30px"/>
-              </template>
-            </el-table-column>
-            <el-table-column label="等级" prop="level" width="50"/>
-          </el-table>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="never">
-          <gz-space>
-            <span>当前直播间弹幕列表显示可添加的荣耀等级图标数量:{{ imgList.length }}</span>
-            <el-button @click="printImgSrcListBut">打印url列表值</el-button>
-          </gz-space>
-        </el-card>
-        <gz-space wrap>
-          <el-card v-for="src in imgList" :key="src">
-            <gz-space direction="column">
-              <el-image :src="src" style="height: 30px" @click="promptMappingToLevelBut(src)"/>
-              <el-button v-show="selectLevel!==-1" size="small" @click="mappingToLevelBut(src)">映射到等级{{
-                  selectLevel
-                }}
-              </el-button>
-            </gz-space>
-          </el-card>
-        </gz-space>
-      </el-col>
-    </el-row>
-  </div>
+  <!-- 原来是三栏 span=8：在 452px 的标签页里每栏只有 140px，
+       表头和等级文字被压成一列单字。改成纵向三段，每段撑满宽度。 -->
+  <SettingGroup description="可为每个房间单独设置荣耀等级限制，房间号填 0 表示全部直播间。限制等级小于等于时屏蔽，点击保存才生效"
+                 title="荣誉等级限制">
+    <GloryLevelLimitTabView/>
+  </SettingGroup>
+
+  <SettingGroup description="点表格行选中等级，再点右侧图标的「映射到此等级」即可绑定。映射关系修改后需点保存"
+                 title="荣耀等级图标映射">
+    <div class="gz-glory__toolbar">
+      <span class="gz-glory__count">{{ mappingLevelCount }} / {{ mappingList.length }} 已映射</span>
+      <div class="gz-glory__actions">
+        <el-button size="small" @click="importMapUrlBut">导入</el-button>
+        <el-button size="small" @click="exportMapUrlBut">导出</el-button>
+        <el-button size="small" @click="refreshMappingList">刷新</el-button>
+        <el-button size="small" type="danger" plain @click="clearBut">清除</el-button>
+        <el-button size="small" type="primary" @click="saveBut">保存</el-button>
+      </div>
+    </div>
+    <el-table :data="mappingList" border height="400" highlight-current-row @row-click="selectRow">
+      <el-table-column label="等级" prop="level" width="64"/>
+      <el-table-column label="预览" width="72">
+        <template #default="scope">
+          <el-image v-if="scope.row.src !== ''" :src="scope.row.src" class="gz-glory__preview"/>
+          <span v-else class="gz-glory__empty">—</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="映射 url">
+        <template #default="scope">
+          <div class="gz-glory__url" @click="inputMappingUrlBut(scope.row)">
+            {{ scope.row.src ? scope.row.src : '点击设置' }}
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
+  </SettingGroup>
+
+  <SettingGroup :description="`当前直播间弹幕列表中已采集到 ${imgList.length} 个荣耀等级图标，点图标即可映射到选中的等级`"
+                title="直播间采集到的图标">
+    <div v-if="imgList.length === 0" class="gz-glory__empty">
+      还没有采集到图标，进入有荣耀等级弹幕的直播间后这里会出现
+    </div>
+    <div v-else class="gz-glory__images">
+      <button v-for="src in imgList"
+              :key="src"
+              class="gz-glory__image-btn"
+              type="button"
+              @click="promptMappingToLevelBut(src)">
+        <el-image :src="src" class="gz-glory__preview"/>
+      </button>
+    </div>
+  </SettingGroup>
 </template>
+
+<style scoped>
+.gz-glory__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fluent-spacing-horizontal-s);
+  padding: var(--fluent-spacing-vertical-xs) var(--fluent-spacing-horizontal-s);
+  flex-wrap: wrap;
+}
+
+.gz-glory__count {
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-neutral-foreground-3);
+}
+
+.gz-glory__actions {
+  display: flex;
+  gap: var(--fluent-spacing-horizontal-xs);
+}
+
+.gz-glory__preview {
+  height: 26px;
+}
+
+.gz-glory__url {
+  min-height: 22px;
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-neutral-foreground-2);
+  word-break: break-all;
+  cursor: pointer;
+}
+
+.gz-glory__empty {
+  padding: var(--fluent-spacing-vertical-s) var(--fluent-spacing-horizontal-s);
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-neutral-foreground-4);
+}
+
+.gz-glory__images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fluent-spacing-horizontal-s);
+  padding: var(--fluent-spacing-vertical-xs) var(--fluent-spacing-horizontal-s);
+}
+
+.gz-glory__image-btn {
+  padding: 4px;
+  border: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
+  border-radius: var(--fluent-border-radius-medium);
+  background: var(--fluent-color-neutral-background-1);
+  cursor: pointer;
+}
+
+.gz-glory__image-btn:hover {
+  border-color: var(--fluent-color-brand-stroke-1);
+}
+</style>
