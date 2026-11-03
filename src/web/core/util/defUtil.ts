@@ -239,8 +239,12 @@ export const addGzStyle = (el: Document | Element, insertionPosition: Element | 
 
 export function initVueApp(el: string | Element, RootComponent: any, props: Record<string, any> = {}): VueApp {
     const app = createApp(RootComponent, props);
-    // 挂载 Element Plus（ElementPlus 由 @require 的 UMD 在同一拼接作用域提供），并配置中文语言包
-    app.use(ElementPlus, {locale: zhCn});
+    // 挂载 Element Plus（ElementPlus 由 @require 的 UMD 在同一拼接作用域提供），并配置中文语言包。
+    // zIndex 必须高于主面板的 9001：EP 弹层默认从 2000 起算，会被面板整片盖住——
+    // 表现为下拉框「打不开」、消息框只露一角，实际都渲染了但点不到、看不见。
+    // 命令式 API（ElMessage/ElMessageBox/ElNotification）在 detached app 里创建，
+    // 但它们读的是同一份 globalConfig，所以这一处配置对它们同样生效。
+    app.use(ElementPlus, {locale: zhCn, zIndex: 10000});
     app.mount(el);
     return app;
 }
