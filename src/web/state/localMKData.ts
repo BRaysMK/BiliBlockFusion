@@ -147,11 +147,6 @@ const getCoinLikesRatioRate = (): number => {
     return GM_getValue('coin_likes_ratio_rate', 0.05)
 }
 
-/** 是否禁用视频投币/点赞比（内容价值）屏蔽 */
-const isCoinLikesRatioRateDisabled = (): boolean => {
-    return GM_getValue('coin_likes_ratio_rate_blocking_status', false)
-}
-
 /** 是否启用互动率屏蔽 */
 const isInteractiveRateBlockingStatus = (): boolean => {
     return GM_getValue('interactive_rate_blocking_status', false)
@@ -566,7 +561,6 @@ export default {
     isVideoLikeRateBlockingStatus,
     isCoinLikesRatioRateBlockingStatus,
     getCoinLikesRatioRate,
-    isCoinLikesRatioRateDisabled,
     isInteractiveRateBlockingStatus,
     getInteractiveRate,
     getUidRangeMasking,
