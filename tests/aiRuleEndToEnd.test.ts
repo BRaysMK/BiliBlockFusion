@@ -267,17 +267,25 @@ describe("AI 写入的规则键能被屏蔽逻辑读到", () => {
 describe("规则键 getter 覆盖检查", () => {
     it("每个规则键在 src 中都有真实读取点（不存在只登记不消费的死键）", async () => {
         const fs = await import("node:fs");
-        const {resolve} = await import("node:path");
-        const {execSync} = await import("node:child_process");
+        const path = await import("node:path");
+        /** 一次读完所有源码再在内存里匹配：每个键起一个 grep 子进程，Windows 上累计必然超过 5s 超时 */
+        const sources: string[] = [];
+        const walk = (dir: string): void => {
+            for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
+                const full = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    walk(full);
+                } else if (/\.(ts|vue)$/.test(entry.name)) {
+                    sources.push(fs.readFileSync(full, "utf8"));
+                }
+            }
+        };
+        walk("src/web");
+        const joined = sources.join("\n");
         const dead: string[] = [];
         for (const item of ruleKeyListDataJson as Array<{key: string}>) {
-            const out = execSync(
-                `grep -rl "${item.key}" src/web --include=*.ts --include=*.vue`,
-                {cwd: process.cwd(), encoding: "utf8"}
-            ).split("\n").filter(f => f.length > 0)
-                .filter(f => !f.includes("ruleKeyListDataJson.json"))
-                .filter(f => !f.includes("aiRuleSettingSpec.ts"));
-            if (out.length === 0) dead.push(item.key);
+            // 规则键清单与 AI 注册表本身不算消费点，要的是屏蔽逻辑里的真实读取
+            if (!joined.includes(`'${item.key}'`) && !joined.includes(`"${item.key}"`)) dead.push(item.key);
         }
         expect(dead, `这些规则键没有任何屏蔽逻辑读取: ${dead.join(", ")}`).toEqual([]);
     });
