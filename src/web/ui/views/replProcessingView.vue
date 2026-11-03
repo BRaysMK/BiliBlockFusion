@@ -7,6 +7,8 @@ import {
   isReplaceCommentSearchTerms
 } from "@/state/localMKData.ts";
 import {ElMessage, ElMessageBox, ElNotification} from 'element-plus';
+import SettingRow from '../components/SettingRow.vue';
+import SettingGroup from '../components/SettingGroup.vue';
 
 /**
  * 内容替换处理布局组件
@@ -15,6 +17,7 @@ const tableData = ref<any[]>(getSubstituteWordsArr());
 const enableReplacementProcessingVal = ref(enableReplacementProcessing());
 const clearCommentEmoticonsVal = ref(isClearCommentEmoticons());
 const isReplaceCommentSearchTermsVal = ref(isReplaceCommentSearchTerms());
+const showHelp = ref(false);
 
 //验证
 const validate = (item: any) => {
@@ -109,75 +112,124 @@ watch(isReplaceCommentSearchTermsVal, (n) => {
 </script>
 
 <template>
-  <div>
-    <el-card shadow="never">
-      <template #header>说明
-        <el-row>
-          <el-col :span="12">
-            <div>1.评论内容暂不支持替换表情</div>
-            <div>2.如修改后或添加数据需保存方可生效</div>
-            <div>3.暂不支持标题替换</div>
-            <div>4.支持正则替换，
-              <el-link
-                  href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll"
-                  target="_blank"
-                  type="primary">
-                详情参考js中的replaceAll用法
-              </el-link>
-            </div>
-            <div>5.搜索暂时先用快捷键ctrl+f代替</div>
-            <div>6.作用域中，选择了评论表情再选其他之前需要取消选项评论表情</div>
-            <div>7.评论表情，查找时要用英文输入法[]包裹表情关键词，留空为评论中移除该表情。反之替换普通文本内容。
-              <el-link href="https://docs.qq.com/doc/DSlJNR1NVcGR3eEto" target="_blank"
-                       title="页面中用搜索定位表情包对照表" type="primary">表情包对照表
-              </el-link>
-            </div>
-          </el-col>
-          <el-col :span="12">
-            <el-card shadow="never">
-              <template #header>全局</template>
-              <el-tooltip content="当该选项未启用时下面表格中的不生效">
-                <el-switch v-model="enableReplacementProcessingVal" active-text="启用"/>
-              </el-tooltip>
-              <el-switch v-model="clearCommentEmoticonsVal" active-text="清除评论表情"/>
-              <el-tooltip content="将评论中的蓝色关键词带搜索小图标的内容替换成普通文本内容">
-                <el-switch v-model="isReplaceCommentSearchTermsVal" active-text="替换评论搜索词"/>
-              </el-tooltip>
-            </el-card>
-          </el-col>
-        </el-row>
-      </template>
-    </el-card>
-    <el-table :data="tableData" border stripe>
-      <el-table-column label="作用域" width="450px">
-        <template #default="scope">
-          <el-checkbox-group v-model="scope.row.actionScopes" @change="actionScopesChange">
-            <el-checkbox border disabled value="视频标题">视频标题</el-checkbox>
-            <el-checkbox border value="评论内容">评论内容</el-checkbox>
-            <el-checkbox border value="评论表情">评论表情</el-checkbox>
-          </el-checkbox-group>
-        </template>
-      </el-table-column>
-      <el-table-column label="查找">
-        <template #default="scope">
-          <el-input v-model="scope.row.findVal" clearable maxlength="10" @change="verifyDuplicate"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="替换">
-        <template #default="scope">
-          <el-input v-model="scope.row.replaceVal" clearable maxlength="10"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作">
-        <template #header>
-          <el-button @click="addBut">添加</el-button>
-          <el-button @click="refreshBut">刷新</el-button>
-          <el-button type="primary" size="small" @click="saveBut">保存</el-button>
-        </template>
-        <template #default="scope">
-          <el-button type="danger" size="small" @click="delItemBut(scope.row,scope.$index)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-  </div>
+  <SettingGroup title="全局开关">
+    <SettingRow description="关闭后下方表格中的所有替换规则都不生效" label="启用替换处理">
+      <el-switch v-model="enableReplacementProcessingVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="移除评论里的表情图片" label="清除评论表情">
+      <el-switch v-model="clearCommentEmoticonsVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="把评论中蓝色关键词（带搜索小图标）替换成普通文本" label="替换评论搜索词">
+      <el-switch v-model="isReplaceCommentSearchTermsVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup>
+    <div class="gz-repl__toolbar">
+      <button class="gz-repl__help-toggle" type="button" @click="showHelp = !showHelp">
+        {{ showHelp ? '收起说明' : '使用说明' }}
+      </button>
+      <div class="gz-repl__actions">
+        <el-button size="small" @click="addBut">添加</el-button>
+        <el-button size="small" @click="refreshBut">刷新</el-button>
+        <el-button size="small" type="primary" @click="saveBut">保存</el-button>
+      </div>
+    </div>
+    <ul v-if="showHelp" class="gz-repl__help">
+      <li>评论内容暂不支持替换表情，暂不支持标题替换</li>
+      <li>修改或添加数据后需点「保存」才生效</li>
+      <li>支持正则替换，
+        <el-link href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll"
+                 target="_blank" type="primary">
+          参考 replaceAll 用法
+        </el-link>
+      </li>
+      <li>操作评论表情时，作用域需先取消其他选项</li>
+      <li>评论表情：查找内容用英文 <code>[]</code> 包裹表情关键词，替换留空表示移除该表情
+        <el-link href="https://docs.qq.com/doc/DSlJNR1NVcGR3eEto" target="_blank" type="primary">表情包对照表</el-link>
+      </li>
+    </ul>
+    <!-- 每条规则是「作用域 / 查找 / 替换」三组控件，横向排在一行至少需要 600px，
+         452px 的内容区放不下。改成每条一张纵向卡片，字段各自独占整行。 -->
+    <div v-if="tableData.length === 0" class="gz-repl__empty">还没有替换规则，点上方「添加」新增一条</div>
+    <div v-for="(row, index) in tableData" :key="index" class="gz-repl__item">
+      <div class="gz-repl__item-header">
+        <el-checkbox-group v-model="row.actionScopes" size="small" @change="actionScopesChange">
+          <el-checkbox border disabled value="视频标题">视频标题</el-checkbox>
+          <el-checkbox border value="评论内容">评论内容</el-checkbox>
+          <el-checkbox border value="评论表情">评论表情</el-checkbox>
+        </el-checkbox-group>
+        <el-button size="small" type="danger" plain @click="delItemBut(row, index)">删除</el-button>
+      </div>
+      <div class="gz-repl__item-fields">
+        <el-input v-model="row.findVal" clearable maxlength="10" placeholder="查找内容" size="small"
+                  @change="verifyDuplicate"/>
+        <span class="gz-repl__arrow">→</span>
+        <el-input v-model="row.replaceVal" clearable maxlength="10" placeholder="替换为（留空即删除）" size="small"/>
+      </div>
+    </div>
+  </SettingGroup>
 </template>
+
+<style scoped>
+.gz-repl__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--fluent-spacing-vertical-xs) var(--fluent-spacing-horizontal-s);
+}
+
+.gz-repl__actions {
+  display: flex;
+  gap: var(--fluent-spacing-horizontal-xs);
+}
+
+.gz-repl__help-toggle {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-brand-foreground-1);
+  cursor: pointer;
+}
+
+.gz-repl__help {
+  margin: 0;
+  padding: 0 var(--fluent-spacing-horizontal-s) var(--fluent-spacing-vertical-s) var(--fluent-spacing-horizontal-l);
+  font-size: var(--fluent-font-size-base-200);
+  line-height: 1.7;
+  color: var(--fluent-color-neutral-foreground-3);
+}
+
+.gz-repl__item {
+  margin: 0 var(--fluent-spacing-horizontal-s) var(--fluent-spacing-vertical-s);
+  padding: var(--fluent-spacing-vertical-s);
+  border: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
+  border-radius: var(--fluent-border-radius-medium);
+}
+
+.gz-repl__item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fluent-spacing-horizontal-s);
+  margin-bottom: var(--fluent-spacing-vertical-xs);
+  flex-wrap: wrap;
+}
+
+.gz-repl__item-fields {
+  display: flex;
+  align-items: center;
+  gap: var(--fluent-spacing-horizontal-xs);
+}
+
+.gz-repl__arrow {
+  color: var(--fluent-color-neutral-foreground-4);
+}
+
+.gz-repl__empty {
+  padding: var(--fluent-spacing-vertical-m) var(--fluent-spacing-horizontal-s);
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-neutral-foreground-4);
+}
+</style>

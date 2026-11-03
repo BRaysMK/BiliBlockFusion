@@ -9,6 +9,8 @@ import localMKData, {
 } from "../../../state/localMKData.ts";
 import globalValue from "../../../config/globalValue.ts";
 import bvRequestQueue from "../../../core/http/bvRequestQueue.ts";
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 /**
  * 条件限制组件
@@ -55,33 +57,52 @@ eventEmitter.on('更新根据bv号网络请求获取视频信息状态', (b: boo
 });
 </script>
 <template>
-  <div>
-    <el-card shadow="never">
-      <template #header>常规</template>
-      <el-switch v-model="bOnlyTheHomepageIsBlocked" active-text="仅首页屏蔽生效屏蔽"/>
-      <el-tooltip content="模糊和正则匹配时，将匹配词转小写与规则值匹配。修改后刷新页面生效">
-        <el-switch v-model="bFuzzyAndRegularMatchingWordsToLowercase"
-                   active-text="模糊和正则匹配词转小写"/>
-      </el-tooltip>
-      <el-tooltip content="改动实时生效">
-        <el-switch v-model="isEffectiveUIDShieldingOnlyVideoVal" active-text="仅生效UID屏蔽(限视频)"/>
-      </el-tooltip>
-      <el-switch v-model="hideBlockButtonVal" active-text="不显示屏蔽按钮"/>
-      <el-switch v-model="isCheckNestedDynamicContentVal" active-text="动态项屏蔽检查嵌套动态"/>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>
-        <span>网络请求频率(单位秒)</span>
-        <div>如设置0，则为不限制，比如设置2，则为每个请求之间隔2秒，可有效降低对B站api接口的压力，降低风控</div>
-        <div>注意：设置过低可能会导致部分接口风控</div>
-        <div>如接口风控了请先勾选下面的【禁用根据bv号网络请求获取视频信息】</div>
-        <div>修改下一轮请求结束后生效</div>
-      </template>
-      <el-switch v-model="isDisableNetRequestsBvVideoInfo" active-text="禁用根据bv号网络请求获取视频信息"/>
-      <el-slider v-model="requestFrequencyVal" :disabled="isDisableNetRequestsBvVideoInfo" :max="5" :step="0.1"
-                 show-input
-                 show-stops
-      ></el-slider>
-    </el-card>
-  </div>
+  <SettingGroup title="常规">
+    <SettingRow description="只在首页生效，其余页面（搜索、空间、动态等）不做屏蔽" label="仅首页屏蔽生效">
+      <el-switch v-model="bOnlyTheHomepageIsBlocked" size="small"/>
+    </SettingRow>
+    <SettingRow description="模糊和正则匹配时先把匹配词转小写再比较，修改后刷新页面生效" label="匹配词转小写">
+      <el-switch v-model="bFuzzyAndRegularMatchingWordsToLowercase" size="small"/>
+    </SettingRow>
+    <SettingRow description="UID 屏蔽只在视频场景生效，不改动评论区与动态，改动实时生效" label="仅 UID 屏蔽（限视频）">
+      <el-switch v-model="isEffectiveUIDShieldingOnlyVideoVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="隐藏页面上由脚本生成的屏蔽按钮" label="不显示屏蔽按钮">
+      <el-switch v-model="hideBlockButtonVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="动态列表里转发的内容也按外层账号的规则检查" label="动态项检查嵌套动态">
+      <el-switch v-model="isCheckNestedDynamicContentVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup
+      description="每个网络请求之间的间隔，可降低对 B 站接口的压力与风控概率；设 0 表示不限制。修改在下一轮请求结束后生效"
+      title="网络请求">
+    <SettingRow description="开启后不再按 bv 号请求视频详情，依赖它的规则（播放量、时长、组合规则等）将全部失效。接口被风控时先开这个"
+                label="禁用按 bv 号请求视频信息">
+      <el-switch v-model="isDisableNetRequestsBvVideoInfo" size="small"/>
+    </SettingRow>
+    <SettingRow description="0 表示不限制。设置过低可能导致接口风控" label="请求间隔">
+      <el-input-number v-model="requestFrequencyVal"
+                       :disabled="isDisableNetRequestsBvVideoInfo"
+                       :max="5"
+                       :min="0"
+                       :step="0.1"
+                       class="gz-conditionality__number"
+                       controls-position="right"
+                       size="small"/>
+      <span class="gz-conditionality__unit">秒</span>
+    </SettingRow>
+  </SettingGroup>
 </template>
+
+<style scoped>
+.gz-conditionality__number {
+  width: 104px;
+}
+
+.gz-conditionality__unit {
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-neutral-foreground-3);
+}
+</style>
