@@ -367,6 +367,7 @@ export default {
             || url.startsWith('https://www.bilibili.com/?spm_id_from=')
     },
     getBewlyEl,
+    getVideoList,
     run(url: string) {
         const parseUrl = urlUtil.parseUrl(url);
         const {page} = parseUrl.queryParams
