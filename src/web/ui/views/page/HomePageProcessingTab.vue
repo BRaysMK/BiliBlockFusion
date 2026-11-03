@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, watch} from 'vue'
+import {computed, ref, watch} from 'vue'
 import bilibiliHome from "../../../pages/home/bilibili.ts";
 import {
   getHomeFeedLoadAttemptsGm,
@@ -12,6 +12,8 @@ import {
   getShieldModeGm
 } from "@/state/localMKData.ts";
 import cssManager from "../../../domain/cssManager.ts";
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 const isHideCarouselImageVal = ref(isHideCarouselImageGm());
 const isHideHomeTopHeaderBannerImageVal = ref(isHideHomeTopHeaderBannerImageGm());
@@ -22,6 +24,12 @@ const releaseTypeCardVals = ref(getReleaseTypeCardsGm());
 // 屏蔽方式：remove（默认，卡片消失、后续顶上）/ overlay（遮罩）/ hide（不可见但留空）
 const shieldModeVal = ref(getShieldModeGm());
 const isOverlayOnlyTypeVal = ref(isOverlayOnlyTypeGm());
+
+/** 「叠加层仅显示屏蔽类型」只在叠加层模式下有意义 */
+const overlayOnlyDisabled = computed(() => shieldModeVal.value !== 'overlay');
+
+/** 放行卡片是这 9 类；选项写死在模板里，这里只定义取值，避免两处维护 */
+const RELEASE_TYPE_OPTIONS = ['直播', '番剧', '电影', '国创', '综艺', '课堂', '电视剧', '纪录片', '漫画'];
 
 watch(isHideCarouselImageVal, (n) => {
   GM_setValue('is_hide_carousel_image_gm', n);
@@ -54,55 +62,51 @@ watch(isOverlayOnlyTypeVal, (n) => {
 </script>
 
 <template>
-  <el-card shadow="never">
-    <template #header>屏蔽方式</template>
-    <el-tooltip content="移除：卡片消失，后续顶上；叠加层：保留遮罩；隐藏：留空白">
-      <div>
-        <span>视频屏蔽方式：</span>
-        <el-radio-group v-model="shieldModeVal" size="small">
-          <el-radio-button value="remove">移除</el-radio-button>
-          <el-radio-button value="overlay">叠加层</el-radio-button>
-          <el-radio-button value="hide">隐藏</el-radio-button>
-        </el-radio-group>
-      </div>
-    </el-tooltip>
-    <el-tooltip content="遮罩上只显示屏蔽类型，不显示具体匹配词">
-      <el-switch v-model="isOverlayOnlyTypeVal" active-text="叠加层仅显示屏蔽类型"
-                 :disabled="shieldModeVal !== 'overlay'"/>
-    </el-tooltip>
-  </el-card>
-  <el-card shadow="never">
-    <template #header>首页</template>
-    <el-switch v-model="isHideCarouselImageVal" active-text="隐藏轮播图"/>
-    <el-switch v-model="isHideHomeTopHeaderBannerImageVal" active-text="隐藏顶部标题横幅图片"/>
-    <el-tooltip content="隐藏视频列表上方的动态、热门、频道栏一整行">
-      <el-switch v-model="isHideTopHeaderChannelVal" active-text="隐藏顶部页面频道栏"/>
-    </el-tooltip>
-    <el-tooltip content="首页列表未填满视口时，静默触发页面自身加载；每次连续补载的最多尝试次数，设置为0表示关闭">
-      <div>
-        <span>首页列表连续补载次数：</span>
-        <el-input-number v-model="homeFeedLoadAttemptsVal" :min="0" :step="1"/>
-      </div>
-    </el-tooltip>
-    <el-tooltip content="实验功能：过滤首页响应中明确识别的广告、直播、发布类型和基础视频规则；未知类型与深度规则仍由原有页面流程处理，修改后请刷新首页">
-      <el-switch v-model="isHomeResponseRewriteVal" active-text="通过响应过滤首页推荐视频（实验）"/>
-    </el-tooltip>
-    <el-divider/>
-    <el-tooltip content="但视频列表中出现选择的类型时跳过，反之屏蔽" placement="top">
-      <div>放行的卡片
-        <el-divider/>
-        <el-checkbox-group v-model="releaseTypeCardVals">
-          <el-checkbox value="直播">直播</el-checkbox>
-          <el-checkbox value="番剧">番剧</el-checkbox>
-          <el-checkbox value="电影">电影</el-checkbox>
-          <el-checkbox value="国创">国创</el-checkbox>
-          <el-checkbox value="综艺">综艺</el-checkbox>
-          <el-checkbox value="课堂">课堂</el-checkbox>
-          <el-checkbox value="电视剧">电视剧</el-checkbox>
-          <el-checkbox value="纪录片">纪录片</el-checkbox>
-          <el-checkbox value="漫画">漫画</el-checkbox>
-        </el-checkbox-group>
-      </div>
-    </el-tooltip>
-  </el-card>
+  <SettingGroup description="控制命中规则的视频卡片怎么处理，改动实时生效" title="屏蔽方式">
+    <SettingRow description="移除：卡片消失、后续顶上；叠加层：保留卡片并盖遮罩；隐藏：不可见但仍占位"
+                label="视频屏蔽方式">
+      <el-radio-group v-model="shieldModeVal" size="small">
+        <el-radio-button value="remove">移除</el-radio-button>
+        <el-radio-button value="overlay">叠加层</el-radio-button>
+        <el-radio-button value="hide">隐藏</el-radio-button>
+      </el-radio-group>
+    </SettingRow>
+    <SettingRow description="遮罩上只显示屏蔽类型，不显示具体匹配到的词。仅在叠加层模式下生效"
+                label="叠加层仅显示屏蔽类型">
+      <el-switch v-model="isOverlayOnlyTypeVal" :disabled="overlayOnlyDisabled" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="首页">
+    <SettingRow label="隐藏轮播图">
+      <el-switch v-model="isHideCarouselImageVal" size="small"/>
+    </SettingRow>
+    <SettingRow label="隐藏顶部标题横幅图片">
+      <el-switch v-model="isHideHomeTopHeaderBannerImageVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="顶部站点频道导航，滚动后吸顶的那条也一并隐藏" label="隐藏顶部频道栏">
+      <el-switch v-model="isHideTopHeaderChannelVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="列表未填满视口时自动触发补载，这是连续尝试的次数上限。0 表示关闭" label="列表连续补载次数">
+      <el-input-number v-model="homeFeedLoadAttemptsVal" :min="0" :step="1" class="gz-home__number"
+                       controls-position="right" size="small"/>
+    </SettingRow>
+    <SettingRow description="在接口响应阶段就过滤推荐视频，未知结构仍走原流程。改动后需刷新首页" label="响应过滤推荐视频（实验）">
+      <el-switch v-model="isHomeResponseRewriteVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup description="下列类型的卡片不会被屏蔽，即使它命中了规则" title="放行的卡片">
+    <SettingRow stacked>
+      <el-checkbox-group v-model="releaseTypeCardVals">
+        <el-checkbox v-for="type in RELEASE_TYPE_OPTIONS" :key="type" :value="type">{{ type }}</el-checkbox>
+      </el-checkbox-group>
+    </SettingRow>
+  </SettingGroup>
 </template>
+
+<style scoped>
+.gz-home__number {
+  width: 104px;
+}
+</style>

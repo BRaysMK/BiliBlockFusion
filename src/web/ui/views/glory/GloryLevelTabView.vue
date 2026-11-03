@@ -125,12 +125,12 @@ eventEmitter.on('event:更新荣耀等级图片链接列表', (dataList: any[]) 
 <template>
   <!-- 原来是三栏 span=8：在 452px 的标签页里每栏只有 140px，
        表头和等级文字被压成一列单字。改成纵向三段，每段撑满宽度。 -->
-  <SettingGroup description="可为每个房间单独设置荣耀等级限制，房间号填 0 表示全部直播间。限制等级小于等于时屏蔽，点击保存才生效"
+  <SettingGroup description="按房间单独限制，房间号填 0 表示全部直播间。等级小于等于设定值时屏蔽，点击保存才生效"
                  title="荣誉等级限制">
     <GloryLevelLimitTabView/>
   </SettingGroup>
 
-  <SettingGroup description="点表格行选中等级，再点右侧图标的「映射到此等级」即可绑定。映射关系修改后需点保存"
+  <SettingGroup description="先点表格行选中等级，再点图标上的「映射到此等级」绑定。改动需点保存"
                  title="荣耀等级图标映射">
     <div class="gz-glory__toolbar">
       <span class="gz-glory__count">{{ mappingLevelCount }} / {{ mappingList.length }} 已映射</span>
@@ -160,7 +160,7 @@ eventEmitter.on('event:更新荣耀等级图片链接列表', (dataList: any[]) 
     </el-table>
   </SettingGroup>
 
-  <SettingGroup :description="`当前直播间弹幕列表中已采集到 ${imgList.length} 个荣耀等级图标，点图标即可映射到选中的等级`"
+  <SettingGroup :description="`弹幕列表中已采集到 ${imgList.length} 个等级图标，点图标即可映射到选中的等级`"
                 title="直播间采集到的图标">
     <div v-if="imgList.length === 0" class="gz-glory__empty">
       还没有采集到图标，进入有荣耀等级弹幕的直播间后这里会出现

@@ -18,6 +18,8 @@ import liveSectionModel from "../../../pages/live/sectionModel.ts";
 import liveRoomModel from "../../../pages/live/roomModel.ts";
 import liveCommon from "../../../pages/live/common.ts";
 import space from "../../../pages/space/main.ts";
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 //页面处理处理
 const isRemoveSearchBottomContent = ref(GM_getValue('isRemoveSearchBottomContent', false));
@@ -81,7 +83,7 @@ watch(isHideLiveGiftPanelVal, (n) => {
 watch(isDelLiveBottomBannerAdVal, (n) => {
   GM_setValue('is_del_live_bottom_banner_ad_val_gm', n);
   if (liveRoomModel.isLiveRoom() && !liveRoomModel.isLiveRoomActivity()) {
-    liveRoomModel.delLivePageRightSidebarAd();
+    liveRoomModel.delLivePageBottomBannerAd();
   }
 });
 watch(isHideAddSeeLaterVal, (n) => {
@@ -102,61 +104,78 @@ watch(commentBlockButtonStyleVal, (n) => {
 });
 </script>
 <template>
-  <div>
-    <el-card shadow="never">
-      <template #header>
-        <span>搜索页</span>
-      </template>
-      <el-switch v-model="isRemoveSearchBottomContent"
-                 active-text="屏蔽底部额外内容"/>
-      <el-tooltip content="综合选项卡视频列表中出现的直播卡片">
-        <el-switch v-model="isClearLiveCardVal" active-text="屏蔽推荐直播类"/>
-      </el-tooltip>
-      <el-tooltip content="实验功能：修改搜索接口响应，提前过滤可识别的视频和直播结果；未知结构仍由页面流程处理，修改后请刷新搜索页">
-        <el-switch v-model="isSearchResponseRewriteVal" active-text="通过响应过滤搜索结果（实验）"/>
-      </el-tooltip>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>
-        <span>顶部搜索框</span>
-      </template>
-      <el-switch v-model="isClearTopInputTipContent" active-text="清空内容"/>
-      <el-switch v-model="isHideHotSearchesPanelVal" active-text="隐藏热搜"/>
-      <el-switch v-model="isHideSearchHistoryPanelVal" active-text="隐藏搜索历史"/>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>直播页</template>
-      <el-switch v-model="isDelLivePageRightSidebarVal" active-text="屏蔽右侧侧边栏"/>
-      <el-divider/>
-      直播间
-      <el-divider/>
-      <el-switch v-model="isRoomBackgroundHideVal" active-text="背景移除"/>
-      <el-switch v-model="isHideLiveGiftPanelVal" active-text="隐藏礼物栏"/>
-      <el-switch v-model="isDelLiveBottomBannerAdVal" active-text="移除底部横幅广告"
-                 title="移除页面礼物栏下方的横幅广告"/>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>视频列表项</template>
-      <el-switch v-model="isHideAddSeeLaterVal" active-text="隐藏添加至稍后再看按钮" title="刷新页面生效"/>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>用户空间主页</template>
-      <el-switch v-model="isHideChargingDedicatedVideosVal" active-text="隐藏投稿选项卡中充电视频"/>
-      <el-switch v-model="isLiveReplayVideosHideVal" active-text="隐藏投稿选项卡直播回放"/>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>动态列表</template>
-      <el-tooltip content="评论屏蔽按钮的显示位置：用户名后面（默认，内联在用户信息后）/ 隐藏 / 三点菜单中（新版评论区悬浮操作条内）/ 楼中层评论后面（楼中楼按钮移到评论内容后，避免占用用户名行）">
-        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-          <span style="white-space: nowrap;">评论屏蔽按钮位置</span>
-          <el-select v-model="commentBlockButtonStyleVal" style="width: 160px;">
-            <el-option value="default" label="用户名后面"/>
-            <el-option value="hide" label="隐藏"/>
-            <el-option value="more" label="三点菜单中"/>
-            <el-option value="after" label="楼中层评论后面"/>
-          </el-select>
-        </div>
-      </el-tooltip>
-    </el-card>
-  </div>
+  <SettingGroup title="搜索页">
+    <SettingRow label="屏蔽底部额外内容">
+      <el-switch v-model="isRemoveSearchBottomContent" size="small"/>
+    </SettingRow>
+    <SettingRow description="搜索结果列表里混入的直播卡片，视频与其他选项卡一并生效" label="屏蔽推荐直播类">
+      <el-switch v-model="isClearLiveCardVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="在接口响应阶段提前过滤可识别的视频与直播，未知结构仍走页面流程。改动后需刷新搜索页"
+                label="响应过滤搜索结果（实验）">
+      <el-switch v-model="isSearchResponseRewriteVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="顶部搜索框">
+    <SettingRow label="清空提示内容">
+      <el-switch v-model="isClearTopInputTipContent" size="small"/>
+    </SettingRow>
+    <SettingRow label="隐藏热搜">
+      <el-switch v-model="isHideHotSearchesPanelVal" size="small"/>
+    </SettingRow>
+    <SettingRow label="隐藏搜索历史">
+      <el-switch v-model="isHideSearchHistoryPanelVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="直播页">
+    <SettingRow description="分区页与直播间通用" label="屏蔽右侧侧边栏">
+      <el-switch v-model="isDelLivePageRightSidebarVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="直播间">
+    <SettingRow label="移除背景">
+      <el-switch v-model="isRoomBackgroundHideVal" size="small"/>
+    </SettingRow>
+    <SettingRow label="隐藏礼物栏">
+      <el-switch v-model="isHideLiveGiftPanelVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="礼物栏下方的横幅广告" label="移除底部横幅广告">
+      <el-switch v-model="isDelLiveBottomBannerAdVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="视频列表项">
+    <SettingRow description="刷新页面生效" label="隐藏「添加至稍后再看」按钮">
+      <el-switch v-model="isHideAddSeeLaterVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="用户空间主页">
+    <SettingRow description="投稿选项卡中的充电专属视频" label="隐藏充电视频">
+      <el-switch v-model="isHideChargingDedicatedVideosVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="投稿选项卡中的直播回放" label="隐藏直播回放">
+      <el-switch v-model="isLiveReplayVideosHideVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="评论区">
+    <SettingRow description="屏蔽按钮的显示位置，所有页面的评论区通用。切换后立即重扫" label="评论屏蔽按钮位置">
+      <el-select v-model="commentBlockButtonStyleVal" class="gz-page__select" size="small">
+        <el-option label="用户名后面（默认）" value="default"/>
+        <el-option label="隐藏" value="hide"/>
+        <el-option label="三点菜单中" value="more"/>
+        <el-option label="楼中层评论后面" value="after"/>
+      </el-select>
+    </SettingRow>
+  </SettingGroup>
 </template>
+
+<style scoped>
+.gz-page__select {
+  width: 168px;
+}
+</style>

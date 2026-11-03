@@ -76,9 +76,9 @@ eventEmitter.on('更新根据bv号网络请求获取视频信息状态', (b: boo
   </SettingGroup>
 
   <SettingGroup
-      description="每个网络请求之间的间隔，可降低对 B 站接口的压力与风控概率；设 0 表示不限制。修改在下一轮请求结束后生效"
+      description="降低对 B 站接口的压力与风控概率。修改在下一轮请求结束后生效"
       title="网络请求">
-    <SettingRow description="开启后不再按 bv 号请求视频详情，依赖它的规则（播放量、时长、组合规则等）将全部失效。接口被风控时先开这个"
+    <SettingRow description="依赖 bv 详情的规则（播放量、时长、组合规则等）会全部失效。被风控时先开这个"
                 label="禁用按 bv 号请求视频信息">
       <el-switch v-model="isDisableNetRequestsBvVideoInfo" size="small"/>
     </SettingRow>

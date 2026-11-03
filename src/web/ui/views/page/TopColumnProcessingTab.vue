@@ -3,6 +3,8 @@ import {ref, watch} from 'vue'
 import localMKData from "../../../state/localMKData.ts";
 import topColumnProcessing from "../../../pages/topColumnProcessing.ts";
 import {ElMessage, ElMessageBox} from 'element-plus';
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 const hideTheLeftTopColumnsVal = ref<string[]>(localMKData.getHideTheLeftTopColumnsGm());
 const topBarColumnShieldingStatusVal = ref(localMKData.isTopBarColumnShieldingStatusGm());
@@ -38,26 +40,36 @@ const handleClose = (tag: any) => {
 </script>
 
 <template>
-  <div>
-    <el-card shadow="never">
-      <template #header>
-        <gz-space>
-          顶栏栏目屏蔽
-          <el-switch v-model="topBarColumnShieldingStatusVal" active-text="启用"/>
-        </gz-space>
-      </template>
-      <gz-space align-items="flex-start" direction="">
-        <gz-space align-items="flex-start" direction="">
-          <span>说明:栏目范围，顶部左侧和右侧，其中左侧的哔哩哔哩图标，栏目值为【logo】、右侧的个人头像栏值为【个人logo】</span>
-        </gz-space>
-        <gz-space wrap>
-          <el-button @click="addBut">添加</el-button>
-          <el-tag v-for="item in hideTheLeftTopColumnsVal" :key="item" closable
-                  @close="handleClose(item)">
-            {{ item }}
-          </el-tag>
-        </gz-space>
-      </gz-space>
-    </el-card>
-  </div>
+  <SettingGroup
+      description="左右两侧顶栏栏目都可用。左侧的哔哩哔哩图标填 logo，右侧头像栏填 个人logo"
+      title="顶栏栏目屏蔽">
+    <SettingRow label="启用顶栏栏目屏蔽">
+      <el-switch v-model="topBarColumnShieldingStatusVal" size="small"/>
+    </SettingRow>
+    <SettingRow stacked>
+      <div class="gz-top-column__tags">
+        <el-button size="small" @click="addBut">添加栏目</el-button>
+        <el-tag v-for="item in hideTheLeftTopColumnsVal" :key="item" closable size="small" @close="handleClose(item)">
+          {{ item }}
+        </el-tag>
+        <span v-if="hideTheLeftTopColumnsVal.length === 0" class="gz-top-column__empty">
+          还没有屏蔽任何栏目
+        </span>
+      </div>
+    </SettingRow>
+  </SettingGroup>
 </template>
+
+<style scoped>
+.gz-top-column__tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--fluent-spacing-horizontal-xs);
+}
+
+.gz-top-column__empty {
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-neutral-foreground-4);
+}
+</style>

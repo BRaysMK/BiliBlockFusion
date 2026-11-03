@@ -2,6 +2,8 @@
 import {ref, watch} from 'vue';
 import {getExcludeURLsGm, isExcludeURLSwitchGm} from "@/state/localMKData.ts";
 import {ElMessage} from 'element-plus';
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 const excludeURLSwitchVal = ref(isExcludeURLSwitchGm());
 const data = ref(getExcludeURLsGm());
@@ -55,57 +57,68 @@ watch(excludeURLSwitchVal, (n) => {
 </script>
 
 <template>
-  <div>
-    <el-card shadow="never">
-      <template #header>说明</template>
-      <el-row>
-        <el-col :span="12">
-          <div>1.被排除的页面大部分功能会失效</div>
-          <div>2.修改后建议刷新页面</div>
-          <el-switch v-model="excludeURLSwitchVal" active-text="启用设置"/>
-        </el-col>
-        <el-col :span="12">
-          <el-input v-model.trim="testInputRegVal">
-            <template #prepend>正则地址</template>
-          </el-input>
-          <el-input v-model.trim="testInputVal">
-            <template #prepend>测试地址</template>
-          </el-input>
-          <div class="el-horizontal-right">
-            <el-button @click="testVerificationBut">测试验证</el-button>
-          </div>
-        </el-col>
-      </el-row>
-    </el-card>
-    <el-table :data="data" border stripe>
-      <el-table-column label="启用" width="100">
+  <SettingGroup description="被排除的页面里本脚本大部分功能会失效，改动后建议刷新页面" title="排除页面">
+    <SettingRow label="启用排除设置">
+      <el-switch v-model="excludeURLSwitchVal" size="small"/>
+    </SettingRow>
+    <SettingRow stacked>
+      <div class="gz-exclude__test">
+        <el-input v-model.trim="testInputRegVal" placeholder="正则地址" size="small"/>
+        <el-input v-model.trim="testInputVal" placeholder="测试地址" size="small"/>
+        <el-button size="small" @click="testVerificationBut">测试验证</el-button>
+      </div>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="排除规则">
+    <el-table :data="data" border size="small">
+      <el-table-column label="启用" width="56">
         <template #default="scope">
-          <el-switch v-model="scope.row.state"/>
+          <el-switch v-model="scope.row.state" size="small"/>
         </template>
       </el-table-column>
       <el-table-column label="正则地址">
         <template #default="scope">
-          <el-input v-model.trim="scope.row.regularURL"/>
+          <el-input v-model.trim="scope.row.regularURL" size="small"/>
         </template>
       </el-table-column>
-      <el-table-column label="描述">
+      <el-table-column label="描述" width="120">
         <template #default="scope">
-          <el-input v-model.trim="scope.row.desc"/>
+          <el-input v-model.trim="scope.row.desc" size="small"/>
         </template>
       </el-table-column>
-      <el-table-column align="center" width="300">
+      <el-table-column align="center" width="132">
         <template #header>
-          <el-button @click="tableAddItemBut">添加</el-button>
-          <el-button @click="refreshBut">刷新</el-button>
-          <el-button type="success" @click="saveBut">保存</el-button>
+          <el-button size="small" @click="tableAddItemBut">添加</el-button>
+          <el-button size="small" @click="refreshBut">刷新</el-button>
+          <el-button size="small" type="success" @click="saveBut">保存</el-button>
         </template>
         <template #default="scope">
-          <el-tooltip content="以当前网页url用于验证匹配结果">
-            <el-button @click="tableVerificationItemUrlBut(scope.row.regularURL)">验证当前Url</el-button>
-          </el-tooltip>
-          <el-button type="danger" @click="tableDelItemBut(scope.$index)">删除</el-button>
+          <div class="gz-exclude__row-buttons">
+            <el-button size="small" title="以当前网页地址验证匹配结果"
+                       @click="tableVerificationItemUrlBut(scope.row.regularURL)">验证</el-button>
+            <el-button size="small" type="danger" @click="tableDelItemBut(scope.$index)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
-  </div>
+  </SettingGroup>
 </template>
+
+<style scoped>
+.gz-exclude__test {
+  display: flex;
+  align-items: center;
+  gap: var(--fluent-spacing-horizontal-xs);
+}
+
+.gz-exclude__row-buttons {
+  display: flex;
+  gap: var(--fluent-spacing-horizontal-xs);
+}
+
+/* 表格操作列里的按钮自带外边距，会把 132px 撑破 */
+.gz-exclude__row-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+</style>

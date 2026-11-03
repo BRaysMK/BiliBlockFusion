@@ -20,7 +20,7 @@ const unitMap: Record<string, string> = {
 
 <template>
   <SettingGroup
-      description="最小值：小于该值就屏蔽；最大值：大于该值就屏蔽。两侧开关都关闭则不做任何限制，指标取自视频卡片上的显示值"
+      description="小于最小值或大于最大值即屏蔽；开关关闭表示该方向不限制。数值取自视频卡片上的显示值"
       title="数量限制">
     <SwitchMinMaxInputCard v-for="v in externalList"
                            :key="v.title"

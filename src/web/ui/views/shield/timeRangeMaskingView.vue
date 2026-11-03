@@ -23,7 +23,7 @@ watch(status, (n) => {
 </script>
 
 <template>
-  <SettingGroup description="按视频发布时间判定：发布时间落在任一启用的范围内即屏蔽。总开关关闭后所有范围都不生效" title="时间范围屏蔽">
+  <SettingGroup description="发布时间落在任一启用的范围内即屏蔽。总开关关闭后所有范围都不生效" title="时间范围屏蔽">
     <SettingRow label="总开关">
       <el-switch v-model="status" size="small"/>
     </SettingRow>

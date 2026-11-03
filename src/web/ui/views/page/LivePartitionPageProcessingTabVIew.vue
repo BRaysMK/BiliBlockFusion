@@ -4,6 +4,8 @@ import {isLiveSectionResponseRewriteGm, isRoomListAdaptiveGm} from "@/state/loca
 import liveSectionModel from "../../../pages/live/sectionModel.ts";
 import cssManager from "../../../domain/cssManager.ts";
 import PartitionTagWhiterListPanel from "./PatitionTagWhiterListPanel.vue";
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 const isRoomListAdaptiveVal = ref(isRoomListAdaptiveGm());
 const isLiveSectionResponseRewriteVal = ref(isLiveSectionResponseRewriteGm());
@@ -20,23 +22,35 @@ watch(isLiveSectionResponseRewriteVal, (n) => {
 </script>
 
 <template>
-  <div>
-    <el-card shadow="never">
-      <el-switch v-model="isRoomListAdaptiveVal" active-text="房间列表自适应"/>
-      <el-tooltip content="在页面渲染前过滤掉命中屏蔽规则的直播间，避免渲染后再删除导致列表高度骤降；过滤后列表过短时右下角按钮会变红呼吸提示，点击即可自动补满一屏，修改后请刷新分区页">
-        <el-switch v-model="isLiveSectionResponseRewriteVal" active-text="响应层过滤直播间列表（默认开启）"/>
-      </el-tooltip>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>顶部切换分区面板白单名展示(仅展示列表中分区,启用后生效，启用了如留空则会清空列表)</template>
-      <gz-space>
-        <PartitionTagWhiterListPanel partition-list-key="mobile_game_list_gm" switch-key="mobile_game_status_gm"
-                                     title="手游分区"/>
-        <PartitionTagWhiterListPanel partition-list-key="online_game_list_gm" switch-key="online_game_status_gm"
-                                     title="网游分区"/>
-        <PartitionTagWhiterListPanel partition-list-key="console_game_list_gm" switch-key="console_game_status_gm"
-                                     title="单机游戏"/>
-      </gz-space>
-    </el-card>
-  </div>
+  <SettingGroup title="直播分区">
+    <SettingRow label="房间列表自适应">
+      <el-switch v-model="isRoomListAdaptiveVal" size="small"/>
+    </SettingRow>
+    <SettingRow
+        description="渲染前就过滤命中规则的直播间，避免列表先撑开再塌陷。列表过短时右下角按钮变红，点一下补满一屏。改动后需刷新"
+        label="响应层过滤直播间列表">
+      <el-switch v-model="isLiveSectionResponseRewriteVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup description="仅展示列表中的分区。启用后若列表留空，顶部面板会被清空" title="顶部分区面板白名单">
+    <div class="gz-live-partition__panels">
+      <PartitionTagWhiterListPanel partition-list-key="mobile_game_list_gm" switch-key="mobile_game_status_gm"
+                                   title="手游分区"/>
+      <PartitionTagWhiterListPanel partition-list-key="online_game_list_gm" switch-key="online_game_status_gm"
+                                   title="网游分区"/>
+      <PartitionTagWhiterListPanel partition-list-key="console_game_list_gm" switch-key="console_game_status_gm"
+                                   title="单机游戏"/>
+    </div>
+  </SettingGroup>
 </template>
+
+<style scoped>
+/* 三块白名单面板原来并排，452px 内容区里每块只剩 140px；改为纵向排列 */
+.gz-live-partition__panels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fluent-spacing-vertical-s);
+  padding: var(--fluent-spacing-vertical-xs) var(--fluent-spacing-horizontal-s);
+}
+</style>

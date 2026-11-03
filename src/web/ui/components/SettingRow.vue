@@ -9,13 +9,14 @@ import HelpTip from './HelpTip.vue';
  * 这里把配置项压成固定一行：左侧名称、右侧控件、说明收进 ⓘ 气泡。
  */
 withDefaults(defineProps<{
-  /** 配置项名称 */
-  label: string;
+  /** 配置项名称；stacked 行可以省略，此时只渲染控件 */
+  label?: string;
   /** 补充说明，收进 ⓘ 气泡；不传则不显示图标 */
   description?: string;
   /** 控件区无法与名称同排时（如整行宽度的表格）改为上下堆叠 */
   stacked?: boolean;
 }>(), {
+  label: '',
   description: '',
   stacked: false,
 });
@@ -23,8 +24,8 @@ withDefaults(defineProps<{
 
 <template>
   <div class="gz-setting-row" :class="{'gz-setting-row--stacked': stacked}">
-    <div class="gz-setting-row__label">
-      <span>{{ label }}</span>
+    <div v-if="label !== '' || description !== ''" class="gz-setting-row__label">
+      <span v-if="label !== ''">{{ label }}</span>
       <HelpTip v-if="description !== ''" :content="description"/>
     </div>
     <div class="gz-setting-row__control">

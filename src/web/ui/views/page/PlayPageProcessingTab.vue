@@ -1,6 +1,8 @@
 ﻿<script setup lang="ts">
 import {ref, watch} from 'vue'
 import localMKData, {isCloseCommentBlockingGm, isCommentResponseRewriteGm} from "../../../state/localMKData.ts";
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 const isDelPlayerPageAd = ref(GM_getValue('isDelPlayerPageAd', false));
 const isDelPlayerPageRightGameAd = ref(GM_getValue('isDelPlayerPageRightGameAd', false));
@@ -34,28 +36,31 @@ watch(isCommentResponseRewriteVal, (n) => {
 </script>
 
 <template>
-  <div>
-    <el-card shadow="never">
-      <template #header>
-        <span>播放页</span>
-      </template>
-      <el-switch v-model="isDelPlayerPageAd" active-text="屏蔽页面元素广告"/>
-      <el-switch v-model="isDelPlayerPageRightGameAd" active-text="屏蔽右侧游戏推荐"/>
-      <el-tooltip content="移除整个推荐列表，状态刷新生效">
-        <el-switch v-model="isDelPlayerPageRightVideoList" active-text="移除右侧推荐列表"/>
-      </el-tooltip>
-      <el-tooltip content="状态刷新生效">
-        <el-switch v-model="isDelBottomComment" active-text="移除评论区"/>
-      </el-tooltip>
-      <el-tooltip content="视频播放完之后会在播放器上显示推荐内容，开启之后移除播放器上整个推荐内容">
-        <el-switch v-model="isDelPlayerEndingPanelVal" active-text="移除播放完推荐层"/>
-      </el-tooltip>
-      <el-tooltip content="开启后评论屏蔽功能关闭">
-        <el-switch v-model="isCloseCommentBlockingVal" active-text="关闭评论屏蔽"/>
-      </el-tooltip>
-      <el-tooltip content="实验功能：全局修改评论接口响应（视频/影视/动态/空间等所有页面），在渲染前过滤可识别的评论（含楼中楼与置顶），命中规则输出到输出信息；关闭评论屏蔽时本开关无效，修改后请刷新页面">
-        <el-switch v-model="isCommentResponseRewriteVal" active-text="响应过滤评论区（实验）"/>
-      </el-tooltip>
-    </el-card>
-  </div>
+  <SettingGroup title="播放页">
+    <SettingRow label="屏蔽页面元素广告">
+      <el-switch v-model="isDelPlayerPageAd" size="small"/>
+    </SettingRow>
+    <SettingRow label="屏蔽右侧游戏推荐">
+      <el-switch v-model="isDelPlayerPageRightGameAd" size="small"/>
+    </SettingRow>
+    <SettingRow description="整个右侧推荐列表隐藏后仍占位留空。刷新页面后生效" label="隐藏右侧推荐列表">
+      <el-switch v-model="isDelPlayerPageRightVideoList" size="small"/>
+    </SettingRow>
+    <SettingRow description="刷新页面后生效" label="移除评论区">
+      <el-switch v-model="isDelBottomComment" size="small"/>
+    </SettingRow>
+    <SettingRow description="视频播放结束后播放器上会浮出推荐层，开启后整层移除" label="移除播放完推荐层">
+      <el-switch v-model="isDelPlayerEndingPanelVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup description="这里的两个开关都作用于评论屏蔽，改动后需刷新页面" title="评论">
+    <SettingRow description="页面内评论不再做屏蔽判定。响应过滤已安装时也需刷新才会停用" label="关闭评论屏蔽">
+      <el-switch v-model="isCloseCommentBlockingVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="在评论接口响应阶段提前过滤，覆盖全部页面与楼中楼、置顶。改动后需刷新"
+                label="响应过滤评论区（实验）">
+      <el-switch v-model="isCommentResponseRewriteVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
 </template>

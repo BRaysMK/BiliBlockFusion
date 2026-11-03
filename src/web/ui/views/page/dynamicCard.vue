@@ -13,6 +13,8 @@ import localMKData, {
 } from "../../../state/localMKData.ts";
 import dynamicPage from "../../../pages/dynamic/page.ts";
 import cssManager from "../../../domain/cssManager.ts";
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 const enableDynamicItemsContentBlockingVal = ref(enableDynamicItemsContentBlockingGm());
 const isBlockRepostDynamicVal = ref(isBlockRepostDynamicGm());
@@ -67,30 +69,42 @@ watch(hideBackToOldVersionButVal, (n) => {
 </script>
 
 <template>
-  <div>
-    <el-card>
-      <template #header>动态首页</template>
-      <el-tooltip content="启用该项后，对应页面中的动态会对uid白名单处理，和动态内容处理">
-        <el-switch v-model="enableDynamicItemsContentBlockingVal" active-text="启用动态内容屏蔽"/>
-      </el-tooltip>
-      <el-tooltip content="动态首页中左侧的个人信息卡片，展示关注粉丝动态该卡片">
-        <el-switch v-model="hidePersonalInfoCardVal" active-text="隐藏个人信息卡片"/>
-      </el-tooltip>
-      <el-switch v-model="isDynamicHomeRightLayHideVal" active-text="隐藏右侧布局(热搜)"
-                 title="区域为热搜和其上方的社区中心"/>
-    </el-card>
-    <el-card>
-      <template #header>动态</template>
-      <el-switch v-model="isBlockRepostDynamicVal" active-text="屏蔽转发类型"/>
-      <el-tooltip content="如直播预约动态">
-        <el-switch v-model="isBlockAppointmentDynamicVal" active-text="屏蔽预约类型"/>
-      </el-tooltip>
-      <el-switch v-model="isBlockVoteDynamicVal" active-text="屏蔽投票类型"/>
-      <el-switch v-model="isBlockUPowerLotteryDynamicVal" active-text="屏蔽充电专属抽奖类型"/>
-      <el-switch v-model="isBlockGoodsDynamicVal" active-text="屏蔽商品类"/>
-      <el-switch v-model="isBlockSpecialColumnForChargingDynamicVal" active-text="屏蔽充电专属专栏"/>
-      <el-switch v-model="isBlockVideoChargingExclusiveDynamicVal" active-text="屏蔽充电专属视频"/>
-      <el-switch v-model="hideBackToOldVersionButVal" active-text="屏蔽右下角的回到旧版悬浮按钮"/>
-    </el-card>
-  </div>
+  <SettingGroup title="动态首页">
+    <SettingRow description="打开后动态列表里的每一条都会按 uid 白名单与动态内容规则判定" label="启用动态内容屏蔽">
+      <el-switch v-model="enableDynamicItemsContentBlockingVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="动态首页左侧展示关注/粉丝数据的个人信息卡片" label="隐藏个人信息卡片">
+      <el-switch v-model="hidePersonalInfoCardVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="区域为热搜和其上方的社区中心" label="隐藏右侧布局">
+      <el-switch v-model="isDynamicHomeRightLayHideVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup description="按动态的发布类型过滤，勾选后该类动态不再显示" title="按类型屏蔽">
+    <SettingRow label="屏蔽转发类型">
+      <el-switch v-model="isBlockRepostDynamicVal" size="small"/>
+    </SettingRow>
+    <SettingRow description="如直播预约动态" label="屏蔽预约类型">
+      <el-switch v-model="isBlockAppointmentDynamicVal" size="small"/>
+    </SettingRow>
+    <SettingRow label="屏蔽投票类型">
+      <el-switch v-model="isBlockVoteDynamicVal" size="small"/>
+    </SettingRow>
+    <SettingRow label="屏蔽充电专属抽奖类型">
+      <el-switch v-model="isBlockUPowerLotteryDynamicVal" size="small"/>
+    </SettingRow>
+    <SettingRow label="屏蔽商品类">
+      <el-switch v-model="isBlockGoodsDynamicVal" size="small"/>
+    </SettingRow>
+    <SettingRow label="屏蔽充电专属专栏">
+      <el-switch v-model="isBlockSpecialColumnForChargingDynamicVal" size="small"/>
+    </SettingRow>
+    <SettingRow label="屏蔽充电专属视频">
+      <el-switch v-model="isBlockVideoChargingExclusiveDynamicVal" size="small"/>
+    </SettingRow>
+    <SettingRow label="屏蔽右下角回到旧版悬浮按钮">
+      <el-switch v-model="hideBackToOldVersionButVal" size="small"/>
+    </SettingRow>
+  </SettingGroup>
 </template>

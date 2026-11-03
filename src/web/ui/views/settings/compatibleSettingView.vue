@@ -2,6 +2,8 @@
 import {ref, watch} from 'vue';
 import globalValue from "../../../config/globalValue.ts";
 import localMKData, {bGateClearListNonVideoGm} from "../../../state/localMKData.ts";
+import SettingRow from '../../components/SettingRow.vue';
+import SettingGroup from '../../components/SettingGroup.vue';
 
 //是否适配bilibili-app-commerce脚本(Bilibili-Gate脚本)
 const adaptationBAppRecommend = ref(globalValue.adaptationBAppCommerce);
@@ -28,29 +30,24 @@ watch(discardOldCommentAreasV, (newVal) => {
 </script>
 
 <template>
-  <div>
-    <el-card>
-      <template #header>说明</template>
-      <div>如果用户没有安装并使用对应脚本或插件，就不要开启相关兼容选项</div>
-    </el-card>
-    <el-card>
-      <template #header>Bilibili-Gate脚本(bilibili-app-recommend)</template>
-      <el-switch v-model="adaptationBAppRecommend" active-text="首页屏蔽适配"/>
-      <el-switch v-model="bGateClearListNonVideoV" active-text="清空列表非视频元素" title="刷新页面后生效"/>
-    </el-card>
-    <el-card>
-      <template #header>Bewly插件(BewlyCat)原BewlyBewly</template>
-      <div>
-        兼容BewlyCat的版本可看使用文档，不往前兼容
-      </div>
-      <el-switch v-model="compatible_BEWLY_BEWLY" active-text="首页适配"/>
-    </el-card>
-    <el-card>
-      <template #header>评论区</template>
-      使用之后需刷新对应页面才可生效，勾选即评论区使用新版获取方式，不再使用旧版方式
-      <div>
-        <el-switch v-model="discardOldCommentAreasV" active-text="弃用旧版评论区处理"/>
-      </div>
-    </el-card>
-  </div>
+  <SettingGroup description="没安装对应脚本或插件时不要开启，否则会改变本脚本自身的判定" title="Bilibili-Gate 脚本">
+    <SettingRow label="首页屏蔽适配">
+      <el-switch v-model="adaptationBAppRecommend" size="small"/>
+    </SettingRow>
+    <SettingRow description="清空推荐列表里的非视频元素，刷新页面后生效" label="清空列表非视频元素">
+      <el-switch v-model="bGateClearListNonVideoV" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup description="仅兼容 BewlyCat，不向前兼容旧版 BewlyBewly" title="BewlyCat 插件">
+    <SettingRow label="首页适配">
+      <el-switch v-model="compatible_BEWLY_BEWLY" size="small"/>
+    </SettingRow>
+  </SettingGroup>
+
+  <SettingGroup title="评论区">
+    <SettingRow description="评论区改用新版获取方式，不再处理旧版接口。改动后需刷新页面" label="弃用旧版评论区处理">
+      <el-switch v-model="discardOldCommentAreasV" size="small"/>
+    </SettingRow>
+  </SettingGroup>
 </template>
