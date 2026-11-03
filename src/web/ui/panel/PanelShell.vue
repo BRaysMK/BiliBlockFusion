@@ -61,10 +61,37 @@ const open = async (): Promise<void> => {
   if (token === openToken && props.modelValue) opened.value = true;
 };
 
+/**
+ * 收起被 teleport 到 body 的 EP 浮层（下拉 / 气泡 / 提示）
+ *
+ * EP 把浮层挂到 body 下的 #el-popper-container-*，不在面板 DOM 内，面板的
+ * visibility:hidden 管不到它们。点空白、点悬浮按钮关闭时，浮层是被 EP 自己的
+ * click-outside 顺带收掉的；但按快捷键关闭不产生任何点击，浮层会留在页面上。
+ * 这里在面板表面补发一对 mousedown/mouseup：target 落在面板内，EP 的 click-outside
+ * 判定为「点到了外面」而正常收起；面板自身的空白点击逻辑因 target 在面板内直接放行。
+ *
+ * 判定「是否还有展开的浮层」不能看 display：浮层动画结束后 EP 用 v-show 置
+ * display:none，但组件内部仍是展开态（trigger 的 aria-expanded 仍为 true）。
+ * 漏判会让收起失效；宁可多发一对点击，也不能漏。
+ */
+const dismissDetachedPoppers = (): void => {
+  const surface = panelRef.value?.querySelector<HTMLElement>('.gz-panel__surface') ?? null;
+  if (surface === null) return;
+  const hasDetachedPopper = Array.from(document.querySelectorAll<HTMLElement>('[id^="el-popper-container-"] .el-popper'))
+    .some((el) => el.getAttribute('aria-hidden') !== 'true');
+  if (!hasDetachedPopper) return;
+  // 不能传 view: window——油猴沙箱里 window 是代理对象，MouseEvent 构造函数会抛
+  // TypeError: Failed to convert value to 'Window'，整段收起逻辑静默失效。
+  const init: MouseEventInit = {bubbles: true, cancelable: true, button: 0};
+  surface.dispatchEvent(new MouseEvent('mousedown', init));
+  surface.dispatchEvent(new MouseEvent('mouseup', init));
+};
+
 const close = (): void => {
   openToken++;
   clearCloseTimer();
   opened.value = false;
+  dismissDetachedPoppers();
   closeTimer = setTimeout(() => {
     closeTimer = null;
     emit('closed');

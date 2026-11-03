@@ -186,6 +186,45 @@ describe("主面板外壳", () => {
         await nextTick();
         expect(wrapper.emitted("update:modelValue")).toBeUndefined();
     });
+
+    it("关闭时给面板表面补发 mousedown/mouseup，让 EP 浮层跟着收起", async () => {
+        // 浮层被 teleport 到 body 下的 #el-popper-container-*，面板的 visibility 管不到；
+        // 只有点击类关闭会被 EP 的 click-outside 顺带收掉，快捷键关闭必须靠这一对事件。
+        wrapper = buildWrapper(true);
+        await flush(wrapper);
+
+        const container = document.createElement("div");
+        container.id = "el-popper-container-test";
+        const openPopper = document.createElement("div");
+        openPopper.className = "el-popper";
+        openPopper.setAttribute("aria-hidden", "false");
+        container.appendChild(openPopper);
+        document.body.appendChild(container);
+
+        const surface = document.querySelector(".gz-panel__surface") as HTMLElement;
+        const seen: string[] = [];
+        surface.addEventListener("mousedown", () => seen.push("mousedown"));
+        surface.addEventListener("mouseup", () => seen.push("mouseup"));
+
+        await wrapper.setProps({modelValue: false});
+        await flush(wrapper);
+
+        expect(seen).toEqual(["mousedown", "mouseup"]);
+    });
+
+    it("没有展开的浮层时不补发点击", async () => {
+        wrapper = buildWrapper(true);
+        await flush(wrapper);
+
+        const surface = document.querySelector(".gz-panel__surface") as HTMLElement;
+        const handler = vi.fn();
+        surface.addEventListener("mousedown", handler);
+
+        await wrapper.setProps({modelValue: false});
+        await flush(wrapper);
+
+        expect(handler).not.toHaveBeenCalled();
+    });
 });
 
 describe("数值格式换算", () => {
