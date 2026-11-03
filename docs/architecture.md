@@ -118,7 +118,7 @@ src/web/
 │   ├── elBridge.ts       # eventEmitter 的 el-* 事件 → Element Plus 消息 API
 │   ├── components/       # 通用组件：GzSpace、GzText、SwitchMinMaxInputCard、
 │   │                     #   addRuleDialog、cardSlider、videoMetricsFilterItem
-│   ├── dialogs/          # 弹窗：sheetDialog、viewRulesRuleDialog、
+│   ├── dialogs/          # 弹窗：sheetDialog、
 │   │                     #   multipleRuleEditDialog、ruleSetValueDialog、
 │   │                     #   lookContentDialog、showImgDialog
 │   ├── panel/PanelShell.vue  # 主面板外壳（自控浮层，不用 el-drawer）

@@ -30,15 +30,6 @@ const handleChangeCascader = (val: any) => {
   }
   eventEmitter.send('修改规则对话框', typeMap);
 };
-const findItemAllBut = () => {
-  const [model, type] = cascaderVal.value;
-  const typeMap = ruleInfoArr.value.find(item => item.type === type);
-  if (model === '组合匹配') {
-    eventEmitter.send('打开多重规则编辑对话框', typeMap);
-    return;
-  }
-  eventEmitter.send('event-lookRuleDialog', typeMap);
-};
 const delAllBut = () => {
   ElMessageBox.confirm('确定要删除所有规则吗？').then(() => {
     for (let x of ruleInfoArr.value) {
@@ -104,7 +95,6 @@ for (let newRuleKeyListElement of ruleKeyListData.getRuleKeyListData()) {
         <el-button-group>
           <el-button size="small" @click="batchAddBut">批量添加</el-button>
           <el-button size="small" @click="setRuleBut">修改</el-button>
-          <el-button size="small" @click="findItemAllBut">查看项内容</el-button>
           <el-button size="small" @click="delBut">移除</el-button>
         </el-button-group>
         <el-button-group>
