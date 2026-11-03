@@ -5,7 +5,9 @@ import {eventEmitter} from "@/core/EventEmitter.ts";
 import {ElMessage, ElNotification} from 'element-plus';
 import SettingRow from '../../components/SettingRow.vue';
 import SettingGroup from '../../components/SettingGroup.vue';
+import darkTheme, {type ThemeModeSetting} from '../../darkTheme.ts';
 
+const themeModeVal = ref<ThemeModeSetting>(darkTheme.getThemeModeSetting());
 const showRightTopMainButSwitch = ref(localMKData.isShowRightTopMainButSwitch());
 const isFirstFullDisplay = ref(localMKData.isFirstFullDisplay());
 const isHalfHiddenIntervalAfterInitialDisplay = ref(localMKData.isHalfHiddenIntervalAfterInitialDisplay());
@@ -24,6 +26,10 @@ const setDrawerShortcutKeyBut = () => {
   ElNotification({title: '', message: '已设置打开关闭主面板快捷键', type: 'success'});
   drawerShortcutKeyVal.value = theKeyPressedKey;
 };
+
+watch(themeModeVal, (n) => {
+  darkTheme.applyThemeMode(n);
+});
 
 watch(showRightTopMainButSwitch, (newVal) => {
   GM_setValue("showRightTopMainButSwitch", newVal === true);
@@ -46,6 +52,17 @@ eventEmitter.on('event-keydownEvent', (event: KeyboardEvent) => {
 </script>
 
 <template>
+  <SettingGroup description="自动跟随 B 站自身的深色主题切换。选「亮色」或「暗色」则固定，不再跟随"
+                title="外观">
+    <SettingRow label="面板主题">
+      <el-radio-group v-model="themeModeVal" size="small">
+        <el-radio-button value="light">亮色</el-radio-button>
+        <el-radio-button value="auto">自动</el-radio-button>
+        <el-radio-button value="dark">暗色</el-radio-button>
+      </el-radio-group>
+    </SettingRow>
+  </SettingGroup>
+
   <SettingGroup title="悬浮按钮">
     <SettingRow description="页面右侧显示打开主面板的悬浮按钮" label="显示主面板按钮">
       <el-switch v-model="showRightTopMainButSwitch" size="small"/>

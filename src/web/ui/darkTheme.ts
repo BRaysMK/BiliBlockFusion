@@ -15,6 +15,29 @@ let observer: MutationObserver | null = null;
 /** 当前主题模式缓存，避免无意义的重复应用 */
 let currentMode: ThemeMode | null = null;
 
+/** 主题设置：light / dark 强制固定，auto 跟随 B 站。键名沿用 1.1.0 的 dark_mode_state */
+export type ThemeModeSetting = 'light' | 'auto' | 'dark';
+
+const THEME_MODE_KEY = 'dark_mode_state';
+
+const getThemeModeSetting = (): ThemeModeSetting => {
+    // GM_getValue 的类型从默认值推成字面量 'auto'，存量值可能是任何字符串，需放宽后再校验
+    const mode: string = GM_getValue(THEME_MODE_KEY, 'auto');
+    return mode === 'light' || mode === 'dark' ? mode : 'auto';
+}
+
+/**
+ * 手动切换主题
+ *
+ * 必须清掉 currentMode 缓存再同步：设置页把「自动」切成与当前实际主题相同的那一档时，
+ * 缓存会让 syncTheme 直接返回，面板看起来毫无反应。
+ */
+const applyThemeMode = (mode: ThemeModeSetting): void => {
+    GM_setValue(THEME_MODE_KEY, mode);
+    currentMode = null;
+    syncTheme();
+}
+
 /**
  * 判断当前是否 B 站深色主题
  * @returns 是否深色
@@ -85,7 +108,8 @@ const hslToRgb = (h: number, s: number, l: number): [number, number, number] => 
 /** 把当前主题应用到主面板根节点；面板尚未挂载时静默跳过 */
 
 const syncTheme = (): void => {
-    const mode: ThemeMode = isBiliDark() ? 'dark' : 'light';
+    const setting = getThemeModeSetting();
+    const mode: ThemeMode = setting === 'auto' ? (isBiliDark() ? 'dark' : 'light') : setting;
     if (mode === currentMode) return;
     const root = document.querySelector<HTMLElement>(PANEL_ROOT_SELECTOR);
     if (root === null) return;
@@ -125,4 +149,6 @@ export default {
     isBiliDark,
     isBiliDarkByCssVar,
     startThemeSync,
+    getThemeModeSetting,
+    applyThemeMode,
 }
