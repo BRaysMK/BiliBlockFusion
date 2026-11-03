@@ -7,7 +7,6 @@ import multipleRuleEditDialog from "../../dialogs/multipleRuleEditDialog.vue";
 import ruleSetValueDialog from '../../dialogs/ruleSetValueDialog.vue';
 import addRuleDialog from '../../components/addRuleDialog.vue'
 import ruleInformationView from "./ruleInformationView.vue";
-import {ElMessage, ElMessageBox} from 'element-plus';
 
 const cascaderVal = ref(["精确匹配", "precise_uid"]);
 const cascaderOptions = ruleKeyListData.getSelectOptions();
@@ -30,15 +29,6 @@ const handleChangeCascader = (val: any) => {
   }
   eventEmitter.send('修改规则对话框', typeMap);
 };
-const delAllBut = () => {
-  ElMessageBox.confirm('确定要删除所有规则吗？').then(() => {
-    for (let x of ruleInfoArr.value) {
-      GM_deleteValue(x.type);
-    }
-    ElMessage.success("删除全部规则成功");
-    eventEmitter.send('刷新规则信息', false);
-  });
-};
 const delBut = () => {
   const [model, type] = cascaderVal.value;
   const typeMap = ruleInfoArr.value.find(item => item.type === type);
@@ -47,14 +37,6 @@ const delBut = () => {
     return;
   }
   ruleUtil.showDelRuleInput(type);
-};
-const clearItemRuleBut = () => {
-  const type = cascaderVal.value[1];
-  const find = ruleInfoArr.value.find(item => item.type === type);
-  ElMessageBox.confirm(`是要清空${find!.name}的规则内容吗？`, 'tip').then(() => {
-    ruleKeyListData.clearKeyItem(type);
-    ElMessageBox.alert(`已清空${find!.name}的规则内容`);
-  });
 };
 const batchAddBut = () => {
   const [model, type] = cascaderVal.value;
@@ -96,10 +78,6 @@ for (let newRuleKeyListElement of ruleKeyListData.getRuleKeyListData()) {
           <el-button size="small" @click="batchAddBut">批量添加</el-button>
           <el-button size="small" @click="setRuleBut">修改</el-button>
           <el-button size="small" @click="delBut">移除</el-button>
-        </el-button-group>
-        <el-button-group>
-          <el-button type="danger" size="small" @click="clearItemRuleBut">清空项</el-button>
-          <el-button type="danger" size="small" @click="delAllBut">全部移除</el-button>
         </el-button-group>
       </div>
     </el-card>

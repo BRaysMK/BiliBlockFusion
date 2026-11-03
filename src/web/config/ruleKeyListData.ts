@@ -158,10 +158,6 @@ const getHotSearchKeyCanonicalArr = (): string[] => {
     return GM_getValue("hotSearchKeyCanonical", [])
 }
 
-const clearKeyItem = (ruleKey: string): void => {
-    GM_deleteValue(ruleKey)
-}
-
 const getVideoTagPreciseCombination = (): string[][] => {
     return GM_getValue("videoTag_preciseCombination", [])
 }
@@ -191,7 +187,6 @@ export default {
     getVideoTagCanonicalArr,
     getHotSearchKeyArr,
     getHotSearchKeyCanonicalArr,
-    clearKeyItem,
     getSelectOptions,
     getVideoTagPreciseCombination,
     getRuleKeyList,
