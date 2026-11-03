@@ -1,28 +1,24 @@
 <script setup lang="ts">
 import {ref, watch} from 'vue';
-import panelSettingsView from "./views/settings/panelSettingsView.vue";
-import compatibleSettingView from "./views/settings/compatibleSettingView.vue";
 import lookContentDialog from "./dialogs/lookContentDialog.vue";
 import PageProcessingTabsView from "./views/page/PageProcessingTabsView.vue";
 import DiagnosticTabsView from "./views/DiagnosticTabsView.vue";
-import AboutTabsView from "./views/AboutTabsView.vue";
 import showImgDialog from "./dialogs/showImgDialog.vue";
 import sheetDialog from "./dialogs/sheetDialog.vue";
-import bulletWordManagementView from "./views/bulletWordManagementView.vue";
 import {eventEmitter} from "../core/EventEmitter.ts";
 import localMKData, {getDrawerShortcutKeyGm} from "../state/localMKData.ts";
-import ruleManagementView from './views/rule/ruleManagementView.vue'
-import excludeURLsView from './views/settings/excludeURLsView.vue'
+import BasicRuleTabView from './views/BasicRuleTabView.vue'
+import AdvancedTabsView from './views/AdvancedTabsView.vue'
+import AiRuleView from './views/AiRuleView.vue'
 import RightFloatingLayoutView from "./views/settings/rightFloatingLayoutView.vue";
-import conditionalityView from './views/rule/conditionalityView.vue';
 import defUtil from "../core/util/defUtil.ts";
+import {normalizeMainTabName, type MainTabName} from "../core/util/mainTabUtil.ts";
 import {ElMessageBox} from 'element-plus';
 import PanelShell from "./panel/PanelShell.vue";
 
 const drawer = ref(false);
-// 默认打开的tab
-const tabsActiveName = ref(GM_getValue('mainTabsActiveName', '规则管理'));
-const debug_panel_show = ref(__DEV__);
+// 默认打开的tab；旧页签名由 normalizeMainTabName 映射到新页签
+const tabsActiveName = ref<MainTabName>(normalizeMainTabName(GM_getValue('mainTabsActiveName', '规则')));
 const isShowBackToTopVal = ref(localMKData.isShowBackToTopBtn());
 
 // 开合状态只有 drawer 这一个布尔值，动画由 PanelShell 内的 CSS 过渡完成。
@@ -46,7 +42,7 @@ document.addEventListener('keydown', (event) => {
 const alertFunDebounce = defUtil.debounce((response: any, bvId: string) => {
   ElMessageBox.alert(`请求获取视频信息失败，状态码：${response.status}，bv号：${bvId}
                 \n。已自动禁用根据bv号网络请求获取视频信息状态
-                \n如需关闭，请在面板条件限制里手动关闭。`, '错误', {
+                \n如需关闭，请在面板「高级 → 面板与条件」里手动关闭。`, '错误', {
     confirmButtonText: '确定',
     type: 'error'
   });
@@ -70,34 +66,22 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
       <div class="gz-panel__content">
         <el-tabs id="gz-drawer-tabs" v-model="tabsActiveName"
                  type="border-card">
-          <el-tab-pane label="面板设置" lazy name="面板设置">
-            <panelSettingsView/>
+          <el-tab-pane label="规则" name="规则">
+            <BasicRuleTabView/>
           </el-tab-pane>
-          <el-tab-pane label="规则管理" lazy name="规则管理">
-            <ruleManagementView/>
-          </el-tab-pane>
-          <el-tab-pane label="页面处理" lazy name="页面处理">
+          <el-tab-pane label="页面" lazy name="页面">
             <PageProcessingTabsView/>
           </el-tab-pane>
-          <el-tab-pane label="兼容设置" lazy name="兼容设置">
-            <compatibleSettingView/>
+          <el-tab-pane label="AI 规则" lazy name="AI 规则">
+            <AiRuleView/>
           </el-tab-pane>
-          <el-tab-pane label="排除页面" lazy name="排除页面">
-            <excludeURLsView/>
+          <!-- 高级：低频、配置项多的功能统一收在这里 -->
+          <el-tab-pane label="高级" lazy name="高级">
+            <AdvancedTabsView/>
           </el-tab-pane>
-          <el-tab-pane label="条件限制" lazy name="条件限制">
-            <conditionalityView/>
-          </el-tab-pane>
-          <!-- 诊断：合并原「输出信息」「缓存管理」「调试测试」三个排查类页签 -->
-          <el-tab-pane label="诊断" name="诊断">
+          <!-- 诊断与关于：排查类 + 信息展示类 -->
+          <el-tab-pane label="诊断与关于" lazy name="诊断与关于">
             <DiagnosticTabsView/>
-          </el-tab-pane>
-          <el-tab-pane v-if="debug_panel_show" label="弹幕词管理" lazy name="弹幕词管理">
-            <bulletWordManagementView/>
-          </el-tab-pane>
-          <!-- 关于：合并原「支持打赏」「关于和问题反馈」两个信息展示类页签 -->
-          <el-tab-pane label="关于" lazy name="关于">
-            <AboutTabsView/>
           </el-tab-pane>
         </el-tabs>
       </div>
