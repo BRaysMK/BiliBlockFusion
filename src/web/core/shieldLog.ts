@@ -2,6 +2,18 @@ import {eventEmitter} from "./EventEmitter.ts";
 
 export const SHIELD_LOG_EVENT = "屏蔽日志";
 
+/**
+ * 「输出信息」消费的五个通道，与日志数组上限保持一致
+ *
+ * 这些监听写在 outputInformationView 的 setup 里，用户第一次点开「诊断与关于」才注册；
+ * 在那之前每次 send 都把原始事件扣进 futures。响应层日志的 original 是整条接口条目，
+ * DOM 层日志还挂着 el，无上限积压后再全量补发，就是点开页签卡死的原因。
+ */
+export const OUTPUT_INFO_FUTURES_LIMIT = 300;
+
+["屏蔽日志", "打印信息", "event-update-out-info", "屏蔽错误信息", "正则匹配时异常"]
+    .forEach((eventName) => eventEmitter.setFuturesLimit(eventName, OUTPUT_INFO_FUTURES_LIMIT));
+
 export type ShieldSource = "响应层过滤" | "DOM层过滤" | "弹幕过滤" | "屏蔽";
 export type ShieldCategory = "响应层过滤" | "视频屏蔽" | "评论屏蔽" | "直播间屏蔽" | "其他屏蔽";
 export type ShieldObjectType =

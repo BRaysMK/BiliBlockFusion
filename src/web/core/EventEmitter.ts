@@ -36,6 +36,20 @@ class EventEmitter {
         callbackInterval: 1500
     }
 
+    /** 各事件在无监听者时的 futures 缓存上限；未登记的事件不限（保持原有「全部补发」语义） */
+    #futuresLimits: Record<string, number> = {}
+
+    /**
+     * 限制某事件在无监听者时的缓存条数，超出后丢弃最旧的
+     *
+     * 默认的补发语义是「一条不丢」，日志类事件从页面加载就开始产生、直到用户点开
+     * 输出信息页才注册监听，期间每条原始事件（含完整接口响应体）都被原样扣住。
+     */
+    setFuturesLimit(eventName: string, limit: number): EventEmitter {
+        this.#futuresLimits[eventName] = limit
+        return this
+    }
+
     /** 注册普通事件监听器；同名已注册时默认静默忽略，overrideEvents 为 true 则覆盖。注册后补发 futures 缓存 */
     on(eventName: string, callback: EventCallback, overrideEvents: boolean = false): EventEmitter {
         const events = this.#regularEvents.events
@@ -95,7 +109,11 @@ class EventEmitter {
             return this
         }
         const futures = ordinaryEvents.futures
+        const limit = this.#futuresLimits[eventName]
         if (futures[eventName]) {
+            // 先按上限裁掉最旧的，再压入新的：积压期间以原始事件对象形式持有，
+            // 里面可能挂着 DOM 与整段接口响应，不能无限增长
+            if (limit !== undefined) futures[eventName].splice(0, futures[eventName].length - limit + 1)
             futures[eventName].push(data)
             return this
         }
