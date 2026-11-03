@@ -63,7 +63,7 @@ CDN 地址与版本常量集中在 `vite.config.ts` 顶部（`VUE_URL` / `ELEMEN
 ### 监听模式（`pnpm watch:dev`）
 
 - `vite build --watch`：源文件变化时自动重建 `dist/local_build.js`，配合安装壳的 `@require file://` 直连，刷新页面即生效，无需复制代码。
-- `pnpm watch:dev` 与 `pnpm build` 同属**开发构建**：**不压缩、保留注释、`__DEV__ === true`**，主面板显示"调试测试"/"弹幕词管理"页签。生产判定在 `vite.config.ts` 的 `isProd = IS_PUBLISH`（仅 `pnpm build:release` 命中）。
+- `pnpm watch:dev` 与 `pnpm build` 同属**开发构建**：**不压缩、保留注释、`__DEV__ === true`**，主面板「诊断与关于」下显示"调试测试"/"弹幕词管理"子页签。生产判定在 `vite.config.ts` 的 `isProd = IS_PUBLISH`（仅 `pnpm build:release` 命中）。
   - 注意：**不能用 `process.env.NODE_ENV` 判定生产**——Vite 执行任意 `vite build`（含 `--watch`）时默认都会把它设为 `'production'`，会误把开发构建判成生产。
   - 源码里的 `[elUtil][dev] findElements 未匹配到元素` 等日志只在开发构建输出，生产构建被 tree-shake 掉。
 
@@ -72,7 +72,7 @@ CDN 地址与版本常量集中在 `vite.config.ts` 顶部（`VUE_URL` / `ELEMEN
 用于在真实页面上快速验证小段逻辑，无需重装或复制代码：
 
 1. 运行 `pnpm ws`（`tsx server/wsServer.ts`），监听 `ws://127.0.0.1:9000`，服务启动即先构建一次
-2. 客户端接入由 GM 开关 `isWsService` 控制（主面板"调试测试"页签，默认关闭）；`src/web/dev/webWs.ts` 连接后立即收到最新代码
+2. 客户端接入由 GM 开关 `isWsService` 控制（主面板「诊断与关于 → 调试测试」子页签，默认关闭）；`src/web/dev/webWs.ts` 连接后立即收到最新代码
 3. 服务端 `fs.watch('src')` 监听源码变化，500ms 防抖后用 Vite programmatic API（`vite.build` + `write: false` 内存构建）编译 `src/test/main.ts` 并广播给所有已连接客户端
 4. 客户端在沙箱中 `eval` 收到的代码；页面 `console.log/warn/error`、代码返回值、运行时错误与 `__wsReport(数据)` 全部回传到服务端 stdout —— 改完测试文件直接看服务端日志即可
 5. 手动触发：页面控制台调用 `wsBuild()`（挂在 `unsafeWindow` 上）

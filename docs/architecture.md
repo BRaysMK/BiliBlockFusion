@@ -38,6 +38,7 @@ src/web/
 │   ├── ruleKeyListData.ts    # 规则键列表
 │   ├── ruleKeyListDataJson.json # 规则键列表数据
 │   ├── otherKeyListDataJson.json # 其他规则键列表数据
+│   ├── aiRuleSettingSpec.ts  # AI 规则接口的配置项注册表 + 规则键说明
 │   ├── video_zoneData.ts     # 视频分区数据
 │   └── video_zone.json       # 视频分区 JSON 数据
 ├── types/                # 类型定义层
@@ -45,6 +46,7 @@ src/web/
 │   ├── shielding.ts      # 屏蔽相关类型定义
 │   ├── storage.ts        # 存储相关类型定义
 │   ├── video.ts          # 视频相关类型定义
+│   ├── aiRule.ts         # AI 规则载荷/变更/备份类型
 │   └── homeResponse.ts   # 首页推荐响应层类型
 ├── core/                 # 基础设施层
 │   ├── cache/            # 缓存模块
@@ -63,6 +65,9 @@ src/web/
 │   │   ├── urlUtil.ts    # URL 解析
 │   │   ├── ruleUtil.ts   # 规则处理
 │   │   ├── ruleMatchingUtil.ts  # 规则匹配
+│   │   ├── aiRuleUtil.ts # AI 规则：Prompt 生成 / 载荷解析校验 / 应用撤销
+│   │   ├── clipboardUtil.ts  # 复制到剪贴板（含旧环境兜底）
+│   │   ├── mainTabUtil.ts    # 主面板页签名与旧值迁移
 │   │   ├── strFormatUtil.ts
 │   │   ├── crc32Util.ts
 │   │   └── arrUtil.ts
@@ -116,13 +121,18 @@ src/web/
 │   ├── dialogs/          # 弹窗：sheetDialog、viewRulesRuleDialog、
 │   │                     #   multipleRuleEditDialog、ruleSetValueDialog、
 │   │                     #   lookContentDialog、showImgDialog
+│   ├── panel/PanelShell.vue  # 主面板外壳（自控浮层，不用 el-drawer）
 │   ├── views/            # 视图页面
-│   │   ├── rule/         # 规则管理
+│   │   ├── rule/         # 规则编辑
 │   │   ├── shield/       # 屏蔽操作
 │   │   ├── page/         # 页面处理
 │   │   ├── settings/     # 设置面板
 │   │   ├── glory/        # 荣耀等级
 │   │   ├── debug/        # 调试面板
+│   │   ├── BasicRuleTabView.vue   # 顶层「规则」页
+│   │   ├── AdvancedTabsView.vue   # 顶层「高级」页（低频功能合集）
+│   │   ├── AiRuleView.vue         # 顶层「AI 规则」页
+│   │   ├── DiagnosticTabsView.vue # 顶层「诊断与关于」页
 │   │   ├── aboutAndFeedbackView.vue  # 关于与反馈视图
 │   │   ├── blacklistManagementView.vue  # 黑名单管理视图
 │   │   ├── bulletWordManagementView.vue # 弹幕词管理视图
@@ -192,6 +202,21 @@ URL 变化检测通过 `watchUtil.addEventListenerUrlChange()` 实现，原理�
 - `getEvents()` — 获取 internal regularEvents 和 callbackEvents 快照，用于调试检查
 
 全局单例 `eventEmitter` 在各模块中共享。
+
+> **`on()` 对同名事件是静默忽略而非覆盖**。视图组件在 `setup` 里注册监听后，
+> 一旦组件被卸载再重新挂载，新实例的注册是空操作、旧闭包仍指向已销毁的实例。
+> 因此 `panel/PanelShell.vue` 首次打开后不再卸载内容，只用 `visibility` 控制可见性。
+
+### 主面板结构
+
+顶层 5 个页签：**规则 / 页面 / AI 规则 / 高级 / 诊断与关于**。
+日常高频的规则编辑在第一页，低频、配置项多的功能收在「高级」页。
+`mainTabUtil.ts` 负责把 GM 里可能存在的旧页签名（规则管理、面板设置等）映射到新页签。
+
+「AI 规则」页不接任何在线服务：它把规则清单、输出格式、约束和当前配置拼成一段
+完整 Prompt，用户自己拿去问 AI，再把返回的 JSON 粘回来，经 `aiRuleUtil` 校验、
+预览后写入 GM。配置项清单在 `config/aiRuleSettingSpec.ts`，新增设置项要同步登记，
+否则 AI 不知道它的存在。
 
 ### 网络监听机制
 
