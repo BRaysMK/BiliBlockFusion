@@ -1,24 +1,25 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import {mount, type VueWrapper} from "@vue/test-utils";
-import {defineComponent, nextTick} from "vue";
+import {defineComponent, h, nextTick} from "vue";
 import PanelShell from "../src/web/ui/panel/PanelShell.vue";
+import {eventEmitter} from "../src/web/core/EventEmitter.ts";
 
 /**
  * 主面板外壳回归测试
  *
- * 这组用例锁住三件事，它们都曾以「点几次都关不掉 / 整页点不动」的形式出现：
+ * 这组用例锁住四件事，它们都曾以「点几次都关不掉 / 整页点不动 / 重开后日志不再更新」的形式出现：
  * 1. 开合只有一份状态，动画期间再切换不会分叉（不出现面板已关但状态仍为开）；
  * 2. 点击面板外空白关闭、点击面板内不关闭、点击 EP 浮层不关闭；
- * 3. 关闭后必须卸载 DOM，不能留下拦点击的残留节点。
+ * 3. 关闭时不能卸载内容：EventEmitter.on 对同名事件去重，卸载后重新注册是空操作，
+ *    视图里的事件监听会永久失效；
+ * 4. 没打开过时不渲染任何 DOM，不白担一份组件树开销。
  *
- * jsdom 不跑 CSS 过渡，故将 duration 设为 0：关闭后在下一个宏任务完成卸载。
+ * jsdom 不跑 CSS 过渡，故将 duration 设为 0。
  */
 
 const flush = async (wrapper: VueWrapper<any>): Promise<void> => {
     await nextTick();
     await new Promise(resolve => setTimeout(resolve, 0));
-    // PanelShell 打开时用两层 rAF 触发过渡，jsdom 的 rAF 由 setTimeout 兜底
-    await new Promise(resolve => setTimeout(resolve, 20));
     await wrapper.vm.$nextTick();
 };
 
@@ -40,7 +41,7 @@ describe("主面板外壳", () => {
         wrapper?.unmount();
     });
 
-    it("关闭状态不渲染任何 DOM，打开后才挂载", async () => {
+    it("从未打开时不渲染任何 DOM，打开后才挂载", async () => {
         wrapper = buildWrapper(false);
         await flush(wrapper);
         expect(document.querySelector(".gz-panel")).toBeNull();
@@ -49,9 +50,10 @@ describe("主面板外壳", () => {
         await flush(wrapper);
         expect(document.querySelector(".gz-panel")).not.toBeNull();
         expect(document.querySelector(".content-marker")).not.toBeNull();
+        expect(document.querySelector(".gz-panel")!.classList.contains("gz-panel--opened")).toBe(true);
     });
 
-    it("关闭后卸载 DOM，不留下拦截点击的节点", async () => {
+    it("关闭后保留 DOM 只切可见性，不留下拦截点击的节点", async () => {
         wrapper = buildWrapper(true);
         await flush(wrapper);
         expect(document.querySelector(".gz-panel")).not.toBeNull();
@@ -59,7 +61,51 @@ describe("主面板外壳", () => {
         await wrapper.setProps({modelValue: false});
         await flush(wrapper);
         await flush(wrapper);
-        expect(document.querySelector(".gz-panel")).toBeNull();
+
+        const panel = document.querySelector(".gz-panel");
+        // 不能卸载：卸载会让子组件的 eventEmitter.on 永远注册不上
+        expect(panel).not.toBeNull();
+        expect(panel!.classList.contains("gz-panel--opened")).toBe(false);
+        expect(panel!.getAttribute("aria-hidden")).toBe("true");
+    });
+
+    it("关闭再打开时内容节点是同一批（未重新挂载）", async () => {
+        wrapper = buildWrapper(true);
+        await flush(wrapper);
+        const before = document.querySelector(".content-marker");
+
+        await wrapper.setProps({modelValue: false});
+        await flush(wrapper);
+        await wrapper.setProps({modelValue: true});
+        await flush(wrapper);
+
+        expect(document.querySelector(".content-marker")).toBe(before);
+    });
+
+    it("重开后面板里的 eventEmitter 监听仍然有效", async () => {
+        eventEmitter.off("测试面板事件");
+        const handler = vi.fn();
+        const Listener = defineComponent({
+            setup() {
+                eventEmitter.on("测试面板事件", handler);
+                return () => h("span", {class: "listener-marker"});
+            },
+        });
+        wrapper = mount(PanelShell, {
+            props: {modelValue: true, duration: 0},
+            slots: {default: Listener},
+            attachTo: document.body,
+        });
+        await flush(wrapper);
+
+        await wrapper.setProps({modelValue: false});
+        await flush(wrapper);
+        await wrapper.setProps({modelValue: true});
+        await flush(wrapper);
+
+        eventEmitter.send("测试面板事件");
+        expect(handler).toHaveBeenCalledTimes(1);
+        eventEmitter.off("测试面板事件");
     });
 
     it("关闭动画期间重新打开：最终处于打开态而不是卡在中间", async () => {
@@ -73,7 +119,6 @@ describe("主面板外壳", () => {
         const panel = document.querySelector(".gz-panel");
         expect(panel).not.toBeNull();
         expect(panel!.classList.contains("gz-panel--opened")).toBe(true);
-        // 内容必须还在：关闭计时器不能被漏掉，把刚打开的面板又卸载掉
         expect(document.querySelector(".content-marker")).not.toBeNull();
     });
 
@@ -85,7 +130,9 @@ describe("主面板外壳", () => {
         // 最后一次 i=5 → modelValue=false
         await flush(wrapper);
         await flush(wrapper);
-        expect(document.querySelector(".gz-panel")).toBeNull();
+        const panel = document.querySelector(".gz-panel");
+        expect(panel).not.toBeNull();
+        expect(panel!.classList.contains("gz-panel--opened")).toBe(false);
     });
 
     it("点击面板外空白发出关闭事件", async () => {

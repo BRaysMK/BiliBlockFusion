@@ -6,7 +6,12 @@
  * visible 由过渡钩子的 afterLeave 异步回写。外部逻辑一旦在 open/close 动画期间
  * 再次切换，两套状态就会分叉——表现为「点按钮没反应」「点几次才关」，
  * 以及动画期间的点击被忽略后残留一个看不见但拦住全页的遮罩。
- * 这里用单个 v-if 控制的普通容器取代它：开合只有一份布尔状态，不存在分叉。
+ * 这里用单个布尔状态 + CSS 过渡取代它：开合只有一份状态，不存在分叉。
+ *
+ * 为什么内容首次打开后永不卸载：EventEmitter.on 对同名事件是静默忽略重复注册的
+ * （见 core/EventEmitter.ts）。一旦卸载，视图里那些 eventEmitter.on(...) 的注册
+ * 在重开时就变成了空操作，旧闭包仍指向已销毁的实例——屏蔽日志、刷新规则信息
+ * 等监听会永久失效。所以这里只用 visibility 控制可见性，DOM 保持不动。
  *
  * 关闭方式只有三种，全部显式：点面板外空白、按快捷键、点悬浮按钮。
  * 不做焦点陷阱、不锁 body 滚动——面板是常驻浮层，锁滚动会让整页失效。
@@ -29,11 +34,14 @@ const emit = defineEmits<{
 
 /** 面板根节点：空白点击判定以它为准 */
 const panelRef = ref<HTMLElement | null>(null);
-/** 是否已挂载到 DOM（关闭动画结束后才卸载内容） */
-const mounted = ref(props.modelValue);
+/** 是否已挂载过：首次打开才创建 DOM，之后不再卸载 */
+const everMounted = ref(props.modelValue);
 /** 是否有打开态样式（用于驱动 CSS 过渡） */
 const opened = ref(props.modelValue);
+
 let closeTimer: ReturnType<typeof setTimeout> | null = null;
+/** 打开令牌：关闭时自增，作废尚未执行的两帧回调，避免关掉后又被打开帧点亮 */
+let openToken = 0;
 
 const clearCloseTimer = (): void => {
   if (closeTimer !== null) {
@@ -42,25 +50,22 @@ const clearCloseTimer = (): void => {
   }
 };
 
-/** 打开：先挂载再在下一帧加打开类，保证 transition 从关闭态起算 */
 const open = async (): Promise<void> => {
   clearCloseTimer();
-  mounted.value = true;
+  everMounted.value = true;
+  const token = ++openToken;
   await nextTick();
-  // 两帧：第一帧让浏览器算出关闭态，第二帧切到打开态才会真正产生过渡
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      opened.value = true;
-    });
-  });
+  // 读一次布局强制回流：先让浏览器算出关闭态，再切到打开态才会真正产生过渡。
+  // 不用双 rAF——后台标签页里 rAF 不触发，面板会一直停在关闭态。
+  if (panelRef.value !== null) void panelRef.value.offsetWidth;
+  if (token === openToken && props.modelValue) opened.value = true;
 };
 
-/** 关闭：先切关闭态播过渡，过渡结束后卸载 */
 const close = (): void => {
+  openToken++;
   clearCloseTimer();
   opened.value = false;
   closeTimer = setTimeout(() => {
-    mounted.value = false;
     closeTimer = null;
     emit('closed');
   }, props.duration);
@@ -72,7 +77,7 @@ const requestClose = (): void => {
 };
 
 watch(() => props.modelValue, (value) => {
-  if (value) void open();
+  if (value) open();
   else close();
 }, {immediate: true});
 
@@ -103,6 +108,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', onDocumentMouseDown, true);
   clearCloseTimer();
+  openToken++;
 });
 
 defineExpose({panelRef});
@@ -110,10 +116,11 @@ defineExpose({panelRef});
 
 <template>
   <Teleport to="body">
-    <div v-if="mounted"
+    <div v-if="everMounted"
          ref="panelRef"
          class="gz-panel"
          :class="{'gz-panel--opened': opened}"
+         :aria-hidden="!opened"
          role="dialog"
          aria-modal="false">
       <div class="gz-panel__surface">
@@ -134,9 +141,17 @@ defineExpose({panelRef});
   bottom: 0;
   z-index: 9001;
   pointer-events: none;
+  /* 关闭态不可见、不可聚焦；延迟到滑出动画播完再隐藏，否则内容会在滑动中消失 */
+  visibility: hidden;
+  transition: visibility 0s linear var(--gz-panel-duration);
   /* 与 PanelShell 的 duration 保持一致 */
   --gz-panel-duration: 260ms;
   --gz-panel-curve: cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.gz-panel--opened {
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 .gz-panel__surface {
