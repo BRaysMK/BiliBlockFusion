@@ -4,6 +4,8 @@ import {eventEmitter} from "@/core/EventEmitter.ts";
 import {ElMessage, ElNotification} from 'element-plus';
 import {filterRuleGroups, groupRuleKeyList, type RuleGroup} from "@/core/util/ruleGroupUtil.ts";
 import ruleKeyListData from "@/config/ruleKeyListData.ts";
+import ruleUtil from "@/core/util/ruleUtil.ts";
+import type {ContentEditContext} from "@/types/contentViewer.ts";
 
 /**
  * 规则信息组件
@@ -62,13 +64,21 @@ const enabledGroupCount = computed(() => groups.value.filter(group => groupTotal
 const totalCount = computed(() =>
     Object.values(counts.value).reduce((sum, len) => sum + len, 0));
 
-const lookRuleBut = (entryKey: string, label: string, len: number) => {
-  if (len === 0) {
-    ElMessage.warning(`${label} 当前规则信息为空`);
-    return;
-  }
+/** 规则键的取值形态：决定抽屉里怎么校验编辑结果 */
+const describeEntry = (entryKey: string): ContentEditContext => {
+  const item = ruleKeyListData.getRuleKeyListData().find((rule) => rule.key === entryKey);
+  return {
+    ruleKey: entryKey,
+    ruleName: item?.name ?? entryKey,
+    integer: ruleUtil.isRuleIntType(entryKey),
+    combination: (item?.name ?? '').includes('(组合匹配)'),
+  };
+};
+
+const lookRuleBut = (entryKey: string): void => {
+  // 空规则也允许打开：编辑态里可以直接填内容并保存，比先去别处添加再回来更顺
   const data = GM_getValue(entryKey, []);
-  eventEmitter.send('展示内容对话框', JSON.stringify(data));
+  eventEmitter.send('展示内容对话框', JSON.stringify(data), describeEntry(entryKey));
 };
 
 refreshInfo(false);
@@ -108,8 +118,8 @@ eventEmitter.on('刷新规则信息', (isTip = true) => {
                   type="button"
                   class="gz-rule-info__chip"
                   :class="{'gz-rule-info__chip--on': (counts[entry.key] ?? 0) > 0}"
-                  :title="`${entry.label}：${counts[entry.key] ?? 0} 条（点击查看内容）`"
-                  @click="lookRuleBut(entry.key, entry.label, counts[entry.key] ?? 0)">
+                  :title="`${entry.label}：${counts[entry.key] ?? 0} 条（点击查看或修改）`"
+                  @click="lookRuleBut(entry.key)">
             <span class="gz-rule-info__mode">{{ entry.mode }}</span>
             <span class="gz-rule-info__count">{{ counts[entry.key] ?? 0 }}</span>
           </button>
