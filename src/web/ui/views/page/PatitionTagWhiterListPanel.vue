@@ -3,13 +3,13 @@ import {computed, ref, watch} from 'vue';
 import {ElMessage} from 'element-plus';
 
 const props = withDefaults(defineProps<{
-    title?: string;
-    switchKey?: string;
-    partitionListKey?: string;
+  title?: string;
+  switchKey?: string;
+  partitionListKey?: string;
 }>(), {
-    title: '',
-    switchKey: '',
-    partitionListKey: '',
+  title: '',
+  switchKey: '',
+  partitionListKey: '',
 });
 
 const partition = ref('');
@@ -43,7 +43,9 @@ const addBut = () => {
   save();
 };
 const delBut = (item: any) => {
-  if (partitionList.value.some((someItem: any) => someItem === item)) {
+  // 这里原本写成 some(...) 为真就提示「不存在」并 return，条件反了：
+  // 只要分区在列表里就永远删不掉。改为取反。
+  if (!partitionList.value.some((someItem: any) => someItem === item)) {
     ElMessage.warning('该分区不存在');
     return;
   }
@@ -60,23 +62,63 @@ switchVal.value = GM_getValue(props.switchKey, false);
 </script>
 
 <template>
-  <el-card shadow="never">
-    <template #header>
-      <gz-space>
-        <span>{{ title }}</span>
-        <el-switch v-model.lazy="switchVal" active-text="启用"/>
-      </gz-space>
-    </template>
-    <el-input v-model.lazy.trim="partition" clearable style="width: 250px;"/>
-    <el-button @click="addBut">添加</el-button>
-    <gz-space wrap>
+  <div class="gz-whitelist">
+    <div class="gz-whitelist__header">
+      <span class="gz-whitelist__title">{{ title }}</span>
+      <el-switch v-model.lazy="switchVal" active-text="启用" size="small"/>
+    </div>
+    <div class="gz-whitelist__input">
+      <el-input v-model.lazy.trim="partition" clearable placeholder="输入分区名称后添加" size="small"/>
+      <el-button size="small" @click="addBut">添加</el-button>
+    </div>
+    <div class="gz-whitelist__tags">
       <el-popconfirm v-for="item in showPartitionList" :key="item"
                      :title="`是要删除tag【${item}】吗？`"
                      @confirm="delBut(item)">
         <template #reference>
-          <el-tag>{{ item }}</el-tag>
+          <el-tag size="small">{{ item }}</el-tag>
         </template>
       </el-popconfirm>
-    </gz-space>
-  </el-card>
+      <span v-if="showPartitionList.length === 0" class="gz-whitelist__empty">还没有分区</span>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.gz-whitelist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fluent-spacing-vertical-xs);
+  padding: var(--fluent-spacing-vertical-s) var(--fluent-spacing-horizontal-s);
+  border-radius: var(--fluent-border-radius-medium);
+  background: var(--fluent-color-neutral-background-2);
+}
+
+.gz-whitelist__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fluent-spacing-horizontal-s);
+}
+
+.gz-whitelist__title {
+  font-size: var(--fluent-font-size-base-300);
+  color: var(--fluent-color-neutral-foreground-2);
+}
+
+.gz-whitelist__input {
+  display: flex;
+  gap: var(--fluent-spacing-horizontal-xs);
+}
+
+.gz-whitelist__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fluent-spacing-horizontal-xs);
+}
+
+.gz-whitelist__empty {
+  font-size: var(--fluent-font-size-base-200);
+  color: var(--fluent-color-neutral-foreground-4);
+}
+</style>
