@@ -1,4 +1,9 @@
-const toPlayCountOrBulletChat = (str: string | null | undefined): number => {
+const toPlayCountOrBulletChat = (str: string | number | null | undefined): number => {
+    // 调用方会用 -1 标记「该指标不存在」，数字直接返回：
+    // 对它调用 str.split 会抛 TypeError，而首页/分区轮询每 3 秒重试一次，形成异常风暴。
+    if (typeof str === 'number') {
+        return Number.isFinite(str) ? str : -1
+    }
     if (!str) {
         return -1
     }
