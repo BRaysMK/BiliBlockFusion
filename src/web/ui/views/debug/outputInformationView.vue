@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue';
+import {computed, ref, shallowRef, triggerRef} from 'vue';
 import {eventEmitter} from "../../../core/EventEmitter.ts";
 import defUtil from "../../../core/util/defUtil.ts";
 import {copyText} from "../../../core/util/clipboardUtil.ts";
@@ -8,6 +8,7 @@ import {
   areShieldLogRecordsSame,
   createShieldLogRecord,
   isShieldLogEvent,
+  OUTPUT_INFO_FUTURES_LIMIT,
   type JsonValue,
   type ShieldLogEvent,
   type ShieldLogRecord
@@ -22,6 +23,8 @@ type OutputInfo = {
   updatedAt?: string;
   count?: number;
   id?: string;
+  /** 插入序号，用作 v-for 的稳定 key；id 相同或内容重复时靠它区分 */
+  seq?: number;
   shield?: any;
 };
 
@@ -37,9 +40,26 @@ const typeOptions = [
   {value: 'error', label: '错误信息'},
 ];
 
-const outputInfoArr = ref<OutputInfo[]>([]);
+/**
+ * 日志条数上限，与 EventEmitter 的 futures 上限保持一致
+ *
+ * 日志记录里挂着 normalizedData / normalizedOriginal 两棵完整 JSON 快照，
+ * 深度响应式会逐层代理它们；模板只做存在性判断、原文按需序列化，用 shallowRef 即可。
+ * 代价是所有就地修改都必须手动 triggerRef（见各入口）。
+ */
+const MAX_OUTPUT_ITEMS = OUTPUT_INFO_FUTURES_LIMIT;
+const outputInfoArr = shallowRef<OutputInfo[]>([]);
+/** 插入序号：v-for 的 key 不能用 index，否则每次 unshift 都会让整表 DOM 重建 */
+let outputInfoSeq = 0;
 const selectedType = ref('all');
 const searchKeyword = ref('');
+
+/** 超出上限时丢弃尾部最旧的记录（列表头部是最新） */
+const trimOutputInfo = (): void => {
+  if (outputInfoArr.value.length > MAX_OUTPUT_ITEMS) {
+    outputInfoArr.value.length = MAX_OUTPUT_ITEMS;
+  }
+};
 
 const filteredInfoArr = computed(() => {
   const keyword = searchKeyword.value.trim().toLowerCase();
@@ -76,6 +96,7 @@ const clearInfoBut = () => {
     type: 'warning'
   }).then(() => {
     outputInfoArr.value = [];
+    triggerRef(outputInfoArr);
     ElNotification({
       title: '输出信息',
       message: '清空成功',
@@ -91,13 +112,17 @@ const updateOutInfo = (infoData: OutputInfo, index: number) => {
   outPutInfoData.content = infoData.content;
   outputInfoArr.value.splice(index, 1);
   outputInfoArr.value.unshift(outPutInfoData);
+  triggerRef(outputInfoArr);
 };
 const addOutInfo = (infoData: OutputInfo) => {
   infoData.content = String(infoData.content ?? '');
+  infoData.seq = ++outputInfoSeq;
   if (infoData.shield) {
     infoData.time = defUtil.toTimeString();
     infoData.count = 1;
     outputInfoArr.value.unshift(infoData);
+    trimOutputInfo();
+    triggerRef(outputInfoArr);
     return;
   }
   const findIdIndex = outputInfoArr.value.findIndex(item => {
@@ -116,6 +141,8 @@ const addOutInfo = (infoData: OutputInfo) => {
   infoData.time = defUtil.toTimeString();
   infoData.count = 1;
   outputInfoArr.value.unshift(infoData);
+  trimOutputInfo();
+  triggerRef(outputInfoArr);
 };
 
 const shieldRecordType = (category: ShieldLogRecord['category']): string => {
@@ -146,6 +173,7 @@ const addShieldLog = (event: ShieldLogEvent) => {
     existing.count = oldRecord.count;
     outputInfoArr.value.splice(existingIndex, 1);
     outputInfoArr.value.unshift(existing);
+    triggerRef(outputInfoArr);
     return;
   }
   addOutInfo({
@@ -261,9 +289,11 @@ eventEmitter.on('正则匹配时异常', (errorData: any) => {
         <span v-if="outputInfoArr.length > 0">请调整筛选条件后重试</span>
         <span v-else>触发屏蔽或运行操作后，相关信息会显示在这里</span>
       </div>
+      <!-- key 用插入序号而不是 index：新增日志走 unshift，index 会整体后移，
+           那样每次插入都会让全部条目销毁重建 -->
       <article
           v-for="(info, index) in filteredInfoArr"
-          :key="`${info.id || info.type}-${info.content}-${index}`"
+          :key="info.seq ?? `${info.id || info.type}-${info.content}`"
           class="output-item"
           :class="`output-item--${info.type}`">
         <div class="output-item__accent"/>
@@ -285,7 +315,10 @@ eventEmitter.on('正则匹配时异常', (errorData: any) => {
           <el-tag v-if="(info.count || 0) > 1" class="output-item__count" type="info" size="small" effect="dark">
             ×{{ info.count }}
           </el-tag>
-          <el-dropdown v-if="info.shield?.normalizedOriginal && (typeof info.shield.normalizedOriginal === 'object')" trigger="click" class="output-item__actions">
+          <!-- persistent 默认 true：菜单未展开也会立刻把一份 popper 子树 teleport 到 body，
+               每条日志一个，几百条就是上千个常驻节点 -->
+          <el-dropdown v-if="info.shield?.normalizedOriginal && (typeof info.shield.normalizedOriginal === 'object')"
+                       :persistent="false" trigger="click" class="output-item__actions">
             <el-button text size="small">更多</el-button>
             <template #dropdown>
               <el-dropdown-menu>
