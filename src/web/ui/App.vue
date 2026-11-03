@@ -17,6 +17,7 @@ import RightFloatingLayoutView from "./views/settings/rightFloatingLayoutView.vu
 import conditionalityView from './views/rule/conditionalityView.vue';
 import defUtil from "../core/util/defUtil.ts";
 import {ElMessageBox} from 'element-plus';
+import PanelShell from "./panel/PanelShell.vue";
 
 const drawer = ref(false);
 // 默认打开的tab
@@ -24,9 +25,8 @@ const tabsActiveName = ref(GM_getValue('mainTabsActiveName', '规则管理'));
 const debug_panel_show = ref(__DEV__);
 const isShowBackToTopVal = ref(localMKData.isShowBackToTopBtn());
 
-// 开合动画完全交给 Element Plus 原生的 Transition 驱动，不要对 drawer 的 DOM 做任何干预：
-// 手写 WAAPI 或清理过渡类都会与 EP 的 .el-drawer-fade-* 争抢 transform，导致抽搐或动画不执行。
-// 时长与曲线在下方 <style> 里用 CSS 覆盖。
+// 开合状态只有 drawer 这一个布尔值，动画由 PanelShell 内的 CSS 过渡完成。
+// 不要在这里再对 DOM 做任何干预：外部改 transform 会与过渡争抢，导致抽搐或动画不执行。
 
 watch(tabsActiveName,(n)=>{
   GM_setValue('mainTabsActiveName', n);
@@ -35,42 +35,6 @@ watch(tabsActiveName,(n)=>{
 eventEmitter.on('主面板开关', () => {
   drawer.value = !drawer.value;
 });
-
-/**
- * 点击面板外空白处关闭面板
- *
- * 面板用 :modal="false"（不用 EP 遮罩层，否则会挡住整个 B 站页面），
- * 因此 EP 自带的 close-on-click-modal 不生效，只能自己监听 document 点击。
- * 面板本体、被 teleport 到 body 的 EP 浮层、右侧悬浮按钮都不算「外部空白」。
- */
-const handleDocumentClick = (event: MouseEvent): void => {
-  if (!drawer.value) return;
-
-  // 面板正在播放开合动画时不处理：enter 过渡期间关闭会与动画叠加，
-  // 面板可能卡在视口外。只查主面板自己的外层容器——页面上还有多个
-  // .is-drawer.el-modal-drawer（子抽屉的遮罩），全局 querySelector 可能取到别人。
-  const wrapEl = document.querySelector('.gz-main-drawer')?.parentElement;
-  if (wrapEl && /el-drawer-fade-(enter|leave)-active/.test(wrapEl.className)) return;
-
-  const target = event.target as HTMLElement | null;
-  if (target === null) return;
-
-  // 面板本体内部（.gz-main-drawer 是真正的抽屉元素）→ 不关闭
-  if (target.closest('.gz-main-drawer') !== null) return;
-  // EP 浮层（弹窗/下拉/气泡/消息框等被 teleport 到 body 下）→ 不关闭，
-  // 否则点下拉选项会把面板一起关掉
-  if (target.closest('.el-popper, .el-overlay, .el-message-box, .el-notification, .el-message') !== null) return;
-  // 浮动开关按钮 → 不关闭，交给它自己的 handler 做开关切换。
-  // 若这里不拦住，mousedown 会先关面板、随后的 click 又把它打开，表现为「点几次都关不掉」。
-  if (target.closest('.gz-float-btn') !== null) return;
-
-  // 其余：点击面板外空白 → 关闭
-  drawer.value = false;
-};
-// 用 mousedown 而非 click：click 要等 mouseup 才触发，
-// 用户在面板外按下拖动时不会误关；同时避免与面板内按钮的 click 竞争。
-// 捕获阶段监听，保证在页面自身的点击处理之前拿到事件。
-document.addEventListener('mousedown', handleDocumentClick, true);
 
 document.addEventListener('keydown', (event) => {
   eventEmitter.emit('event-keydownEvent', event);
@@ -99,54 +63,45 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
 
 <template>
   <div>
-    <!-- 浮层形态（对齐魔改版）：宽 60%、高 70%、距顶 15%，从左侧滑入。
-         EP 的 size 只控制宽度，高度由样式覆盖。
-         - lock-scroll=false：面板是常驻浮层，锁 body 滚动没有意义；EP 的锁屏清理有 200ms 延迟，
-           快速开关时会把 el-popup-parent--hidden 永久留在 body 上，导致整页无法滚动/点击。
-         - modal-penetrable：modal=false 时 EP 仍会渲染一个覆盖全屏、pointer-events:auto 的外层 div，
-           它会吞掉页面和悬浮按钮的点击；加上该属性后外层 pointer-events:none，只有抽屉本体可点。 -->
-    <el-drawer :modal="false"
-               :modal-penetrable="true"
-               :lock-scroll="false"
-               v-model="drawer"
-               :with-header="false"
-               direction="ltr"
-               size="60%"
-               class="gz-main-drawer"
-               style="position: fixed">
-      <el-tabs id="gz-drawer-tabs" v-model="tabsActiveName"
-               type="border-card">
-        <el-tab-pane label="面板设置" lazy name="面板设置">
-          <panelSettingsView/>
-        </el-tab-pane>
-        <el-tab-pane label="规则管理" lazy name="规则管理">
-          <ruleManagementView/>
-        </el-tab-pane>
-        <el-tab-pane label="页面处理" lazy name="页面处理">
-          <PageProcessingTabsView/>
-        </el-tab-pane>
-        <el-tab-pane label="兼容设置" lazy name="兼容设置">
-          <compatibleSettingView/>
-        </el-tab-pane>
-        <el-tab-pane label="排除页面" lazy name="排除页面">
-          <excludeURLsView/>
-        </el-tab-pane>
-        <el-tab-pane label="条件限制" lazy name="条件限制">
-          <conditionalityView/>
-        </el-tab-pane>
-        <!-- 诊断：合并原「输出信息」「缓存管理」「调试测试」三个排查类页签 -->
-        <el-tab-pane label="诊断" name="诊断">
-          <DiagnosticTabsView/>
-        </el-tab-pane>
-        <el-tab-pane v-if="debug_panel_show" label="弹幕词管理" lazy name="弹幕词管理">
-          <bulletWordManagementView/>
-        </el-tab-pane>
-        <!-- 关于：合并原「支持打赏」「关于和问题反馈」两个信息展示类页签 -->
-        <el-tab-pane label="关于" lazy name="关于">
-          <AboutTabsView/>
-        </el-tab-pane>
-      </el-tabs>
-    </el-drawer>
+    <!-- 面板外壳由 PanelShell 自控：宽 60%、高 70%、距顶 15%，从左侧滑入。
+         不用 el-drawer 是因为它的 modelValue/visible 双状态机会与外部开关竞态，
+         详见 PanelShell.vue 顶部注释。 -->
+    <PanelShell v-model="drawer">
+      <div class="gz-panel__content">
+        <el-tabs id="gz-drawer-tabs" v-model="tabsActiveName"
+                 type="border-card">
+          <el-tab-pane label="面板设置" lazy name="面板设置">
+            <panelSettingsView/>
+          </el-tab-pane>
+          <el-tab-pane label="规则管理" lazy name="规则管理">
+            <ruleManagementView/>
+          </el-tab-pane>
+          <el-tab-pane label="页面处理" lazy name="页面处理">
+            <PageProcessingTabsView/>
+          </el-tab-pane>
+          <el-tab-pane label="兼容设置" lazy name="兼容设置">
+            <compatibleSettingView/>
+          </el-tab-pane>
+          <el-tab-pane label="排除页面" lazy name="排除页面">
+            <excludeURLsView/>
+          </el-tab-pane>
+          <el-tab-pane label="条件限制" lazy name="条件限制">
+            <conditionalityView/>
+          </el-tab-pane>
+          <!-- 诊断：合并原「输出信息」「缓存管理」「调试测试」三个排查类页签 -->
+          <el-tab-pane label="诊断" name="诊断">
+            <DiagnosticTabsView/>
+          </el-tab-pane>
+          <el-tab-pane v-if="debug_panel_show" label="弹幕词管理" lazy name="弹幕词管理">
+            <bulletWordManagementView/>
+          </el-tab-pane>
+          <!-- 关于：合并原「支持打赏」「关于和问题反馈」两个信息展示类页签 -->
+          <el-tab-pane label="关于" lazy name="关于">
+            <AboutTabsView/>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+    </PanelShell>
     <lookContentDialog/>
     <showImgDialog/>
     <sheetDialog/>
@@ -167,15 +122,19 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
 
 /* ---- 抽屉容器：画布层 ----
    用 Background2 而非 Background3：深色下 Background3 是 #141414，
-   与卡片 #292929 相差两档，视觉割裂；Background2 形成「画布 → 卡片」的柔和层次 */
+   与卡片 #292929 相差两档，视觉割裂；Background2 形成「画布 → 卡片」的柔和层次。
+
+   min-height:100% 让标签页外壳铺满滚动容器：内容短时背景一直延续到面板底部，
+   不会露出 PanelShell 的底色。 */
 #gz-drawer-tabs {
   background: var(--fluent-color-neutral-background-2);
+  min-height: 100%;
 }
 
 /* 标签页内容区
    - 背景用 Background2（次级表面）：与卡片 Background1 形成层次但不产生过暗反差
      （用 Background3 会在深色下变成近乎纯黑，与卡片割裂）
-   - 自身不滚动，由抽屉 body 统一滚动，避免双重滚动条 */
+   - 自身不滚动，由面板内容区统一滚动，避免双重滚动条 */
 #gz-drawer-tabs > .el-tabs__content {
   padding: 0;
   background: var(--fluent-color-neutral-background-2);
@@ -188,14 +147,10 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   border: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
   border-radius: var(--fluent-border-radius-x-large);
   box-shadow: var(--fluent-shadow-4);
-  /* 注意 1：这里不能用 overflow:hidden。它虽然能让圆角裁切子元素，
-     但会成为内部 sticky 元素的滚动容器，导致左侧子页签吸顶失效
-     （实测 sticky 相对它定位而非抽屉 body，滚动时页签跟着滚出视野）。
-     圆角效果改由下方子元素的 border-radius 继承实现。
-     注意 2：也不能用 height:100% + flex，那会把内容区高度锁死、
-     抽屉 body 的 overflow:auto 失效、面板无法滚动。用 min-height 让内容自然撑高。 */
+  /* 不能用 overflow:hidden：它会成为内部 sticky 元素的滚动容器，
+     左侧子页签的吸顶会相对它定位而不是相对面板内容区，滚动时跟着滚出视野。
+     圆角裁切改由下方子元素各自的 border-radius 实现。 */
   overflow: visible;
-  min-height: 100%;
 }
 
 /* 顶栏自身圆角裁切（替代父级 overflow:hidden） */
@@ -274,49 +229,20 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
   padding: var(--fluent-spacing-vertical-l) var(--fluent-spacing-horizontal-l);
 }
 
-/* ---- 抽屉本体：60% 宽 × 70% 高的浮层（对齐魔改版形态）----
-   魔改版的设计是「不铺满全屏」的浮层：宽 60%、距顶 15%、高 70%、
-   从左侧滑入、只圆右侧两角，视觉上是悬浮面板而非全屏抽屉。
-   宽度由模板 size="60%" 控制（EP 会写成 inline width），
-   高度/位置用 !important 覆盖，因为 EP 对 ltr 方向不提供垂直尺寸控制。 */
-/* 必须用 .gz-main-drawer 限定：面板内的「查看规则内容」「查看内容」等子抽屉
-   同样是 .el-drawer.ltr，用裸类选择器会把它们也套上 60%×70% 浮层样式，
-   导致子抽屉错位、并让主面板 querySelector('.el-drawer') 取到错误元素。 */
-.el-drawer.gz-main-drawer {
-  top: 15% !important;
-  height: 70% !important;
-  border-radius: 0 var(--fluent-border-radius-x-large) var(--fluent-border-radius-x-large) 0 !important;
-  box-shadow: var(--fluent-shadow-64) !important;
-  background: var(--fluent-color-neutral-background-2);
-  overflow: hidden;
-}
-
-/* 开合过渡：EP 默认用 --el-transition-duration（约 0.3s）线性过渡，
-   这里换成 Fluent 的缓动曲线，滑入更自然、关闭也走同一套过渡 */
-.el-drawer-fade-enter-active,
-.el-drawer-fade-leave-active {
-  transition: opacity 280ms cubic-bezier(0.33, 0, 0.67, 1) !important;
-}
-
-.el-drawer-fade-enter-active .el-drawer,
-.el-drawer-fade-leave-active .el-drawer {
-  transition: transform 280ms cubic-bezier(0.33, 0, 0.67, 1) !important;
-}
-
 /* ---- 内层左侧页签吸顶（规则管理 / 页面处理 / 诊断 / 关于 都用 tab-position="left"）----
-   这些子页签跟随面板 body 一起滚动，内容长时页签会被滚出视野。
+   这些子页签跟随面板内容区一起滚动，内容长时页签会被滚出视野。
 
    关键：EP 的 .el-tabs--left 默认带 overflow:hidden，它会让 sticky 失效
    （overflow 非 visible 的祖先会成为 sticky 的滚动容器，导致 sticky 相对它定位而非视口）。
-   因此必须先把 overflow 改成 visible，sticky 才能相对抽屉 body 生效。 */
-.gz-main-drawer .el-tabs--left {
+   因此必须先把 overflow 改成 visible，sticky 才能相对滚动容器生效。 */
+.gz-panel .el-tabs--left {
   overflow: visible;
 }
 
-.gz-main-drawer .el-tabs--left > .el-tabs__header {
+.gz-panel .el-tabs--left > .el-tabs__header {
   position: sticky;
-  /* 贴住外层页签栏下沿：外层页签栏高 43px，抽屉 body 已无 padding，故 top=43 */
-  top: 43px;
+  /* 贴住外层页签栏下沿：外层页签栏高 44px，滚动容器无 padding */
+  top: 44px;
   align-self: flex-start;
   /* 避免吸顶时下方内容透出 */
   background: var(--fluent-color-neutral-background-1);
@@ -324,42 +250,28 @@ eventEmitter.on('e:设置顶部按钮状态', (show: boolean) => {
 }
 
 /* 页签列内部：长列表时页签自身可滚动，不把面板撑高 */
-.gz-main-drawer .el-tabs--left > .el-tabs__header .el-tabs__nav-wrap {
+.gz-panel .el-tabs--left > .el-tabs__header .el-tabs__nav-wrap {
   max-height: calc(70vh - 120px);
   overflow-y: auto;
 }
 
-/* 浮层右侧描边，强化「悬浮卡片」的边界感 */
-.el-drawer.gz-main-drawer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: 1px;
-  background: var(--fluent-color-neutral-stroke-2);
-}
-
-/* 抽屉 body 不能留 padding：吸顶的页签栏贴在内容盒顶端，而 padding 区属于
-   body 的滚动视口，滚动时内容会从 padding 缝里穿到页签栏上方。
-   内边距改由 .el-tab-pane 提供。
-   选择器带上 .gz-main-drawer 提高优先级，避免被 EP 默认的 .el-drawer__body 覆盖。 */
-.el-drawer.gz-main-drawer .el-drawer__body {
+/* 滚动条：Fluent 的细滚动条。
+   面板内容区不留 padding——吸顶页签栏贴在内容盒顶端，padding 区属于滚动视口，
+   滚动时内容会从 padding 缝里穿到页签栏上方。内边距由 .el-tab-pane 提供。 */
+.gz-panel .gz-panel__content {
   padding: 0;
-  overflow-y: auto;
 }
 
-/* 滚动条：Fluent 的细滚动条 */
-.gz-main-drawer .el-drawer__body::-webkit-scrollbar {
+.gz-panel .gz-panel__content::-webkit-scrollbar {
   width: 8px;
 }
 
-.gz-main-drawer .el-drawer__body::-webkit-scrollbar-thumb {
+.gz-panel .gz-panel__content::-webkit-scrollbar-thumb {
   background: var(--fluent-color-neutral-stroke-2);
   border-radius: var(--fluent-border-radius-circular);
 }
 
-.gz-main-drawer .el-drawer__body::-webkit-scrollbar-thumb:hover {
+.gz-panel .gz-panel__content::-webkit-scrollbar-thumb:hover {
   background: var(--fluent-color-neutral-stroke-1);
 }
 
