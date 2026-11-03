@@ -97,6 +97,9 @@ const actionScopesChange = (newArr: any) => {
   }
 };
 
+watch(enableReplacementProcessingVal, (n) => {
+  GM_setValue('enable_replacement_processing', n);
+});
 watch(clearCommentEmoticonsVal, (n) => {
   GM_setValue('is_clear_comment_emoticons', n);
 });
