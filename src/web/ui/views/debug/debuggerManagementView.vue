@@ -17,9 +17,6 @@ const localhostPageAutomaticallyOpenTheMainPanelVal = ref(isLocalhostPageAutomat
 const printValueCacheBut = () => {
   console.log(valueCache.getAll());
 };
-const demoBut = () => {
-
-};
 const fetchGetVideoInfoBut = () => {
   ElMessageBox.prompt('请输入视频bv号', {
     title: '请输入视频bv号',
@@ -60,7 +57,6 @@ watch(localhostPageAutomaticallyOpenTheMainPanelVal, (b) => {
       <el-tab-pane label="基础">
         <el-card shadow="never">
           <template #header><span>测试</span></template>
-          <el-button @click="demoBut">测试网络请求</el-button>
           <el-button @click="fetchGetVideoInfoBut">请求获取视频信息</el-button>
           <el-button @click="printValueCacheBut">打印valueCache值</el-button>
           <el-button @click="printEventBut">打印事件中心值</el-button>

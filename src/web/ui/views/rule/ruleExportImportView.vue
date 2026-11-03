@@ -1,19 +1,29 @@
 ﻿<script setup lang="ts">
-import {reactive, ref} from 'vue';
+import {computed, reactive, ref} from 'vue';
 import defUtil, {saveTextAsFile} from "../../../core/util/defUtil.ts";
 import ruleUtil from "@/core/util/ruleUtil.ts";
 import {eventEmitter} from "@/core/EventEmitter.ts";
 import ruleKeyListData from "../../../config/ruleKeyListData.ts";
 import {ElMessage, ElMessageBox} from 'element-plus';
+import SettingGroup from '../../components/SettingGroup.vue';
 
-//规则导入导出组件
-//要导入的规则内容
+/**
+ * 规则导入导出
+ *
+ * 原来三张卡片各有一组导出按钮（基础规则 3 个 + 指定规则 2 个），
+ * 同一件事「导出成文件 / 复制到剪贴板 / 打到控制台」散在两处。
+ * 现在收敛为：选择范围（全部 / 指定规则）+ 一个导出下拉。
+ */
 const ruleContentImport = ref("");
 const select = reactive({
   val: [] as any[],
   options: [] as any[],
 });
 const file = ref<HTMLInputElement>();
+const showImportHelp = ref(false);
+
+/** 导出全部规则时为 true；否则只导出 select.val 选中的类型 */
+const exportAll = computed(() => select.val.length === 0);
 
 const getSelectValRuleContent = () => {
   const val = select.val;
@@ -33,7 +43,13 @@ const getSelectValRuleContent = () => {
   }
   return map;
 };
-//覆盖导入规则
+
+/** 导出内容：全部导出时是「键 → 规则列表」的对象，与导入格式一致 */
+const getExportPayload = (): Record<string, unknown> | false => {
+  if (exportAll.value) return ruleUtil.getRuleContent(false) as Record<string, unknown>;
+  return getSelectValRuleContent();
+};
+
 const overwriteImportRulesBut = () => {
   ElMessageBox.confirm('是否要覆盖导入规则？').then(() => {
     const trim = ruleContentImport.value.trim();
@@ -43,7 +59,6 @@ const overwriteImportRulesBut = () => {
     }
   });
 };
-//追加导入规则
 const appendImportRulesBut = () => {
   ElMessageBox.confirm('是否要追加导入规则？').then(() => {
     const trim = ruleContentImport.value.trim();
@@ -69,44 +84,53 @@ const handleFileUpload = (event: any) => {
 const inputFIleRuleBut = () => {
   file.value!.click();
 };
-const outToInputBut = () => {
-  ruleContentImport.value = ruleUtil.getRuleContent() as string;
-  ElMessage('已导出到输入框中');
-};
-const ruleOutToFIleBut = () => {
-  const map = getSelectValRuleContent();
-  if (map === false) return;
+
+const exportFileBut = () => {
+  const payload = getExportPayload();
+  if (payload === false) return;
   ElMessageBox.prompt('请输入文件名', '保存为', {
-    inputValue: "b站屏蔽器规则-指定类型-" + defUtil.toTimeString()
+    inputValue: 'b站屏蔽器规则-' + defUtil.toTimeString()
   }).then(({value}: any) => {
-    if (value === "" && value.includes(' ')) {
-      ElMessageBox.alert('文件名不能为空或包含空格');
+    if (value.trim() === '') {
+      ElMessageBox.alert('文件名不能为空');
       return;
     }
-    saveTextAsFile(JSON.stringify(map, null, 4), value + '.json');
+    saveTextAsFile(JSON.stringify(payload, null, 4), value.trim() + '.json');
   });
 };
-const basisRuleOutToFIleBut = () => {
-  let fileName = "b站屏蔽器规则-" + defUtil.toTimeString();
-  ElMessageBox.prompt('请输入文件名', '保存为', {
-    inputValue: fileName
-  }).then(({value}: any) => {
-    if (value === "" && value.includes(' ')) {
-      ElMessageBox.alert('文件名不能为空或包含空格');
-      return;
-    }
-    saveTextAsFile(ruleUtil.getRuleContent(true, 4) as string, value + ".json");
+const exportClipboardBut = () => {
+  const payload = getExportPayload();
+  if (payload === false) return;
+  navigator.clipboard.writeText(JSON.stringify(payload, null, 4)).then(() => {
+    ElMessage.success('已复制到剪贴板');
+  }).catch(() => {
+    // 油猴沙箱/非安全上下文下 clipboard 可能不可用，退回到输入框
+    ruleContentImport.value = JSON.stringify(payload, null, 4);
+    ElMessage.warning('剪贴板不可用，已放到下方导入框');
   });
 };
-const ruleOutToConsoleBut = () => {
-  const map = getSelectValRuleContent();
-  if (map === false) return;
-  console.log(map);
-  ElMessage.info('已导出到控制台上，F12打开控制台查看');
+const exportConsoleBut = () => {
+  const payload = getExportPayload();
+  if (payload === false) return;
+  console.log(payload);
+  ElMessage.info('已导出到控制台，F12 查看');
 };
-const basisRuleOutToConsoleBut = () => {
-  console.log(ruleUtil.getRuleContent(false));
-  ElMessage('已导出到控制台上，F12打开控制台查看');
+const exportToInputBut = () => {
+  const payload = getExportPayload();
+  if (payload === false) return;
+  ruleContentImport.value = JSON.stringify(payload, null, 4);
+  ElMessage('已导出到下方输入框');
+};
+
+const exportCommandMap: Record<string, () => void> = {
+  file: exportFileBut,
+  clipboard: exportClipboardBut,
+  input: exportToInputBut,
+  console: exportConsoleBut,
+};
+
+const handleExportCommand = (command: string): void => {
+  exportCommandMap[command]?.();
 };
 
 for (const v of ruleKeyListData.getRuleKeyListData()) {
@@ -115,47 +139,57 @@ for (const v of ruleKeyListData.getRuleKeyListData()) {
 </script>
 
 <template>
-  <div>
-    <el-card shadow="never">
-      <template #header>
-        <span>导出基础规则</span>
-      </template>
-      <el-button @click="basisRuleOutToFIleBut">导出文件</el-button>
-      <el-button @click="outToInputBut">导出编辑框</el-button>
-      <el-button @click="basisRuleOutToConsoleBut">导出控制台</el-button>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>导出指定规则</template>
-      <el-select v-model="select.val" clearable filterable multiple placeholder="请选择导出规则类型">
-        <el-option
-            v-for="item in select.options"
-            :key="item.key"
-            :label="item.name"
-            :value="item.key">
-        </el-option>
+  <SettingGroup description="按上面的选择范围导出：不选规则类型即导出全部规则"
+                title="导出">
+    <div class="gz-export__row">
+      <el-select v-model="select.val" class="gz-export__select" clearable filterable multiple
+                 placeholder="全部规则（可多选指定类型）">
+        <el-option v-for="item in select.options" :key="item.key" :label="item.name" :value="item.key"/>
       </el-select>
-      <el-button @click="ruleOutToFIleBut">导出文件</el-button>
-      <el-button @click="ruleOutToConsoleBut">导出控制台</el-button>
-    </el-card>
-    <el-card shadow="never">
-      <template #header>导入规则</template>
-      <div>仅支持json格式内容导入,且最外层为对象(花括号)</div>
-      <div>内容格式为{key: [规则列表]}</div>
-      <div>可以只导入指定类型规则，最外层需为对象，key为规则的内部key，value为规则列表</div>
-      <el-divider/>
-      <div>
-        <el-button @click="inputFIleRuleBut">读取外部规则文件</el-button>
-        <el-button type="danger" size="small" @click="overwriteImportRulesBut">覆盖导入规则</el-button>
-        <el-button type="primary" size="small" @click="appendImportRulesBut">追加导入规则</el-button>
-      </div>
-      <el-divider/>
-      <div>
-        <el-input v-model="ruleContentImport"
-                  :autosize="{ minRows: 10, maxRows: 50}"
-                  placeholder="要导入的规则内容" type="textarea"></el-input>
-      </div>
-    </el-card>
-    <input ref="file" accept="application/json" style="display: none" type="file"
-           @change="handleFileUpload">
-  </div>
+      <el-dropdown trigger="click" @command="handleExportCommand">
+        <el-button size="small" type="primary">导出</el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="file">下载为 json 文件</el-dropdown-item>
+            <el-dropdown-item command="clipboard">复制到剪贴板</el-dropdown-item>
+            <el-dropdown-item command="input">放到下方导入框</el-dropdown-item>
+            <el-dropdown-item command="console">打印到控制台</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </div>
+  </SettingGroup>
+
+  <SettingGroup description="最外层必须是对象（花括号），格式为 { 规则键: [规则列表] }" title="导入">
+    <div class="gz-export__row">
+      <el-button size="small" @click="inputFIleRuleBut">读取外部规则文件</el-button>
+      <el-button size="small" type="danger" plain @click="overwriteImportRulesBut">覆盖导入</el-button>
+      <el-button size="small" type="primary" @click="appendImportRulesBut">追加导入</el-button>
+    </div>
+    <div class="gz-export__textarea">
+      <el-input v-model="ruleContentImport"
+                :autosize="{ minRows: 6, maxRows: 16}"
+                placeholder="要导入的规则内容（JSON）"
+                type="textarea"/>
+    </div>
+  </SettingGroup>
+  <input ref="file" accept="application/json" style="display: none" type="file" @change="handleFileUpload">
 </template>
+
+<style scoped>
+.gz-export__row {
+  display: flex;
+  align-items: center;
+  gap: var(--fluent-spacing-horizontal-s);
+  padding: var(--fluent-spacing-vertical-xs) var(--fluent-spacing-horizontal-s);
+}
+
+.gz-export__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.gz-export__textarea {
+  padding: var(--fluent-spacing-vertical-xs) var(--fluent-spacing-horizontal-s) var(--fluent-spacing-vertical-s);
+}
+</style>

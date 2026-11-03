@@ -31,15 +31,11 @@ const fetchGetBarrageBlockingWordsBut = () => {
   console.log(list);
   console.log('获取弹幕屏蔽词_end=======');
 };
-const outToJsonFIleBut = () => {
-
-};
 
 void initial();
 </script>
 <template>
   <div>
     <el-button @click="fetchGetBarrageBlockingWordsBut">获取弹幕屏蔽词</el-button>
-    <el-button @click="outToJsonFIleBut">导出至json文件</el-button>
   </div>
 </template>

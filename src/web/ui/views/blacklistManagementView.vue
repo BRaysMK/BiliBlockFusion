@@ -50,8 +50,6 @@ const total = ref(0);
 const list = ref<any[]>([]);
 const showList = ref<any[]>([]);
 const findVal = ref('');
-// 请求间隔
-const sliderInterval = ref(0.6);
 const isDivLoading = ref(false);
 // 取消列表显示最大限制
 const isCancelMaxLimit = ref(false);
@@ -189,104 +187,155 @@ const tableAddUidBlackButAll = () => {
 watch(findVal, (n) => {
   showList.value = filterTable(list.value, n);
 });
-watch(sliderInterval, (n) => {
-  queue.setInterval(n * 1000);
-});
 watch(isCancelMaxLimit, (n) => {
   pageSize.value = n ? 1000000 : 50;
 });
 
-queue.setInterval(sliderInterval.value * 1000);
+// 拉取黑名单是低频操作（一次几十页），固定间隔即可；
+// 与「高级 → 面板与条件 → 请求间隔」共用一个网络节流语义，不再单独暴露设置项。
+queue.setInterval(600);
 </script>
 <template>
-  <div>
-    <el-space direction="vertical" alignment="stretch">
-      <el-text>1.注意：该功能为b站自身的黑名单</el-text>
-      <el-text>1.对应地址
-        <el-link href="https://account.bilibili.com/account/blacklist" target="_blank">
-          https://account.bilibili.com/account/blacklist
-        </el-link>
-      </el-text>
-      <el-text>3.需要登录才可以使用</el-text>
-    </el-space>
-    <el-card v-loading="isDivLoading" element-loading-text="拼命加载中" shadow="never">
-      <template #header>
-        <el-row>
-          <el-col :span="8">
-            <el-badge :value="total">
-              <el-tag>累计</el-tag>
-            </el-badge>
-            <el-badge :value="showList.length" style="margin-left: 45px">
-              <el-tag>显示数</el-tag>
-            </el-badge>
-            <div>
-              <el-card shadow="never">
-                <template #header>请求的间隔({{ sliderInterval }}S)</template>
-                <el-slider v-model="sliderInterval" max="10" step="0.1"></el-slider>
-              </el-card>
-              <el-button @click="getOnePageDataBut">获取第一页</el-button>
-              <el-button @click="getAllBut">获取全部</el-button>
-              <el-button type="danger" size="small" @click="clearTableBut">清空列表</el-button>
-              <el-button @click="outDataToConsoleBut">导出控制台</el-button>
-              <el-button @click="outDataToFileBut">导出文件</el-button>
+  <div class="gz-blacklist">
+    <div class="gz-blacklist__hint">
+      B 站自身的黑名单（<el-link href="https://account.bilibili.com/account/blacklist" target="_blank" type="primary">
+      账号黑名单管理</el-link>），需要登录后才能拉取。可把这里的用户一键搬进本脚本的 uid 精确屏蔽规则。
+    </div>
+    <div class="gz-blacklist__toolbar">
+      <el-badge :value="total">
+        <el-tag size="small">累计</el-tag>
+      </el-badge>
+      <el-badge :value="showList.length">
+        <el-tag size="small">显示</el-tag>
+      </el-badge>
+      <div class="gz-blacklist__actions">
+        <el-button size="small" @click="getOnePageDataBut">取第一页</el-button>
+        <el-button size="small" @click="getAllBut">取全部</el-button>
+        <el-dropdown size="small" trigger="click" @command="(cmd: string) => (cmd === 'file' ? outDataToFileBut() : outDataToConsoleBut())">
+          <el-button size="small">导出</el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="file">下载为 json 文件</el-dropdown-item>
+              <el-dropdown-item command="console">打印到控制台</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-button size="small" type="danger" plain @click="clearTableBut">清空</el-button>
+      </div>
+    </div>
+    <div class="gz-blacklist__toolbar">
+      <el-switch v-model="isCancelMaxLimit" active-text="取消列表显示最大限制" size="small"/>
+      <div class="gz-blacklist__actions">
+        <el-select v-model="select.val" class="gz-blacklist__field-select" size="small">
+          <el-option
+              v-for="item in select.options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+          </el-option>
+        </el-select>
+        <el-input v-model="findVal" class="gz-blacklist__find" clearable placeholder="按所选字段过滤" size="small"/>
+      </div>
+    </div>
+    <!-- 内容区只有 420px：时间 / 头像 / 姓名 / uid / 签名 / 操作 六列并排要 640px。
+         头像并进姓名列，签名收进姓名悬停气泡，四列正好放下。 -->
+    <el-table v-loading="isDivLoading" :data="showList" border element-loading-text="正在拉取黑名单" size="small"
+              stripe>
+      <el-table-column label="拉黑时间" prop="mtime" width="96">
+        <template #default="scope">
+          {{ new Date(scope.row.mtime * 1000).toLocaleDateString() }}
+        </template>
+      </el-table-column>
+      <el-table-column label="用户" min-width="130">
+        <template #default="scope">
+          <el-tooltip :content="scope.row.sign === '' ? '（无签名）点名字打开主页' : scope.row.sign + '（点名字打开主页）'"
+                      placement="top">
+            <div class="gz-blacklist__user" @click="tableOpenAddressBut(scope.row)">
+              <el-avatar :size="22" :src="scope.row.face" shape="square"/>
+              <span class="gz-blacklist__user-name">{{ scope.row.uname }}</span>
             </div>
-          </el-col>
-          <el-col :span="16">
-            <el-card shadow="never">
-              <template #header><span>过滤</span></template>
-              <div>
-                <el-switch v-model="isCancelMaxLimit" active-text="取消列表显示最大限制"/>
-              </div>
-              <el-select v-model="select.val">
-                <el-option
-                    v-for="item in select.options"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value">
-                </el-option>
-              </el-select>
-              <el-input v-model="findVal"></el-input>
-            </el-card>
-          </el-col>
-        </el-row>
-      </template>
-      <el-table :data="showList" border stripe>
-        <el-table-column label="时间" prop="mtime" width="155px">
-          <template #default="scope">
-            {{ new Date(scope.row.mtime * 1000).toLocaleString() }}
-          </template>
-        </el-table-column>
-        <el-table-column label="头像" width="55px">
-          <template #default="scope">
-            <el-avatar :src="scope.row.face" shape="square"></el-avatar>
-          </template>
-        </el-table-column>
-        <el-table-column label="用户名" prop="uname" width="190px"></el-table-column>
-        <el-table-column label="用户ID" prop="mid" width="180px"></el-table-column>
-        <el-table-column label="签名" prop="sign"></el-table-column>
-        <el-table-column label="标记" width="50px">
-          <template #default="scope">
-            未定
-          </template>
-        </el-table-column>
-        <el-table-column label="操作">
-          <template #header>
-            <el-button @click="tableAddUidBlackButAll">一键添加uid屏蔽</el-button>
-          </template>
-          <template #default="scope">
-            <el-button @click="tableOpenAddressBut(scope.row)">打开地址</el-button>
-            <el-button @click="tableAddUidBlackBut(scope.row)">uid屏蔽</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          </el-tooltip>
+        </template>
+      </el-table-column>
+      <el-table-column label="用户 ID" prop="mid" width="96"/>
+      <el-table-column width="96">
+        <template #default="scope">
+          <el-button size="small" @click="tableAddUidBlackBut(scope.row)">加入屏蔽</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <div class="gz-blacklist__footer">
+      <el-button size="small" type="primary" @click="tableAddUidBlackButAll">一键把当前列表加入 uid 屏蔽</el-button>
       <el-pagination
           :page-size="pageSize"
           :total="list.length"
           background
           layout="prev, pager, next"
+          small
           @current-change="handleCurrentChange"
       >
       </el-pagination>
-    </el-card>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.gz-blacklist__user {
+  display: flex;
+  align-items: center;
+  gap: var(--fluent-spacing-horizontal-xs);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.gz-blacklist__user-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gz-blacklist__hint {
+  padding: var(--fluent-spacing-vertical-xs) var(--fluent-spacing-horizontal-s);
+  font-size: var(--fluent-font-size-base-200);
+  line-height: 1.6;
+  color: var(--fluent-color-neutral-foreground-3);
+}
+
+.gz-blacklist__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--fluent-spacing-horizontal-s);
+  padding: var(--fluent-spacing-vertical-xs) var(--fluent-spacing-horizontal-s);
+}
+
+.gz-blacklist__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--fluent-spacing-horizontal-xs);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* EP 给相邻按钮加 margin-left，放进 flex 容器后会破坏对齐 */
+.gz-blacklist__actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+.gz-blacklist__field-select {
+  width: 108px;
+}
+
+.gz-blacklist__find {
+  width: 180px;
+}
+
+.gz-blacklist__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--fluent-spacing-horizontal-s);
+  padding: var(--fluent-spacing-vertical-s) var(--fluent-spacing-horizontal-s);
+}
+</style>
