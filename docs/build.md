@@ -63,7 +63,7 @@ CDN 地址与版本常量集中在 `vite.config.ts` 顶部（`VUE_URL` / `ELEMEN
 ### 监听模式（`pnpm watch:dev`）
 
 - `vite build --watch`：源文件变化时自动重建 `dist/local_build.js`，配合安装壳的 `@require file://` 直连，刷新页面即生效，无需复制代码。
-- `pnpm watch:dev` 与 `pnpm build` 同属**开发构建**：**不压缩、保留注释、`__DEV__ === true`**，主面板「诊断与关于」下显示"调试测试"/"弹幕词管理"子页签。生产判定在 `vite.config.ts` 的 `isProd = IS_PUBLISH`（仅 `pnpm build:release` 命中）。
+- `pnpm watch:dev` 与 `pnpm build` 同属**开发构建**：**不压缩、保留注释、`__DEV__ === true`**，主面板「诊断与关于」下显示"调试测试"子页签。生产判定在 `vite.config.ts` 的 `isProd = IS_PUBLISH`（仅 `pnpm build:release` 命中）。
   - 注意：**不能用 `process.env.NODE_ENV` 判定生产**——Vite 执行任意 `vite build`（含 `--watch`）时默认都会把它设为 `'production'`，会误把开发构建判成生产。
   - 源码里的 `[elUtil][dev] findElements 未匹配到元素` 等日志只在开发构建输出，生产构建被 tree-shake 掉。
 
