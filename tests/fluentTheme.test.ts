@@ -92,6 +92,18 @@ describe("Fluent 2 主题层", () => {
         expect(referenced.length).toBeGreaterThan(30);
     });
 
+    it("tooltip 气泡不吃 EP 的 is-dark 反色（深色下会变成纯白块）", async () => {
+        const {readFileSync} = await import("node:fs");
+        const {resolve} = await import("node:path");
+        const bridge = readFileSync(resolve(process.cwd(), "src/web/ui/theme/elementPlusBridge.css"), "utf8");
+        // EP 的 is-dark 用 --el-text-color-primary 当底色、--el-bg-color 当文字色，
+        // 本项目把这两个令牌映射成 foreground-1 / background-1，不覆盖就是深色下纯白气泡。
+        expect(bridge).toContain(".el-popper.el-tooltip.is-dark");
+        expect(bridge).toMatch(/\.el-tooltip\.is-dark[\s\S]{0,400}max-width:\s*320px/);
+        // 箭头是独立伪元素，不单独覆盖会在气泡边缘露出白/黑三角
+        expect(bridge).toMatch(/\.el-popper\.el-tooltip\.is-dark\s*>\s*\.el-popper__arrow::before/);
+    });
+
     it("字号令牌满足可读性下限：正文 14px、次级 12px，无 11px", async () => {
         const {biliLightTheme} = await import("../src/web/ui/theme/fluentBrand.ts");
         expect(biliLightTheme.fontSizeBase300).toBe("14px");

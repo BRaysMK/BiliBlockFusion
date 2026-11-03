@@ -466,26 +466,33 @@
 /* --------------------------------------------------------------------------
    5. tooltip 气泡（el-popper.is-dark）
    --------------------------------------------------------------------------
-   EP 的 tooltip 默认 effect="dark"，其底色取 --el-text-color-primary、文字取 --el-bg-color。
+   EP 的 tooltip 默认 effect="dark"，底色取 --el-text-color-primary、文字取 --el-bg-color。
    本文件第 1 节把这两个令牌分别映射到 foreground-1 / background-1，于是：
-   深色主题下面板里会弹出一块纯白气泡，浅色主题下弹出一块纯黑气泡——两种主题都不对。
-   这里改用「与画布同侧的中性表面」：底色 background-4（比卡片再深/浅一档），
-   文字 foreground-1，描边 stroke-2，让气泡读起来像浮起的卡片而不是反色块。 */
-.gz-theme-light .el-popper.is-dark,
-.gz-theme-dark .el-popper.is-dark {
+   深色主题下面板里弹出一块纯白气泡，浅色主题下弹出一块纯黑气泡——两种主题都不对。
+
+   改用与「基础规则信息」卡片相同的表面：background-1 + stroke-2 + shadow-8。
+   不能只改 --el-popper-bg-color-dark：EP 的 is-dark 还用 --el-bg-color 当文字色、
+   --el-text-color-primary 当描边色，只改底色会得到白底白字。
+
+   选择器限定 .el-tooltip：不加这个类名会连带把 popover / 下拉的 is-dark 一起改掉。 */
+.gz-theme-light .el-popper.el-tooltip.is-dark,
+.gz-theme-dark .el-popper.el-tooltip.is-dark {
+  /* EP 默认没有宽度上限，绝对定位下会按文案长度拉成横贯视口的一条长带 */
   max-width: 320px;
   padding: var(--fluent-spacing-vertical-s) var(--fluent-spacing-horizontal-m);
   border: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
   border-radius: var(--fluent-border-radius-medium);
-  background: var(--fluent-color-neutral-background-4);
-  color: var(--fluent-color-neutral-foreground-1);
+  background: var(--fluent-color-neutral-background-1);
+  color: var(--fluent-color-neutral-foreground-2);
   box-shadow: var(--fluent-shadow-8);
-  line-height: 1.6;
+  font-size: var(--fluent-font-size-base-300);
+  line-height: 1.5;
+  word-break: break-word;
 }
 
 /* 箭头是独立伪元素，EP 用 --el-text-color-primary 作底；不改就会在气泡边缘露出一块白/黑三角 */
-.gz-theme-light .el-popper.is-dark > .el-popper__arrow::before,
-.gz-theme-dark .el-popper.is-dark > .el-popper__arrow::before {
-  background: var(--fluent-color-neutral-background-4);
+.gz-theme-light .el-popper.el-tooltip.is-dark > .el-popper__arrow::before,
+.gz-theme-dark .el-popper.el-tooltip.is-dark > .el-popper__arrow::before {
+  background: var(--fluent-color-neutral-background-1);
   border: var(--fluent-stroke-width-thin) solid var(--fluent-color-neutral-stroke-2);
 }
