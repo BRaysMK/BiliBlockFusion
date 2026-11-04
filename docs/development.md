@@ -6,15 +6,14 @@
 
 | 文档 | 位置 | 面向 | 内容 |
 |------|------|------|------|
-| `README.md` | 仓库根目录 | GitHub 用户 | 项目简介、特色功能、安装方式、快速使用、相关链接（用户向门面，不包含开发细节） |
-| `docs/mk.md` | `docs/` 目录 | 发布平台（脚本猫 / GreasyFork） | 发布平台的脚本描述原文，包含完整屏蔽类型列表（37 种）与高级/其他规则，由发布者复制到平台 |
+| `README.md` | 仓库根目录 | GitHub 用户 + 发布平台 | 项目简介、功能概览、安装方式、更新记录、开发命令；同时作为脚本猫 / GreasyFork 的脚本说明，由两平台从 raw README 自动同步 |
 | `docs/development.md` | `docs/` 目录 | 开发者 | 本文档：文档索引 + 文档分工 + 项目简介 + 环境搭建 + 外部资源 |
 | `docs/build.md` | `docs/` 目录 | 开发者 | 构建与运行、Tampermonkey 元信息、构建配置细节 |
 | `docs/architecture.md` | `docs/` 目录 | 开发者 | 项目结构、架构分层详解 |
 | `docs/workflow.md` | `docs/` 目录 | 开发者 | 开发工作流、质量关卡、常见开发场景 |
 
 > **维护约定**：
-> - 37 种屏蔽类型完整列表只在 `docs/mk.md` 维护（README 只列概要并链接到它）
+> - 平台说明以 `README.md` 为唯一来源（脚本猫 `/manage` 与 GreasyFork `/admin` 各配了一条 raw README 同步地址），不再单独维护平台描述文件
 > - 构建、架构、开发相关的详细内容按主题分布在 `docs/build.md` / `docs/architecture.md` / `docs/workflow.md`
 > - 本文档只保留索引与入门信息，详细内容一律进对应主题文档
 
@@ -59,11 +58,10 @@ pnpm install
 
 | 资源 | 链接 |
 |------|------|
-| 项目 README | https://github.com/hgztask/BiBiBSPUserVideoMonkeyScript |
-| 发布平台描述 (mk.md) | https://github.com/hgztask/BiBiBSPUserVideoMonkeyScript/blob/main/docs/mk.md |
-| 脚本发布 (脚本猫) | https://scriptcat.org/zh-CN/script-show-page/1029 |
-| 脚本发布 (GreasyFork) | https://greasyfork.org/zh-CN/scripts/461382 |
-| 源码 (GitHub) | https://github.com/hgztask/BiBiBSPUserVideoMonkeyScript |
+| 源码 (GitHub) | https://github.com/BRaysMK/BiliBlockFusion |
+| 脚本发布 (脚本猫) | https://scriptcat.org/zh-CN/script-show-page/6301 |
+| 脚本发布 (GreasyFork) | https://greasyfork.org/zh-CN/scripts/578590-biliblockfusion |
+| 上游原始仓库 | https://github.com/hgztask/BiBiBSPUserVideoMonkeyScript |
 | 开发文档 (腾讯文档) | https://docs.qq.com/doc/DSkdTQ1p1aFNnVnRS |
 | 更新日志 | https://docs.qq.com/doc/DSnhjSVZmRkpCd0Nj |
 | 常见问题 | https://docs.qq.com/doc/DSlJNR1NVcGR3eEto |

@@ -111,8 +111,7 @@ src/web/
 
 | 文档 | 面向 | 内容 |
 |------|------|------|
-| `README.md`（根目录） | GitHub 用户 | 简介、特色功能、安装、快速使用、链接；屏蔽类型只列概要 |
-| `docs/mk.md` | 发布平台（脚本猫/GreasyFork） | 发布平台描述原文，37 种屏蔽类型完整列表**独占维护** |
+| `README.md`（根目录） | GitHub 用户 + 发布平台 | 简介、功能概览、安装、更新记录、开发命令；**同时是脚本猫 / GreasyFork 的脚本说明**，两平台从 raw README 自动同步 |
 | `docs/development.md` | 开发者 | 文档索引 + 文档分工 + 项目简介 + 环境搭建 + 外部资源 |
 | `docs/build.md` | 开发者 | 构建与运行、Tampermonkey 元信息、构建配置细节 |
 | `docs/architecture.md` | 开发者 | 项目结构、架构分层详解 |
