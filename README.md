@@ -2,9 +2,31 @@
 
 B 站内容过滤油猴脚本，基于 [BiBiBSPUserVideoMonkeyScript](https://github.com/hgztask/BiBiBSPUserVideoMonkeyScript) 二次开发。
 
+## 功能
+
+**按对象屏蔽**
+
+- 用户 — 用户名 模糊 / 精确 / 正则、uid 精确、uid 白名单、签名 模糊 / 正则、头像挂件名 模糊 / 精确
+- 视频 — 标题 模糊 / 正则、tag 模糊 / 精确 / 正则 / 组合、简介 模糊 / 正则、bv 号精确、视频弹幕 模糊 / 正则
+- 评论 — 关键词 模糊 / 正则、字数限制、用户等级上下限
+- 动态 — 动态内容、动态视频、话题 tag（模糊 / 精确 / 正则）
+- 直播 — 直播标题、分区名、直播间 id、UP 主 uid、直播弹幕、粉丝牌
+- 热搜 — 关键词 模糊 / 正则
+- 数值指标 — 时长 / 播放量 / 弹幕量的上下限，粉丝数、投稿数、点赞率、互动率、三连率、投币点赞比
+- 高级判定 — 性别、会员类型、硬核会员、已关注、充电专属、竖屏视频、合作视频成员、精选/限评/禁评类视频
+- 区间 — uid 范围、发布时间范围
+
+**屏蔽方式**：视频卡片可选 移除 / 叠加层（半透明遮罩 + 屏蔽原因）/ 隐藏 三态；评论命中后直接移除
+
+**辅助**：快捷屏蔽按钮、白名单、规则 JSON 导入导出、AI 规则页、BewlyCat 首页适配、本地缓存
+
 ## 安装
 
-安装 Tampermonkey 或脚本猫，导入 `dist/BiliBlockFusion.user.js`。按 `` ` `` 键打开主面板。
+1. 安装 Tampermonkey 或脚本猫
+2. 从 [GreasyFork](https://greasyfork.org/zh-CN/scripts/578590-biliblockfusion) 或 [脚本猫](https://scriptcat.org/zh-CN/script-show-page/6301) 点击「安装此脚本」
+3. 或在 Tampermonkey 中新建脚本，粘贴 `dist/BiliBlockFusion.user.js` 的全部内容
+
+安装后访问 B 站，按 `` ` `` 键或点右侧悬浮按钮打开主面板。
 
 ## 更新
 
